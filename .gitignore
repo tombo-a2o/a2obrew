@@ -1,0 +1,17 @@
+# Editor
+*~
+.*.sw[a-z]
+
+# Windows
+Thumbs.db
+
+# Mac OS X
+.DS_Store
+
+# Fetched files
+emsdk/
+downloads/
+objc4/
+icu/
+libdispatch/
+Foundation/
