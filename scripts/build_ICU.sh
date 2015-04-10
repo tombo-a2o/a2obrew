@@ -30,5 +30,4 @@ emconfigure \
   --prefix=${EMSCRIPTEN}/system/local \
   --with-cross-build=`pwd`/../buildMac
 emmake make
-cp -R out/lib/* ${EMSCRIPTEN}/system/lib/
-cp -R out/include/* ${EMSCRIPTEN}/system/include/
+make install

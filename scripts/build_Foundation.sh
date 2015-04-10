@@ -2,7 +2,7 @@
 cd emsdk; source ./emsdk_env.sh > /dev/null; cd ..
 
 if [ ! -d ./Foundation ]; then
-  git clone git@github.com:tomboinc/Foundation.git
+  git clone git@github.com:tomboinc/Foundation.git --branch feature/emscripten
 fi
 
 cd Foundation
