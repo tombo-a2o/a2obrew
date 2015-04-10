@@ -2,6 +2,9 @@
 # Install Python2 with pyenv
 if [ ! -d ~/.pyenv ]; then
   curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash
+  export PATH="$HOME/.pyenv/bin:$PATH"
+  eval "$(pyenv init -)"
+  eval "$(pyenv virtualenv-init -)"
   pyenv install 2.7.9
 else
   echo "* pyenv is installed"
