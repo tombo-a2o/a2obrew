@@ -6,11 +6,11 @@ if [ ! -f ./downloads/icu4c-54_1-src.tgz ]; then
 fi
 
 if [ ! -d ./icu ]; then
-  mkdir tar xvfz ./downloads/icu4c-54_1-src.tgz
+  tar xvfz ./downloads/icu4c-54_1-src.tgz
 fi
 
 cd icu
-mkdir -p buildMac buildEmscripten buildEmscripten/out
+mkdir -p buildMac buildEmscripten
 cd buildMac
 ../source/runConfigureICU MacOSX
 make
