@@ -1,9 +1,7 @@
 #!/bin/sh
 # Install emsdk
 if [ ! -d ./emsdk ]; then
-# FIXME: Change after https://github.com/juj/emsdk/pull/30 is merged
-# git clone https://github.com/juj/emsdk
-  git clone https://github.com/gunyarakun/emsdk > /dev/null
+  git clone https://github.com/juj/emsdk > /dev/null
   cd emsdk
   source ./emsdk_env.sh > /dev/null
 else
