@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -ex
 cd emsdk; source ./emsdk_env.sh > /dev/null; cd ..
 
 if [ ! -d ./Foundation ]; then

@@ -1,4 +1,4 @@
-#/bin/sh
+#/bin/sh -ex
 # Install Python2 with pyenv
 if [ ! -d ~/.pyenv ]; then
   curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash

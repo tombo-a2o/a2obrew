@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -ex
 cd emsdk; source ./emsdk_env.sh > /dev/null; cd ..
 
 if [ ! -f ./downloads/icu4c-54_1-src.tgz ]; then

@@ -1,4 +1,4 @@
-#/bin/sh
+#/bin/sh -ex
 # Install Node.js woth nvm
 if [ ! -d ~/.nvm ]; then
   curl https://raw.githubusercontent.com/creationix/nvm/v0.24.1/install.sh | bash
