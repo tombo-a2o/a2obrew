@@ -27,11 +27,35 @@
     "cmake_build_type": "RelWithDebInfo"
   },
   {
+    "id": "clang",
+    "version": "pthreads",
+    "bitness": 64,
+    "install_path": "clang/fastcomp",
+    "git_branch": "pthreads",
+    "url": "git@github.com:tomboinc/emscripten-fastcomp.git",
+    "clang_url": "git@github.com:tomboinc/emscripten-fastcomp-clang.git",
+    "custom_install_script": "build_fastcomp",
+    "activated_path": "%installation_dir%/%fastcomp_build_bin_dir%",
+    "activated_cfg": "LLVM_ROOT='%installation_dir%/%fastcomp_build_bin_dir%'",
+    "cmake_build_type": "RelWithDebInfo"
+  },
+  {
     "id": "emscripten",
     "version": "a2o",
     "bitness": 64,
     "url": "git@github.com:tomboinc/emscripten.git",
     "git_branch": "feature/objc",
+    "activated_cfg": "EMSCRIPTEN_ROOT='%installation_dir%';EMSCRIPTEN_NATIVE_OPTIMIZER='%installation_dir%/tools/optimizer_build/%cmake_build_type_on_win%optimizer%.exe%'",
+    "activated_path": "%installation_dir%",
+    "activated_env": "EMSCRIPTEN=%installation_dir%",
+    "cmake_build_type": "RelWithDebInfo",
+    "custom_install_script": "build_optimizer"
+  },
+  {
+    "id": "emscripten",
+    "version": "pthreads",
+    "url": "git@github.com:tomboinc/emscripten.git",
+    "git_branch": "pthreads",
     "activated_cfg": "EMSCRIPTEN_ROOT='%installation_dir%';EMSCRIPTEN_NATIVE_OPTIMIZER='%installation_dir%/tools/optimizer_build/%cmake_build_type_on_win%optimizer%.exe%'",
     "activated_path": "%installation_dir%",
     "activated_env": "EMSCRIPTEN=%installation_dir%",
@@ -690,6 +714,18 @@
     "version": "a2o",
     "bitness": 64,
     "uses": ["clang-a2o-64bit", "emscripten-a2o-64bit"],
+    "os": "linux"
+  },
+  {
+    "version": "pthreads",
+    "bitness": 64,
+    "uses": ["clang-pthreads-64bit", "emscripten-pthreads"],
+    "os": "osx"
+  },
+  {
+    "version": "pthreads",
+    "bitness": 64,
+    "uses": ["clang-pthreads-64bit", "emscripten-pthreads"],
     "os": "linux"
   },
 
