@@ -29,6 +29,7 @@
   {
     "id": "emscripten",
     "version": "a2o",
+    "bitness": 64,
     "url": "git@github.com:tomboinc/emscripten.git",
     "git_branch": "feature/objc",
     "activated_cfg": "EMSCRIPTEN_ROOT='%installation_dir%';EMSCRIPTEN_NATIVE_OPTIMIZER='%installation_dir%/tools/optimizer_build/%cmake_build_type_on_win%optimizer%.exe%'",
@@ -682,13 +683,13 @@
   {
     "version": "a2o",
     "bitness": 64,
-    "uses": ["clang-a2o-64bit", "emscripten-a2o"],
+    "uses": ["clang-a2o-64bit", "emscripten-a2o-64bit"],
     "os": "osx"
   },
   {
     "version": "a2o",
     "bitness": 64,
-    "uses": ["clang-a2o-64bit", "emscripten-a20"],
+    "uses": ["clang-a2o-64bit", "emscripten-a2o-64bit"],
     "os": "linux"
   },
 
