@@ -1,5 +1,4 @@
 #!/bin/sh -ex
-cd emsdk; source ./emsdk_env.sh > /dev/null; cd ..
 
 if [ ! -f ./downloads/icu4c-54_1-src.tgz ]; then
   curl -o ./downloads/icu4c-54_1-src.tgz http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-src.tgz
@@ -15,6 +14,7 @@ cd buildMac
 ../source/runConfigureICU MacOSX
 make
 cd ../buildEmscripten
+source ../../emsdk/emsdk_env.sh
 emconfigure \
   ../source/configure \
   --enable-static \
