@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 
 # needs user id
-[ $# -eq 1 ] 
+[ $# -eq 1 ]
 
 for repo in emsdk/emscripten/a2o_64bit emsdk/clang/fastcomp/src emsdk/clang/fastcomp/src/tools/clang; do
   pushd $repo
