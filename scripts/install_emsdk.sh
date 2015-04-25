@@ -7,7 +7,9 @@ if [ ! -d ./emsdk ]; then
 else
   cd emsdk
   source ./emsdk_env.sh > /dev/null
+  git stash > /dev/null
   git pull > /dev/null
+  git stash pop > /dev/null
 fi
 
 if emsdk list | grep INSTALLED | grep sdk-a2o-64bit > /dev/null; then
