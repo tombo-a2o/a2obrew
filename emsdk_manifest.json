@@ -45,11 +45,13 @@
     "bitness": 64,
     "url": "git@github.com:tomboinc/emscripten.git",
     "git_branch": "feature/objc",
-    "activated_cfg": "EMSCRIPTEN_ROOT='%installation_dir%';EMSCRIPTEN_NATIVE_OPTIMIZER='%installation_dir%/tools/optimizer_build/%cmake_build_type_on_win%optimizer%.exe%'",
+    "activated_cfg": "EMSCRIPTEN_ROOT='%installation_dir%';EMSCRIPTEN_NATIVE_OPTIMIZER='%installation_dir%_64bit_optimizer/%cmake_build_type_on_win%optimizer%.exe%'",
     "activated_path": "%installation_dir%",
     "activated_env": "EMSCRIPTEN=%installation_dir%",
     "cmake_build_type": "RelWithDebInfo",
-    "custom_install_script": "build_optimizer"
+    "custom_install_script": "build_optimizer",
+    "custom_is_installed_script": "is_optimizer_installed",
+    "custom_uninstall_script": "uninstall_optimizer"
   },
   {
     "id": "emscripten",
@@ -60,7 +62,9 @@
     "activated_path": "%installation_dir%",
     "activated_env": "EMSCRIPTEN=%installation_dir%",
     "cmake_build_type": "RelWithDebInfo",
-    "custom_install_script": "build_optimizer"
+    "custom_install_script": "build_optimizer",
+    "custom_is_installed_script": "is_optimizer_installed",
+    "custom_uninstall_script": "uninstall_optimizer"
   },
 
   {
