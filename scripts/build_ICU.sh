@@ -26,7 +26,6 @@ emconfigure \
   --disable-extras \
   --disable-tools \
   --with-data-packaging=files \
-  --build=i686-pc-linux-gnu \
   --prefix=${EMSCRIPTEN}/system/local \
   --with-cross-build=`pwd`/../buildMac
 emmake make
