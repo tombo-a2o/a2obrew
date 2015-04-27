@@ -43,6 +43,7 @@
     "id": "emscripten",
     "version": "a2o",
     "bitness": 64,
+    "append_bitness": false,
     "url": "git@github.com:tomboinc/emscripten.git",
     "git_branch": "feature/objc",
     "activated_cfg": "EMSCRIPTEN_ROOT='%installation_dir%';EMSCRIPTEN_NATIVE_OPTIMIZER='%installation_dir%_64bit_optimizer/%cmake_build_type_on_win%optimizer%.exe%'",
@@ -56,6 +57,8 @@
   {
     "id": "emscripten",
     "version": "pthreads",
+    "bitness": 64,
+    "append_bitness": false,
     "url": "git@github.com:tomboinc/emscripten.git",
     "git_branch": "pthreads",
     "activated_cfg": "EMSCRIPTEN_ROOT='%installation_dir%';EMSCRIPTEN_NATIVE_OPTIMIZER='%installation_dir%/tools/optimizer_build/%cmake_build_type_on_win%optimizer%.exe%'",
