@@ -1,4 +1,5 @@
-#!/bin/sh -ex
+#!/bin/bash -exu
+source emsdk/emsdk_env.sh > /dev/null
 
 if [ ! -f ./downloads/icu4c-54_1-src.tgz ]; then
   curl -o ./downloads/icu4c-54_1-src.tgz http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-src.tgz

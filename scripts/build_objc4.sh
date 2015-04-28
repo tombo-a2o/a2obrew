@@ -1,5 +1,5 @@
-#!/bin/sh -ex
-cd emsdk; source ./emsdk_env.sh > /dev/null; cd ..
+#!/bin/bash -exu
+source emsdk/emsdk_env.sh > /dev/null
 
 echo $PATH
 
