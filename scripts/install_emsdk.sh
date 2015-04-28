@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/bash -exu
 # Install emsdk
 if [ ! -d ./emsdk ]; then
   git clone https://github.com/juj/emsdk > /dev/null

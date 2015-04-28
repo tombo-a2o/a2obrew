@@ -1,5 +1,5 @@
-#!/bin/sh -ex
-cd emsdk; source ./emsdk_env.sh > /dev/null; cd ..
+#!/bin/bash -exu
+source emsdk/emsdk_env.sh > /dev/null
 
 if [ ! -d ./Foundation ]; then
   git clone git@github.com:tomboinc/Foundation.git --branch feature/emscripten

@@ -1,10 +1,10 @@
-#/bin/sh -ex
+#/bin/bash -exu
 # Install Python2 with pyenv
-if [ ! -d ~/.pyenv ]; then
+if [ ! -d ${HOME}/.pyenv ]; then
   curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash
-  echo "export PATH=\"\$HOME/.pyenv/bin:\$PATH\"" >> ~/.bash_profile
+  echo "export PATH=\"\$HOME/.pyenv/bin:\$PATH\"" >> ${HOME}/.bash_profile
   echo "eval \"\$(pyenv init -)\"" >> ~/.bash_profile
-  echo "eval \"\$(pyenv virtualenv-init -)\"" >> ~/.bash_profile
+  echo "eval \"\$(pyenv virtualenv-init -)\"" >> ${HOME}/.bash_profile
   export PATH="$HOME/.pyenv/bin:$PATH"
   eval "$(pyenv init -)"
   eval "$(pyenv virtualenv-init -)"

@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/bash -exu
 
 # needs user id
 [ $# -eq 1 ]
