@@ -28,5 +28,5 @@ emconfigure \
   --with-data-packaging=files \
   --prefix=${EMSCRIPTEN}/system/local \
   --with-cross-build=`pwd`/../buildMac
-emmake make
+emmake make ARFLAGS=rv
 make install
