@@ -2,9 +2,9 @@
 # Install a2o environment
 OS=`uname`
 
-if [ "$OS" == "Darwin" ]; then
+if [ "$OS" = "Darwin" ]; then
   ./scripts/mac/install.sh
-elif [ "$OS" == "linux" ]; then
+elif [ "$OS" = "linux" ]; then
   . /etc/lsb-release
   if which apt-get; then
     ./scripts/ubuntu/install.sh
