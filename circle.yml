@@ -1,0 +1,9 @@
+dependencies:
+  override:
+    - ./install.sh
+
+test:
+  override:
+    - cd Foundation/System/test
+    - make
+    - node str.js
