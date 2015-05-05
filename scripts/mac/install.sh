@@ -26,3 +26,10 @@ else
   brew install readline
   brew link readline
 fi
+
+# Install automake
+if brew list automake > /dev/null; then
+  echo "* automake is installed"
+else
+  brew install automake
+fi
