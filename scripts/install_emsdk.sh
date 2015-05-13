@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/bash -exu
 # Install emsdk
 if [ ! -d ./emsdk ]; then
   git clone https://github.com/juj/emsdk > /dev/null
@@ -24,3 +24,6 @@ if emsdk list | grep INSTALLED | grep \* | grep sdk-a2o-64bit > /dev/null; then
 else
   emsdk activate sdk-a2o-64bit
 fi
+
+source emsdk/emsdk_env.sh > /dev/null
+emcc --clear-cache

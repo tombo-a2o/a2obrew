@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Install base softwares
 sudo aptitude update
 sudo aptitude install -y build-essential git-core cmake default-jre \

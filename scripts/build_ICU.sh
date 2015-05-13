@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/bash -exu
 
 if [ ! -f ./downloads/icu4c-54_1-src.tgz ]; then
   curl -o ./downloads/icu4c-54_1-src.tgz http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-src.tgz
@@ -28,5 +28,5 @@ emconfigure \
   --with-data-packaging=files \
   --prefix=${EMSCRIPTEN}/system/local \
   --with-cross-build=`pwd`/../buildMac
-emmake make
+emmake make ARFLAGS=rv
 make install
