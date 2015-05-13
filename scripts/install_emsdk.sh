@@ -24,3 +24,6 @@ if emsdk list | grep INSTALLED | grep \* | grep sdk-a2o-64bit > /dev/null; then
 else
   emsdk activate sdk-a2o-64bit
 fi
+
+source emsdk/emsdk_env.sh > /dev/null
+emcc --clear-cache
