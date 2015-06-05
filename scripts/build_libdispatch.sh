@@ -1,10 +1,6 @@
 #!/bin/bash -ex
 source emsdk/emsdk_env.sh > /dev/null
 
-if [ ! -d ./blocks-runtime ]; then
-  git clone git@github.com:mheily/blocks-runtime.git
-fi
-
 if [ ! -d ./libkqueue ]; then
   git clone git@github.com:tomboinc/libkqueue.git --branch feature/emscripten
 fi
@@ -17,10 +13,11 @@ if [ ! -d ./libdispatch-linux ]; then
   git clone git@github.com:tomboinc/libdispatch-linux.git --branch feature/emscripten
 fi
 
-for repo in blocks-runtime libkqueue libpwq; do
+for repo in libkqueue libpwq; do
   pushd $repo
   autoreconf -i || autoreconf -i
   emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local
+  rm a.out*
   emmake make
   emmake make install
   popd

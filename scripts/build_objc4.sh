@@ -11,4 +11,4 @@ fi
 # Build
 cd objc4
 make
-make install-all
+make install
