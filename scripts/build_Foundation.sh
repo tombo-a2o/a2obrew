@@ -15,6 +15,10 @@ cd ../../../
 cd System/Foundation/src
 make
 DSTROOT=${EMSCRIPTEN}/system/frameworks make install
+cd ../../../
+cd System/CFNetwork/src
+make
+DSTROOT=${EMSCRIPTEN}/system/frameworks make install
 
 # Test
 cd ../../../
