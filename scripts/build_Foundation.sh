@@ -22,6 +22,6 @@ DSTROOT=${EMSCRIPTEN}/system/frameworks make install
 
 # Test
 cd ../../../
-cd System/test
+cd System/test/helloworld
 make -B
 node str.js

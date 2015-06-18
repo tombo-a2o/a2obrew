@@ -4,6 +4,6 @@ dependencies:
 
 test:
   override:
-    - cd Foundation/System/test
+    - cd Foundation/System/test/helloworld
     - make
     - node str.js
