@@ -25,5 +25,8 @@ else
   emsdk activate sdk-a2o-64bit
 fi
 
-source ./emsdk_env.sh > /dev/null
+cd ..
+./scripts/update_emscripten.sh
+
+source emsdk/emsdk_env.sh > /dev/null
 emcc --clear-cache
