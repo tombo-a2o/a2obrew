@@ -2,9 +2,10 @@
 (cd emsdk/emscripten/a2o; git pull)
 (cd emsdk/clang/fastcomp/src; git pull)
 (cd emsdk/clang/fastcomp/src/tools/clang; git pull)
-if type nproc ; then
-  JOBS=`nproc`
-elif type gnproc ; then
+#if type nproc ; then
+#  JOBS=`nproc`
+#elif type gnproc ; then
+if type gnproc ; then
   JOBS=`gnproc`
 else
   JOBS=1
