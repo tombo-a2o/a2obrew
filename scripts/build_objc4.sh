@@ -10,5 +10,6 @@ fi
 
 # Build
 cd objc4
+git pull
 make
 make install

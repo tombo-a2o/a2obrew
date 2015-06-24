@@ -6,6 +6,7 @@ if [ ! -d ./Foundation ]; then
 fi
 
 cd Foundation
+git pull
 
 # Build
 cd System/CoreFoundation/src

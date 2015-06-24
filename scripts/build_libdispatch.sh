@@ -15,6 +15,7 @@ fi
 
 for repo in libkqueue libpwq; do
   pushd $repo
+  git pull
   autoreconf -i || autoreconf -i
   emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local
   rm a.out*
@@ -24,6 +25,7 @@ for repo in libkqueue libpwq; do
 done
 
 cd libdispatch-linux
+git pull
 # No need to call emconfigure because the configure script is just a wrapper of cmake and calls emcmake internally
 ./configure --prefix=${EMSCRIPTEN}/system/local
 make

@@ -6,6 +6,7 @@ if [ ! -d ./blocks-runtime ]; then
 fi
 
 cd blocks-runtime
+git pull
 autoreconf -i || autoreconf -i
 emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local
 rm a.out*
