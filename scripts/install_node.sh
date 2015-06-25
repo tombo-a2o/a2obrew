@@ -1,5 +1,5 @@
 #/bin/bash -exu
-# Install Node.js woth nvm
+# Install Node.js with nvm
 
 if nvm > /dev/null; then
   echo "* nvm has already been installed"
@@ -7,7 +7,9 @@ else
   if [ -z "$NVM_DIR" ]; then
     NVM_DIR="${HOME}/.nvm"
   fi
-  curl https://raw.githubusercontent.com/creationix/nvm/v0.24.1/install.sh | bash
+  if [ ! -e "$NVM_DIR" ]; then
+    curl https://raw.githubusercontent.com/creationix/nvm/v0.24.1/install.sh | bash
+  fi
   source ${NVM_DIR}/nvm.sh > /dev/null 2>&1
 fi
 
