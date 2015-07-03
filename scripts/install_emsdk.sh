@@ -9,7 +9,8 @@ cd emsdk
 
 # change repository
 if git remote -v | grep juj > /dev/null ; then
-  git remote set-url origin https://github.com/tomboinc/emsdk
+  git remote set-url origin git@github.com:tomboinc/emsdk.git
+  git fetch
   git reset HEAD .
   git checkout .
   git checkout feature/objc
