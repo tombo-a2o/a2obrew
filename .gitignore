@@ -18,3 +18,4 @@ libpwq/
 libkqueue/
 blocks-runtime/
 Foundation/
+libbsd/
