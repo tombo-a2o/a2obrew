@@ -1,16 +1,22 @@
 #!/bin/bash -exu
 # Install emsdk
+
 if [ ! -d ./emsdk ]; then
-  git clone https://github.com/juj/emsdk > /dev/null
-  cd emsdk
-  source ./emsdk_env.sh > /dev/null
-else
-  cd emsdk
-  source ./emsdk_env.sh > /dev/null
-  git stash > /dev/null
-  git pull > /dev/null
-  git stash pop > /dev/null
+  git clone https://github.com/tomboinc/emsdk --branch feature/objc
 fi
+
+cd emsdk
+
+# change repository
+if git remote -v | grep juj > /dev/null ; then
+  git remote set-url origin https://github.com/tomboinc/emsdk
+  git reset HEAD .
+  git checkout .
+  git checkout feature/objc
+fi
+
+git pull
+source ./emsdk_env.sh
 
 if emsdk list | grep INSTALLED | grep sdk-a2o-64bit > /dev/null; then
   echo "* sdk-a2o-64bit is installed"
