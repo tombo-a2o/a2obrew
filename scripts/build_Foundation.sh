@@ -20,9 +20,13 @@ cd ../../../
 cd System/CFNetwork/src
 make
 DSTROOT=${EMSCRIPTEN}/system/frameworks make install
+cd ../../../
+cd System/CoreGraphics
+make
+make install
+cd ../../
 
 # Test
-cd ../../../
 cd System/test/helloworld
 make -B
 node str.js
