@@ -2,7 +2,7 @@
 # Install emsdk
 
 if [ ! -d ./emsdk ]; then
-  git clone https://github.com/tomboinc/emsdk --branch feature/objc
+  git clone git@github.com:tomboinc/emsdk --branch feature/objc
 fi
 
 cd emsdk
