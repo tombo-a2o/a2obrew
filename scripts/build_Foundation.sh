@@ -9,22 +9,30 @@ cd Foundation
 git pull
 
 # Build
-cd System/CoreFoundation/src
-make
-DSTROOT=${EMSCRIPTEN}/system/frameworks make install
-cd ../../../
-cd System/Foundation/src
-make
-DSTROOT=${EMSCRIPTEN}/system/frameworks make install
-cd ../../../
-cd System/CFNetwork/src
-make
-DSTROOT=${EMSCRIPTEN}/system/frameworks make install
-cd ../../../
-cd System/CoreGraphics
+pushd System/CoreFoundation/src
 make
 make install
-cd ../../
+popd
+
+pushd System/CFNetwork/src
+make
+make install
+popd
+
+pushd System/CoreGraphics
+make
+make install
+popd
+
+pushd System/Foundation/src
+make
+make install
+popd
+
+pushd System/CoreAnimation
+make
+make install
+popd
 
 # Test
 cd System/test/helloworld
