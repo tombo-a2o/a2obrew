@@ -22,7 +22,6 @@ source ./emsdk_env.sh
 if emsdk list | grep INSTALLED | grep sdk-a2o-64bit > /dev/null; then
   echo "* sdk-a2o-64bit is installed"
 else
-  cp ../emsdk_manifest.json .
   emsdk install sdk-a2o-64bit
 fi
 
