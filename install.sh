@@ -17,6 +17,11 @@ fi
 ./scripts/install_node.sh
 ./scripts/install_python.sh
 ./scripts/install_emsdk.sh
+
+if [ "$1" = "rebuild" ]; then
+  ./scripts/clean_libraries.sh
+fi
+
 ./scripts/build_libbsd.sh
 ./scripts/build_blocks_runtime.sh
 ./scripts/build_objc4.sh
