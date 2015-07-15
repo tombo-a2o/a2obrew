@@ -10,6 +10,6 @@ fi
 cd libbsd
 git pull
 autoreconf -i
-emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local
+emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local --disable-shared
 make
 make install
