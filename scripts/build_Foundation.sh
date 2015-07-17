@@ -14,6 +14,11 @@ make
 make install
 popd
 
+pushd System/Secure
+make
+make install
+popd
+
 pushd System/CFNetwork/src
 make
 make install
