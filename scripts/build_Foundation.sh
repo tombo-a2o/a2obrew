@@ -14,7 +14,7 @@ make
 make install
 popd
 
-pushd System/Secure
+pushd System/Security
 make
 make install
 popd
