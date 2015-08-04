@@ -13,6 +13,7 @@ emsdk/
 downloads/
 objc4/
 icu/
+libdispatch/
 libdispatch-linux/
 libpwq/
 libkqueue/

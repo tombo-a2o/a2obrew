@@ -26,5 +26,6 @@ fi
 ./scripts/build_blocks_runtime.sh
 ./scripts/build_objc4.sh
 ./scripts/build_ICU.sh
-./scripts/build_libdispatch.sh
+#./scripts/build_libdispatch.sh
+./scripts/build_libdispatch_em.sh
 ./scripts/build_Foundation.sh
