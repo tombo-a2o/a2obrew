@@ -18,8 +18,10 @@ fi
 ./scripts/install_python.sh
 ./scripts/install_emsdk.sh
 
-if [ "$1" = "rebuild" ]; then
-  ./scripts/clean_libraries.sh
+if [ -v 1 ]; then
+    if [ "$1" = "rebuild" ]; then
+        ./scripts/clean_libraries.sh
+    fi
 fi
 
 ./scripts/build_libbsd.sh
