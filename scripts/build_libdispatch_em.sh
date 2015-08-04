@@ -2,7 +2,7 @@
 source emsdk/emsdk_env.sh > /dev/null
 
 if [ ! -d ./libdispatch ]; then
-  git clone git@github.com:tomboinc/libdispatch-linux.git --branch feature/emscripten
+  git clone git@github.com:tomboinc/libdispatch.git --branch feature/emscripten
 fi
 
 cd libdispatch
