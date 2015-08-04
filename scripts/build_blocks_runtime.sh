@@ -8,7 +8,7 @@ fi
 cd blocks-runtime
 git pull
 autoreconf -i || autoreconf -i
-emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local
+AR=emar emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local --enable-static --disable-shared
 rm a.out*
 make
 make install
