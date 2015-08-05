@@ -17,7 +17,7 @@ for repo in libkqueue libpwq; do
   pushd $repo
   git pull
   autoreconf -i || autoreconf -i
-  emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local
+  AR=emar emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local --disable-shared --enable-static
   rm a.out*
   emmake make
   emmake make install

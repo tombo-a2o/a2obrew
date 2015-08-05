@@ -8,36 +8,11 @@ fi
 cd Foundation
 git pull
 
-# Build
-pushd System/CoreFoundation/src
-make
-make install
-popd
+repos="CoreFoundation/src Security CFNetwork/src CoreGraphics Foundation/src AVFoundation Accounts AdSupport CommonCrypto CoreAnimation CoreAudio AudioToolbox CoreLocation CoreText GameKit ImageIO MapKit MobileCoreServices MultipeerConnectivity Social StoreKit SystemConfiguration"
 
-pushd System/Security
-make
-make install
-popd
-
-pushd System/CFNetwork/src
-make
-make install
-popd
-
-pushd System/CoreGraphics
-make
-make install
-popd
-
-pushd System/Foundation/src
-make
-make install
-popd
-
-pushd System/CoreAnimation
-make
-make install
-popd
+for repo in $repos; do
+    (cd System/$repo; make install)
+done
 
 # Test
 cd System/test/helloworld
