@@ -31,3 +31,5 @@ fi
 ./scripts/build_libdispatch.sh
 #./scripts/build_libdispatch_em.sh
 ./scripts/build_Foundation.sh
+./scripts/build_UIKit.sh
+./scripts/build_miscellaneous.sh

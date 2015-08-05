@@ -8,13 +8,8 @@ fi
 cd Foundation
 git pull
 
-repos="CoreFoundation/src Security CFNetwork/src CoreGraphics Foundation/src"
+repos="AVFoundation Accounts AdSupport CommonCrypto CoreAnimation CoreAudio AudioToolbox CoreLocation CoreText GameKit ImageIO MapKit MobileCoreServices MultipeerConnectivity Social StoreKit SystemConfiguration"
 
 for repo in $repos; do
     (cd System/$repo; make install)
 done
-
-# Test
-cd System/test/helloworld
-make -B
-node str.js
