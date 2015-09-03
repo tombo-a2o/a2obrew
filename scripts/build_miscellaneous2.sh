@@ -8,7 +8,7 @@ fi
 cd Foundation
 git pull
 
-repos="CoreAnimation"
+repos="AVFoundation Accounts AdSupport CommonCrypto CoreAudio AudioToolbox CoreLocation CoreText GameKit ImageIO MapKit MobileCoreServices MultipeerConnectivity Social StoreKit SystemConfiguration"
 
 for repo in $repos; do
     (cd System/$repo; make install)
