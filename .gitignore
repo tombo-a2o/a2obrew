@@ -21,3 +21,6 @@ blocks-runtime/
 Foundation/
 libbsd/
 Chameleon
+UIKit-WinObjC
+cairo
+pixman
