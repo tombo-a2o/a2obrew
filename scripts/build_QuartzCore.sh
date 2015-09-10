@@ -5,7 +5,7 @@ if [ ! -d ./UIKit-WinObjC ]; then
   git clone git@github.com:tomboinc/UIKit-WinObjC.git --branch master
 fi
 
-cd UIKit 
+cd UIKit-WinObjC
 git pull
 
 make -B -f Makefile.QuartzCore install
