@@ -13,8 +13,3 @@ repos="CoreFoundation/src Security CFNetwork/src"
 for repo in $repos; do
     (cd System/$repo; make install)
 done
-
-# Test
-cd System/test/helloworld
-make -B
-node str.js
