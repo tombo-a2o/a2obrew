@@ -1,4 +1,6 @@
 dependencies:
+  pre:
+    - sudo apt-get update; sudo apt-get upgrade cmake
   override:
     - ./install.sh
 
