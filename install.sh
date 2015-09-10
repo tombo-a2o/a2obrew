@@ -30,7 +30,7 @@ fi
 ./scripts/build_ICU.sh
 ./scripts/build_libdispatch_em.sh
 ./scripts/build_Cores.sh
-./scripts/build_CoresGraphics.sh
+./scripts/build_CoreGraphics.sh
 ./scripts/build_Foundation.sh
 ./scripts/build_QuartzCore.sh
 ./scripts/build_UIKit.sh
