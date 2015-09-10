@@ -28,9 +28,10 @@ fi
 ./scripts/build_blocks_runtime.sh
 ./scripts/build_objc4.sh
 ./scripts/build_ICU.sh
-#./scripts/build_libdispatch.sh
 ./scripts/build_libdispatch_em.sh
+./scripts/build_Cores.sh
+./scripts/build_CoresGraphics.sh
 ./scripts/build_Foundation.sh
-./scripts/build_miscellaneous.sh
+./scripts/build_QuartzCore.sh
 ./scripts/build_UIKit.sh
 ./scripts/build_miscellaneous2.sh
