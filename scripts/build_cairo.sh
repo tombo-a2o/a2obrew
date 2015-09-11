@@ -36,6 +36,7 @@ emconfigure ./configure \
     --enable-ps=no \
     --enable-pdf=no \
     --enable-svg=no \
+    --host=x86_64-apple-darwin14.5.0 \
     CFLAGS="-DCAIRO_NO_MUTEX=1"
 make
 make install
