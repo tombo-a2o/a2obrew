@@ -14,7 +14,8 @@ fi
 
 # Build
 cd pixman
-sed -i "" -e "s/AM_INIT_AUTOMAKE(\[foreign dist-bzip2\])/AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects])/g" configure.ac
+sed -e "s/AM_INIT_AUTOMAKE(\[foreign dist-bzip2\])/AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects])/g" configure.ac > tmp
+mv tmp configure.ac
 NOCONFIGURE=1 ./autogen.sh || autoreconf -i
 emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local --enable-shared=no --enable-static=yes
 make
