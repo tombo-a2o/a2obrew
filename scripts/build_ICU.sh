@@ -1,19 +1,18 @@
 #!/bin/bash -exu
 
-if [ ! -f ./downloads/icu4c-54_1-src.tgz ]; then
-  curl -o ./downloads/icu4c-54_1-src.tgz http://download.icu-project.org/files/icu4c/54.1/icu4c-54_1-src.tgz
+if [ ! -d ./icu ]; then
+  git clone git@github.com:fchiba/icu.git --branch prebuilt
 fi
 
-if [ ! -d ./icu ]; then
-  tar xvfz ./downloads/icu4c-54_1-src.tgz
+if [ `uname` = "Darwin" ]; then
+  nativeDir=buildMac
+else
+  nativeDir=buildLinux
 fi
 
 cd icu
-mkdir -p buildMac buildEmscripten
-cd buildMac
-../source/runConfigureICU MacOSX
-make
-cd ../buildEmscripten
+mkdir -p buildEmscripten
+cd buildEmscripten
 source ../../emsdk/emsdk_env.sh
 emconfigure \
   ../source/configure \
@@ -27,6 +26,6 @@ emconfigure \
   --disable-tools \
   --with-data-packaging=files \
   --prefix=${EMSCRIPTEN}/system/local \
-  --with-cross-build=`pwd`/../buildMac
+  --with-cross-build=`pwd`/../$nativeDir
 emmake make ARFLAGS=rv
 make install
