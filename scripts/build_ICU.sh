@@ -28,4 +28,17 @@ emconfigure \
   --prefix=${EMSCRIPTEN}/system/local \
   --with-cross-build=`pwd`/../$nativeDir
 emmake make ARFLAGS=rv
+cd lib
+for archive in `ls *.a`; do
+    bc=`basename ${archive} .a`.bc
+    llvm-ar t ${archive} > files
+    llvm-ar x ${archive}
+    llvm-link -o ${bc} `cat files`
+    rm ${archive}
+    rm `cat files`
+    rm files
+    llvm-ar r ${archive} ${bc}
+    rm ${bc}
+done
+cd ..
 make install
