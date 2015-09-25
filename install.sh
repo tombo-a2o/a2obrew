@@ -30,5 +30,5 @@ fi
 ./scripts/build_ICU.sh
 ./scripts/build_libdispatch_em.sh
 
-./scripts/build_headers.sh
-./scripts/build_binaries.sh
+./scripts/build_frameworks.sh install_header_only
+./scripts/build_frameworks.sh install
