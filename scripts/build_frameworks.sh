@@ -1,6 +1,8 @@
 #!/bin/bash -exu
 source emsdk/emsdk_env.sh > /dev/null
 
+command=${1:-}
+
 if [ ! -d ./Foundation ]; then
   git clone git@github.com:tomboinc/Foundation.git --branch feature/emscripten
 fi
@@ -9,7 +11,7 @@ cd Foundation
 git pull
 
 for repo in `cat System/frameworks.txt`; do
-    (cd System/$repo; make install_header_only)
+    (cd System/$repo; make ${command})
 done
 cd ..
 
@@ -21,7 +23,7 @@ cd cocotron
 git pull
 
 for repo in `cat frameworks.txt`; do
-    (cd $repo; make install_header_only)
+    (cd $repo; make ${command})
 done
 cd ..
 
@@ -29,7 +31,10 @@ if [ ! -d ./Chameleon ]; then
   git clone git@github.com:tomboinc/Chameleon.git --branch feature/with_cocotron
 fi
 
-cd Chameleon/UIKit
+cd Chameleon
 git pull
 
-make install_header_only
+for repo in UIKit; do
+    (cd $repo; make ${command})
+done
+cd ..
