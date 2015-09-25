@@ -29,7 +29,6 @@ fi
 ./scripts/build_objc4.sh
 ./scripts/build_ICU.sh
 ./scripts/build_libdispatch_em.sh
-./scripts/build_cairo.sh
 
 ./scripts/build_headers.sh
 ./scripts/build_binaries.sh

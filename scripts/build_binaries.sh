@@ -13,13 +13,26 @@ for repo in `cat System/frameworks.txt`; do
 done
 cd ..
 
-if [ ! -d ./UIKit-WinObjC ]; then
-  git clone git@github.com:tomboinc/UIKit-WinObjC.git --branch master
+if [ ! -d ./cocotron ]; then
+  git clone git@github.com:tomboinc/cocotron.git --branch feature/emscripten
 fi
 
-cd UIKit-WinObjC
+cd cocotron
+git pull
+
+for repo in CoreGraphics QuartzCore AppKit; do
+    (cd $repo; make install)
+done
+cd ..
+
+if [ ! -d ./Chameleon ]; then
+  git clone git@github.com:tomboinc/Chameleon.git --branch feature/with_cocotron
+fi
+
+cd Chameleon/UIKit
 git pull
 
 for makefile in `ls Makefile*`; do
     make -f $makefile install
 done
+cd ..
