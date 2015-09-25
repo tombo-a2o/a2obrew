@@ -20,7 +20,7 @@ fi
 cd cocotron
 git pull
 
-for repo in CoreGraphics QuartzCore AppKit; do
+for repo in `cat frameworks.txt`; do
     (cd $repo; make install)
 done
 cd ..
