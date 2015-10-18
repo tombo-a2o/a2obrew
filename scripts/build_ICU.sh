@@ -35,10 +35,10 @@ for archive in `ls *.a`; do
     llvm-ar x ${archive}
     llvm-link -o ${bc} `cat files`
     rm ${archive}
+    llvm-ar r ${archive} ${bc}
     rm `cat files`
     rm files
-    llvm-ar r ${archive} ${bc}
-    rm ${bc}
+    rm -f ${bc}
 done
 cd ..
 make install
