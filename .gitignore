@@ -23,3 +23,5 @@ libbsd/
 Chameleon
 cocotron
 openssl
+cairo
+pixman
