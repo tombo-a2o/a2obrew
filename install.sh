@@ -30,6 +30,7 @@ fi
 ./scripts/build_ICU.sh
 ./scripts/build_libdispatch_em.sh
 ./scripts/build_cairo.sh
+./scripts/build_openssl.sh
 
 ./scripts/build_frameworks.sh install_header_only
 ./scripts/build_frameworks.sh install
