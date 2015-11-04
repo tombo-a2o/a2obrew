@@ -14,6 +14,8 @@ elif [ "$OS" = "linux" ]; then
   fi
 fi
 
+./scripts/install_ruby.sh
+
 ./scripts/install_node.sh
 ./scripts/install_python.sh
 ./scripts/install_emsdk.sh
