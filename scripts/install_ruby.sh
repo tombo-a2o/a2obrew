@@ -19,6 +19,9 @@ if [ -d ${HOME}/.rbenv/plugins/rbenv-gemset ]; then
   echo "* rbenv-gemset has already been installed"
 else
   git clone git://github.com/jf/rbenv-gemset.git $HOME/.rbenv/plugins/rbenv-gemset
+  gem install bundler
+  rbenv rehash
+  bundle install
 fi
 
 if rbenv versions --bare | grep "2\\.2\\.2" > /dev/null; then
