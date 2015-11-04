@@ -9,6 +9,12 @@ else
   eval "$(rbenv init -)"
 fi
 
+if [ -d ${HOME}/.rbenv/plugins/ruby-build ]; then
+  echo "* ruby-build has already been installed"
+else
+  git clone git://github.com/sstephenson/ruby-build.git $HOME/.rbenv/plugins/ruby-build
+fi
+
 if [ -d ${HOME}/.rbenv/plugins/rbenv-gemset ]; then
   echo "* rbenv-gemset has already been installed"
 else
