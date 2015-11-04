@@ -10,24 +10,12 @@ Thumbs.db
 
 # Fetched files
 emsdk/
-# downloads/
-# objc4/
-# icu/
-# libdispatch/
-# libdispatch-linux/
-# libpwq/
-# libkqueue/
-# blocks-runtime/
-# Foundation/
-# libbsd/
-# Chameleon
-# cocotron
-# openssl
-# cairo
-# pixman
 
 # Ruby
 Gemfile.lock
 
 # Depends
 depends/
+
+# build
+build

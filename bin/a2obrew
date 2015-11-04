@@ -12,9 +12,12 @@ if RUBY_VERSION != TARGET_RUBY_VERSION or ENV['GEM_HOME'] != gemset_root
   exit(1)
 end
 
-$LOAD_PATH << "#{File.dirname(__FILE__)}/lib"
+script_path = File.dirname(__FILE__)
+
+$LOAD_PATH << "#{script_path}/lib"
+config = File.expand_path("#{script_path}/../a2oconfig.rb")
 
 require 'a2obrew/cli'
-require '../a2oconfig.rb'
+require config
 
 A2OBrew::CLI.start(ARGV)
