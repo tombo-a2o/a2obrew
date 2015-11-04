@@ -6,6 +6,7 @@ if [ ! -d ./freetype ]; then
 fi
 
 pushd freetype
+git pull
 emconfigure ./configure --prefix=${EMSCRIPTEN}/system/local --disable-shared
 emmake make
 emmake make install
