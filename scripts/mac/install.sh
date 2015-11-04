@@ -33,3 +33,10 @@ if brew list automake > /dev/null; then
 else
   brew install automake
 fi
+
+# Install coreutils
+if brew list coreutils > /dev/null; then
+  echo "* coreutils is installed"
+else
+  brew install coreutils
+fi
