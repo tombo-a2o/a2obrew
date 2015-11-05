@@ -14,26 +14,31 @@ elif [ "$OS" = "linux" ]; then
   fi
 fi
 
+# Install Ruby for a2obrew CLI
 ./scripts/install_ruby.sh
 
+# Install LLs for emscripten
 ./scripts/install_node.sh
 ./scripts/install_python.sh
+# Install emscripten
 ./scripts/install_emsdk.sh
+
+eval $(bin/a2obrew env)
 
 if [ $# == 1 ]; then
     if [ "$1" = "rebuild" ]; then
-        ./scripts/clean_libraries.sh
+        bin/a2obrew clean
     fi
 fi
 
-./scripts/build_libbsd.sh
-./scripts/build_blocks_runtime.sh
-./scripts/build_objc4.sh
-./scripts/build_ICU.sh
-./scripts/build_libdispatch_em.sh
-./scripts/build_cairo.sh
-./scripts/build_openssl.sh
-./scripts/build_freetype.sh
-
-./scripts/build_frameworks.sh install_header_only
-./scripts/build_frameworks.sh install
+bin/a2obrew update
+bin/a2obrew autogen
+bin/a2obrew configure
+bin/a2obrew build blocks-runtime
+bin/a2obrew install blocks-runtime
+bin/a2obrew build objc4
+bin/a2obrew install objc4
+bin/a2obrew build libdispatch
+bin/a2obrew install libdispatch
+bin/a2obrew build
+bin/a2obrew install

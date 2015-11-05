@@ -13,7 +13,7 @@ A2OCONF = {
         :repository_uri => 'git@github.com:tomboinc/libbsd.git',
         :branch => 'feature/emscripten',
         :autogen => './autogen',
-        :configure => 'emconfigure %{project_path}/configure --prefix=%{emsdk_path}/system/local --disable-shared',
+        :configure => 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared',
         :build => 'make -j8',
         :install => 'make install',
         :clean => 'make clean',
@@ -23,8 +23,8 @@ A2OCONF = {
         :path => 'blocks-runtime',
         :repository_uri => 'git@github.com:mheily/blocks-runtime.git',
         :autogen => 'autoreconf -i || autoreconf -i',
-        :configure => 'AR=emar emconfigure %{project_path}/configure --prefix=%{emsdk_path}/system/local --enable-static --disable-shared',
-        :build => 'make -j8',
+        :configure => 'AR=emar emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --enable-static --disable-shared',
+        :build => 'make -j8 && rm a.out*',
         :install => 'make install',
         :clean => 'make clean',
       },
@@ -33,9 +33,10 @@ A2OCONF = {
         :path => 'objc4',
         :repository_uri => 'git@github.com:tomboinc/objc4.git',
         :branch => 'feature/emscripten',
-        :build => 'make -j8',
-        :install => 'make install',
-        :clean => 'make clean',
+        :build_path => '%{project_path}',
+        :build => 'BUILD=%{build_target_path} make -j8',
+        :install => 'BUILD=%{build_target_path} make install',
+        :clean => 'BUILD=%{build_target_path} make clean',
       },
       {
         :name => 'icu',
@@ -54,7 +55,7 @@ emconfigure \
   --disable-extras \
   --disable-tools \
   --with-data-packaging=files \
-  --prefix=%{emsdk_path}/system/local \
+  --prefix=%{emscripten_system_local_path} \
   --with-cross-build=%{build_target_path}
 CONFIGURE
         :build_path => '%{project_path}',
@@ -74,16 +75,16 @@ for archive in `ls *.a`; do
 done
 BUILD
         :install => 'make install',
-        :clean => 'make clean',
       },
       {
         :name => 'libdispatch',
         :path => 'libdispatch',
         :repository_uri => 'git@github.com:tomboinc/libdispatch.git',
         :branch => 'feature/emscripten',
-        :build => 'make -j8',
-        :install => 'make install',
-        :clean => 'make clean',
+        :build_path => '%{project_path}',
+        :build => 'BUILD=%{build_target_path} make -j8',
+        :install => 'BUILD=%{build_target_path} make install',
+        :clean => 'BUILD=%{build_target_path} make clean',
       },
       {
         :name => 'pixman',
@@ -94,7 +95,7 @@ sed -e "s/AM_INIT_AUTOMAKE(\\\[foreign dist-bzip2\\\])/AM_INIT_AUTOMAKE([foreign
 mv tmp configure.ac
 NOCONFIGURE=1 ./autogen.sh || autoreconf -i
 AUTOGEN
-        :configure => 'emconfigure %{project_path}/configure --prefix=%{emsdk_path}/system/local --enable-shared=no --enable-static=yes',
+        :configure => 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --enable-shared=no --enable-static=yes',
         :build => 'make -j8',
         :install => 'make install',
         :clean => 'make clean',
@@ -106,7 +107,7 @@ AUTOGEN
         :autogen => 'NOCONFIGURE=1 ./autogen.sh',
         :configure => <<EMCONFIGURE,
 emconfigure %{project_path}/configure \
-    --prefix=%{emsdk_path}/system/local \
+    --prefix=%{emscripten_system_local_path} \
     --enable-shared=no \
     --enable-static=yes \
     --enable-gl=yes \
@@ -129,7 +130,7 @@ EMCONFIGURE
         :path => 'openssl',
         :repository_uri => 'git@github.com:gunyarakun/openssl.git',
         :branch => 'feature/emscripten',
-        :configure => 'emconfigure sh %{project_path}/Configure -no-asm no-ssl3 no-comp no-hw no-engine enable-deprecated no-shared no-dso no-gmp --openssldir=%{emsdk_path}/system/local linux-generic32',
+        :configure => 'emconfigure sh %{project_path}/Configure -no-asm no-ssl3 no-comp no-hw no-engine enable-deprecated no-shared no-dso no-gmp --openssldir=%{emscripten_system_local_path} linux-generic32',
         :build_path => '%{project_path}',
         :build_target_path => '%{project_path}', # OpenSSL doesn't support target
         :build => 'emmake make build_libs -j8',
@@ -141,7 +142,7 @@ EMCONFIGURE
         :path => 'freetype',
         :repository_uri => 'git@github.com:fchiba/freetype.git',
         :branch => 'master',
-        :configure => 'emconfigure %{project_path}/configure --prefix=%{emsdk_path}/system/local --disable-shared --with-zlib=no --with-png=no',
+        :configure => 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared --with-zlib=no --with-png=no',
         :build => 'emmake make -j8',
         :install => 'emmake make install',
         :clean => 'emmake make clean',
@@ -151,8 +152,10 @@ EMCONFIGURE
         :path => 'Foundation',
         :repository_uri => 'git@github.com:tomboinc/Foundation.git',
         :branch => 'feature/emscripten',
-        :build => 'make -j8',
-        :install => 'make install',
+        :build_path => '%{project_path}',
+        :build => 'BUILD_DIR=%{build_target_path} make -j8',
+        :install => 'BUILD_DIR=%{build_target_path} make install_header_only && BUILD_DIR=%{build_target_path} make install',
+        :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
           System/Accounts
           System/AdSupport
@@ -180,8 +183,10 @@ EMCONFIGURE
         :path => 'cocotron',
         :repository_uri => 'git@github.com:tomboinc/cocotron.git',
         :branch => 'feature/emscripten',
-        :build => 'make -j8',
-        :install => 'make install',
+        :build_path => '%{project_path}',
+        :build => 'BUILD_DIR=%{build_target_path} make -j8',
+        :install => 'BUILD_DIR=%{build_target_path} make install_header_only && BUILD_DIR=%{build_target_path} make install',
+        :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
           AppKit
           CommonCrypto
@@ -198,8 +203,10 @@ EMCONFIGURE
         :path => 'Chameleon',
         :repository_uri => 'git@github.com:tomboinc/Chameleon.git',
         :branch => 'feature/with_cocotron',
-        :build => 'make -j8',
-        :install => 'make install',
+        :build_path => '%{project_path}',
+        :build => 'BUILD_DIR=%{build_target_path} make -j8',
+        :install => 'BUILD_DIR=%{build_target_path} make install_header_only && BUILD_DIR=%{build_target_path} make install',
+        :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
           UIKit
         ),

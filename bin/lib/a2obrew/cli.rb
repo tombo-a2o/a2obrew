@@ -85,8 +85,8 @@ module A2OBrew
 
           configure = proj[:configure] % {
             :project_path => proj_path,
-            :emsdk_path => emsdk_path,
             :build_target_path => build_target_path,
+            :emscripten_system_local_path => emscripten_system_local_path,
           }
           cmd_exec "cd #{build_path} && #{configure}"
         end
@@ -106,18 +106,26 @@ module A2OBrew
 
         # build!
         if proj[:build]
-          proj_path = "#{depends[:path]}/#{proj[:path]}"
-          build_path = build_path(proj_path, target, proj)
-          build_target_path = build_target_path(proj_path, target, proj)
+          proj_base_path = "#{depends[:path]}/#{proj[:path]}"
 
-          mkdir_p(build_target_path)
           if proj[:frameworks]
-            proj[:frameworks].each {|framework|
-              cmd_exec "cd #{proj_path}/#{framework} && BUILD_DIR=#{build_target_path} #{proj[:build]}"
-            }
+            proj_paths = proj[:frameworks].map {|framework| "#{proj_base_path}/#{framework}"}
           else
-            cmd_exec "cd #{build_path} && #{proj[:build]}"
+            proj_paths = [proj_base_path]
           end
+
+          proj_paths.each {|proj_path|
+            build_path = build_path(proj_path, target, proj)
+            build_target_path = build_target_path(proj_path, target, proj)
+
+            mkdir_p(build_target_path)
+
+            build = proj[:build] % {
+              :build_target_path => build_target_path,
+            }
+
+            cmd_exec "cd #{build_path} && #{build}"
+          }
         end
       }
     end
@@ -132,24 +140,33 @@ module A2OBrew
         unless proj_name.nil? or proj[:name] == proj_name
           next
         end
-        proj_path = "#{depends[:path]}/#{proj[:path]}"
-        build_path = build_path(proj_path, target, proj)
-        build_target_path = build_target_path(proj_path, target, proj)
 
         # install
         if proj[:install]
+          proj_base_path = "#{depends[:path]}/#{proj[:path]}"
+
           if proj[:frameworks]
-            proj[:frameworks].each {|framework|
-              cmd_exec "cd #{proj_path}/#{framework} && BUILD_DIR=#{build_target_path} #{proj[:install]}"
-            }
+            proj_paths = proj[:frameworks].map {|framework| "#{proj_base_path}/#{framework}"}
           else
-            cmd_exec "cd #{build_path} && #{proj[:install]}"
+            proj_paths = [proj_base_path]
           end
+
+          proj_paths.each {|proj_path|
+            build_path = build_path(proj_path, target, proj)
+            build_target_path = build_target_path(proj_path, target, proj)
+
+            install = proj[:install] % {
+              :build_target_path => build_target_path,
+            }
+
+            cmd_exec "cd #{build_path} && #{install}"
+          }
         end
       }
     end
 
     desc 'clean PROJECT_NAME', 'clean dependent repositories'
+    method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def clean(proj_name=nil)
       target = options[:target]
       depends = A2OCONF[:depends]
@@ -157,11 +174,27 @@ module A2OBrew
         unless proj_name.nil? or proj[:name] == proj_name
           next
         end
-        proj_path = "#{depends[:path]}/#{proj[:path]}"
-        proj_build_path = build_path(target, proj, proj_path)
 
+        # clean
         if proj[:clean]
-          cmd_exec "cd #{proj_build_path} && #{proj[:clean]}"
+          proj_base_path = "#{depends[:path]}/#{proj[:path]}"
+
+          if proj[:frameworks]
+            proj_paths = proj[:frameworks].map {|framework| "#{proj_base_path}/#{framework}"}
+          else
+            proj_paths = [proj_base_path]
+          end
+
+          proj_paths.each {|proj_path|
+            build_path = build_path(proj_path, target, proj)
+            build_target_path = build_target_path(proj_path, target, proj)
+
+            clean = proj[:clean] % {
+              :build_target_path => build_target_path,
+            }
+
+            cmd_exec "cd #{build_path} && #{clean}"
+          }
         end
       }
     end
@@ -227,6 +260,11 @@ module A2OBrew
 
     def emsdk_path
       "#{a2obrew_path}/emsdk"
+    end
+
+    def emscripten_system_local_path
+      # FIXME: use $EMSCRIPTEN
+      "#{emsdk_path}/emscripten/a2o/system/local"
     end
 
     def build_path(project_path, target, project_conf)
