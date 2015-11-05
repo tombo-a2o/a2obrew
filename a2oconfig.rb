@@ -55,10 +55,11 @@ emconfigure \
   --disable-tools \
   --with-data-packaging=files \
   --prefix=%{emsdk_path}/system/local \
-  --with-cross-build=`pwd`/../$nativeDir
+  --with-cross-build=%{build_target_path}
 CONFIGURE
+        :build_path => '%{project_path}',
         :build => <<BUILD,
-emmake ARFLAGS=rv -j8
+emmake make ARFLAGS=rv -j8
 cd lib
 for archive in `ls *.a`; do
     bc=`basename ${archive} .a`.bc
@@ -71,7 +72,6 @@ for archive in `ls *.a`; do
     rm files
     rm -f ${bc}
 done
-cd ..
 BUILD
         :install => 'make install',
         :clean => 'make clean',
@@ -130,7 +130,8 @@ EMCONFIGURE
         :repository_uri => 'git@github.com:gunyarakun/openssl.git',
         :branch => 'feature/emscripten',
         :configure => 'emconfigure sh %{project_path}/Configure -no-asm no-ssl3 no-comp no-hw no-engine enable-deprecated no-shared no-dso no-gmp --openssldir=%{emsdk_path}/system/local linux-generic32',
-        :build_path => '%{project_path}', # ignores target X( because openssl uses non-standard perl Configure
+        :build_path => '%{project_path}',
+        :build_target_path => '%{project_path}', # OpenSSL doesn't support target
         :build => 'emmake make build_libs -j8',
         :install => 'emmake make install_emscripten',
         :clean => 'make clean',

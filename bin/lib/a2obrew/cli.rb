@@ -74,17 +74,21 @@ module A2OBrew
         unless proj_name.nil? or proj[:name] == proj_name
           next
         end
-        proj_path = "#{depends[:path]}/#{proj[:path]}"
-        proj_build_path = build_path(target, proj, proj_path)
 
         # configure
         if proj[:configure]
-          mkdir_p(proj_build_path)
+          proj_path = "#{depends[:path]}/#{proj[:path]}"
+          build_path = build_path(proj_path, target, proj)
+          build_target_path = build_target_path(proj_path, target, proj)
+
+          mkdir_p(build_path)
+
           configure = proj[:configure] % {
             :project_path => proj_path,
             :emsdk_path => emsdk_path,
+            :build_target_path => build_target_path,
           }
-          cmd_exec "cd #{proj_build_path} && #{configure}"
+          cmd_exec "cd #{build_path} && #{configure}"
         end
       }
     end
@@ -100,23 +104,19 @@ module A2OBrew
           next
         end
 
-        proj_path = "#{depends[:path]}/#{proj[:path]}"
-        proj_build_path = build_path(target, proj, proj_path)
-
-        unless File.directory?(proj_build_path)
-          # mkdir build path for target and execute configure
-          FileUtils.mkdir_p(proj_build_path)
-        end
-
         # build!
         if proj[:build]
+          proj_path = "#{depends[:path]}/#{proj[:path]}"
+          build_path = build_path(proj_path, target, proj)
+          build_target_path = build_target_path(proj_path, target, proj)
+
+          mkdir_p(build_target_path)
           if proj[:frameworks]
-            mkdir_p(proj_build_path)
             proj[:frameworks].each {|framework|
-              cmd_exec "cd #{proj_path}/#{framework} && BUILD_DIR=#{proj_build_path} #{proj[:build]}"
+              cmd_exec "cd #{proj_path}/#{framework} && BUILD_DIR=#{build_target_path} #{proj[:build]}"
             }
           else
-            cmd_exec "cd #{proj_build_path} && #{proj[:build]}"
+            cmd_exec "cd #{build_path} && #{proj[:build]}"
           end
         end
       }
@@ -133,16 +133,17 @@ module A2OBrew
           next
         end
         proj_path = "#{depends[:path]}/#{proj[:path]}"
-        proj_build_path = build_path(target, proj, proj_path)
+        build_path = build_path(proj_path, target, proj)
+        build_target_path = build_target_path(proj_path, target, proj)
 
         # install
         if proj[:install]
           if proj[:frameworks]
             proj[:frameworks].each {|framework|
-              cmd_exec "cd #{proj_path}/#{framework} && BUILD_DIR=#{proj_build_path} #{proj[:install]}"
+              cmd_exec "cd #{proj_path}/#{framework} && BUILD_DIR=#{build_target_path} #{proj[:install]}"
             }
           else
-            cmd_exec "cd #{proj_build_path} && #{proj[:install]}"
+            cmd_exec "cd #{build_path} && #{proj[:install]}"
           end
         end
       }
@@ -174,7 +175,7 @@ module A2OBrew
       end
     end
 
-    # git pull if remote updated 
+    # git pull if remote updated
     def git_update(root_path, branch_name, repository_uri)
       if File.directory?(root_path)
         # git clone has already done
@@ -228,15 +229,26 @@ module A2OBrew
       "#{a2obrew_path}/emsdk"
     end
 
-    def build_path(target, project_conf, project_path)
-      # load non-standard build_path from conf
-      # mainly for openssl which uses non-standard perl configure script X(
+    def build_path(project_path, target, project_conf)
+      # ICU, OpenSSL which requires build as cwd is project_path
       if project_conf[:build_path]
         project_conf[:build_path] % {
-          :project_path => project_path
+          :project_path => project_path,
         }
       else
-        "#{a2obrew_path}/build/#{target}/#{project_conf[:path]}"
+        "#{project_path}/build/#{target}"
+      end
+    end
+
+    def build_target_path(project_path, target, project_conf)
+      # Mainly for OpenSSL which uses non-standard configure.
+      # NOTE: We may use libressl-portable instead.
+      if project_conf[:build_target_path]
+        project_conf[:build_target_path] % {
+          :project_path => project_path,
+        }
+      else
+        "#{project_path}/build/#{target}"
       end
     end
 
