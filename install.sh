@@ -33,12 +33,21 @@ fi
 
 bin/a2obrew update
 bin/a2obrew autogen
-bin/a2obrew configure
+# install basic libraries
+# blocks-runtime
+bin/a2obrew configure blocks-runtime
 bin/a2obrew build blocks-runtime
 bin/a2obrew install blocks-runtime
+# objc4
+bin/a2obrew configure objc4
 bin/a2obrew build objc4
 bin/a2obrew install objc4
+# libdispatch
+bin/a2obrew configure libdispatch
 bin/a2obrew build libdispatch
 bin/a2obrew install libdispatch
+
+# install rest libraries
+bin/a2obrew configure
 bin/a2obrew build
 bin/a2obrew install

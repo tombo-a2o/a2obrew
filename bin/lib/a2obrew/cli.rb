@@ -268,10 +268,10 @@ module A2OBrew
     end
 
     def build_path(project_path, target, project_conf)
-      # ICU, OpenSSL which requires build as cwd is project_path
       if project_conf[:build_path]
         project_conf[:build_path] % {
           :project_path => project_path,
+          :target => target,
         }
       else
         "#{project_path}/build/#{target}"
@@ -279,11 +279,10 @@ module A2OBrew
     end
 
     def build_target_path(project_path, target, project_conf)
-      # Mainly for OpenSSL which uses non-standard configure.
-      # NOTE: We may use libressl-portable instead.
       if project_conf[:build_target_path]
         project_conf[:build_target_path] % {
           :project_path => project_path,
+          :target => target,
         }
       else
         "#{project_path}/build/#{target}"

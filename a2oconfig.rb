@@ -3,6 +3,8 @@
 
 A2O_PATH = File.expand_path(File.dirname(__FILE__))
 
+ICU_NATIVE_DIR = `uname` =~ /\ADarwin/ ? 'buildMac' : 'buildLinux'
+
 A2OCONF = {
   :depends => {
     :path => "#{A2O_PATH}/depends",
@@ -56,9 +58,10 @@ emconfigure \
   --disable-tools \
   --with-data-packaging=files \
   --prefix=%{emscripten_system_local_path} \
-  --with-cross-build=%{build_target_path}
+  --with-cross-build=`pwd`/../#{ICU_NATIVE_DIR}
 CONFIGURE
-        :build_path => '%{project_path}',
+        :build_path => '%{project_path}/buildEmscripten%{target}',
+        :build_target_path => '%{project_path}/buildEmscripten%{target}',
         :build => <<BUILD,
 emmake make ARFLAGS=rv -j8
 cd lib

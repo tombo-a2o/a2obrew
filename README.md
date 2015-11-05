@@ -36,27 +36,32 @@ type a2obrew
 ## Update
 
 ```sh
+# update all
 a2obrew update
+# update only cocotron
+a2obrew update cocotron
 ```
 
 The command just updates a2obrew itself and dependent repositories.
 
 ## Build
 
-For debug version,
+`debug` is a target name. The target should be `debug` or `release`. If no target is specified, the target is `release`.
+
 
 ```sh
-a2obrew build debug
-```
-
-For release version,
-
-```sh
-a2obrew build release
-```
-
-For release version with profiling,
-
-```sh
-a2obrew build profiling
+# autogen is not needed basically after first install
+a2obrew autogen
+# configure is sometimes needed
+a2obrew configure --target=debug
+# after modifing some header and source files, you build with this command
+a2obrew build --target=debug
+# after modifing some header and source files, you build with this command
+a2obrew build --target=debug
+# You can build specific library
+a2obrew build --target=debug cocotron
+# install built binaries
+a2obrew install --target=debug
+# clean built binaries
+a2obrew clean debug
 ```
