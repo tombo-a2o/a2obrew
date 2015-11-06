@@ -50,133 +50,48 @@ module A2OBrew
 
     desc 'autogen PROJECT_NAME', 'autogen dependent repositories'
     def autogen(proj_name=nil)
-      check_emsdk_env
-      depends = A2OCONF[:depends]
-      depends[:projects].each {|proj|
-        unless proj_name.nil? or proj[:name] == proj_name
-          next
-        end
-        proj_path = "#{depends[:path]}/#{proj[:path]}"
-        # run autogen
-        if proj[:autogen]
-          cmd_exec "cd #{proj_path} && #{proj[:autogen]}"
-        end
-      }
+      build_main(:autogen, proj_name)
     end
 
     desc 'configure PROJECT_NAME', 'configure dependent repositories'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def configure(proj_name=nil)
-      check_emsdk_env
       target = options[:target]
-      depends = A2OCONF[:depends]
-      depends[:projects].each {|proj|
-        unless proj_name.nil? or proj[:name] == proj_name
-          next
-        end
-
-        # configure
-        if proj[:configure]
-          proj_path = "#{depends[:path]}/#{proj[:path]}"
-          build_path = build_path(proj_path, target, proj)
-          build_target_path = build_target_path(proj_path, target, proj)
-
-          mkdir_p(build_path)
-
-          configure = proj[:configure] % {
-            :project_path => proj_path,
-            :build_target_path => build_target_path,
-            :emscripten_system_local_path => emscripten_system_local_path,
-          }
-          cmd_exec "cd #{build_path} && #{configure}"
-        end
-      }
+      build_main(:configure, proj_name, target)
     end
 
     desc 'build PROJECT_NAME', 'build dependent repositories'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def build(proj_name=nil)
-      check_emsdk_env
       target = options[:target]
-      depends = A2OCONF[:depends]
-      depends[:projects].each {|proj|
-        unless proj_name.nil? or proj[:name] == proj_name
-          next
-        end
-
-        # build!
-        if proj[:build]
-          proj_base_path = "#{depends[:path]}/#{proj[:path]}"
-
-          if proj[:frameworks]
-            proj_paths = proj[:frameworks].map {|framework| "#{proj_base_path}/#{framework}"}
-          else
-            proj_paths = [proj_base_path]
-          end
-
-          proj_paths.each {|proj_path|
-            build_path = build_path(proj_path, target, proj)
-            build_target_path = build_target_path(proj_path, target, proj)
-
-            mkdir_p(build_target_path)
-
-            build = proj[:build] % {
-              :build_target_path => build_target_path,
-            }
-
-            cmd_exec "cd #{build_path} && #{build}"
-          }
-        end
-      }
+      build_main(:build, proj_name, target)
     end
 
     desc 'install PROJECT_NAME', 'install dependent repositories'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def install(proj_name=nil)
-      check_emsdk_env
       target = options[:target]
-      depends = A2OCONF[:depends]
-      depends[:projects].each {|proj|
-        unless proj_name.nil? or proj[:name] == proj_name
-          next
-        end
-
-        # install
-        if proj[:install]
-          proj_base_path = "#{depends[:path]}/#{proj[:path]}"
-
-          if proj[:frameworks]
-            proj_paths = proj[:frameworks].map {|framework| "#{proj_base_path}/#{framework}"}
-          else
-            proj_paths = [proj_base_path]
-          end
-
-          proj_paths.each {|proj_path|
-            build_path = build_path(proj_path, target, proj)
-            build_target_path = build_target_path(proj_path, target, proj)
-
-            install = proj[:install] % {
-              :build_target_path => build_target_path,
-            }
-
-            cmd_exec "cd #{build_path} && #{install}"
-          }
-        end
-      }
+      build_main(:install, proj_name, target)
     end
 
     desc 'clean PROJECT_NAME', 'clean dependent repositories'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def clean(proj_name=nil)
       target = options[:target]
+      build_main(:clean, proj_name, target)
+    end
+
+    private
+
+    def build_main(command, proj_name, target=nil)
+      check_emsdk_env
       depends = A2OCONF[:depends]
       depends[:projects].each {|proj|
         unless proj_name.nil? or proj[:name] == proj_name
           next
         end
 
-        # clean
-        if proj[:clean]
+        if proj[command]
           proj_base_path = "#{depends[:path]}/#{proj[:path]}"
 
           if proj[:frameworks]
@@ -186,20 +101,27 @@ module A2OBrew
           end
 
           proj_paths.each {|proj_path|
-            build_path = build_path(proj_path, target, proj)
+            work_path = if command == :autogen
+              proj_path
+            else
+              build_path(proj_path, target, proj)
+            end
             build_target_path = build_target_path(proj_path, target, proj)
 
-            clean = proj[:clean] % {
+            mkdir_p(work_path)
+            mkdir_p(build_target_path)
+
+            cmd = proj[command] % {
+              :project_path => proj_path,
               :build_target_path => build_target_path,
+              :emscripten_system_local_path => emscripten_system_local_path,
             }
 
-            cmd_exec "cd #{build_path} && #{clean}"
+            cmd_exec "cd #{work_path} && #{cmd}"
           }
         end
       }
     end
-
-    private
 
     # die unless emcc
     def check_emsdk_env

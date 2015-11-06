@@ -155,9 +155,10 @@ EMCONFIGURE
         :path => 'Foundation',
         :repository_uri => 'git@github.com:tomboinc/Foundation.git',
         :branch => 'feature/emscripten',
+        :autogen => 'BUILD_DIR=%{build_target_path} make install_header_only',
         :build_path => '%{project_path}',
         :build => 'BUILD_DIR=%{build_target_path} make -j8',
-        :install => 'BUILD_DIR=%{build_target_path} make install_header_only && BUILD_DIR=%{build_target_path} make install',
+        :install => 'BUILD_DIR=%{build_target_path} make install',
         :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
           System/Accounts
@@ -186,9 +187,10 @@ EMCONFIGURE
         :path => 'cocotron',
         :repository_uri => 'git@github.com:tomboinc/cocotron.git',
         :branch => 'feature/emscripten',
+        :autogen => 'BUILD_DIR=%{build_target_path} make install_header_only',
         :build_path => '%{project_path}',
         :build => 'BUILD_DIR=%{build_target_path} make -j8',
-        :install => 'BUILD_DIR=%{build_target_path} make install_header_only && BUILD_DIR=%{build_target_path} make install',
+        :install => 'BUILD_DIR=%{build_target_path} make install',
         :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
           AppKit
@@ -206,9 +208,10 @@ EMCONFIGURE
         :path => 'Chameleon',
         :repository_uri => 'git@github.com:tomboinc/Chameleon.git',
         :branch => 'feature/with_cocotron',
+        :autogen => 'BUILD_DIR=%{build_target_path} make install_header_only',
         :build_path => '%{project_path}',
         :build => 'BUILD_DIR=%{build_target_path} make -j8',
-        :install => 'BUILD_DIR=%{build_target_path} make install_header_only && BUILD_DIR=%{build_target_path} make install',
+        :install => 'BUILD_DIR=%{build_target_path} make install',
         :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
           UIKit
