@@ -35,8 +35,8 @@ module A2OBrew
       }
     end
 
-    desc 'env', 'show shell script loading emscripten environment value'
-    def env
+    desc 'emsdk_env', 'show shell script loading emscripten environment value'
+    def emsdk_env
       puts "source #{emsdk_path}/emsdk_env.sh"
     end
 
@@ -136,7 +136,7 @@ module A2OBrew
     # die unless emcc
     def check_emsdk_env
       if find_executable('emcc').nil?
-        error_exit("Cannot find emcc. Execute 'eval $(#{$PROGRAM_NAME} env)'")
+        error_exit("Cannot find emcc. Execute 'eval $(#{$PROGRAM_NAME} emsdk_env)'")
       end
     end
 
