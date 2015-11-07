@@ -23,7 +23,7 @@ fi
 # Install emscripten
 ./scripts/install_emsdk.sh
 
-eval $(bin/a2obrew env)
+source emsdk/emsdk_env.sh > /dev/null
 
 if [ $# == 1 ]; then
     if [ "$1" = "rebuild" ]; then
