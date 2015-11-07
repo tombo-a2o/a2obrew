@@ -155,8 +155,8 @@ module A2OBrew
           puts "#{root_path} is up to date."
         elsif local == base
           # git pull if needed
-          cmd_exec "#{git_command} pull"
-          if $CHILD_STATUS != 0
+          stat = cmd_exec "#{git_command} pull"
+          if stat.exitstatus != 0
             error_exit "git pull fails on #{root_path}"
           end
         elsif remote == base
@@ -228,6 +228,7 @@ module A2OBrew
       puts cmd.colorize(:color => :black, :background => :white)
       puts delimiter
       puts `#{cmd}`
+      $?
     end
   end
 end
