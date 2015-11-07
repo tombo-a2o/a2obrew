@@ -8,7 +8,8 @@ ICU_NATIVE_DIR = `uname` =~ /\ADarwin/ ? 'buildMac' : 'buildLinux'
 A2OCONF = {
   :targets => {
     :debug => {
-      :cppflags => '-g -O0 -DDEBUG',
+      # :cppflags => '-g -O0 -DDEBUG',
+      :cppflags => '-O0 -DDEBUG',
     },
     :release => {
       :cppflags => '-O2',
@@ -220,7 +221,9 @@ EMCONFIGURE
         :branch => 'feature/with_cocotron',
         :autogen => 'BUILD_DIR=%{build_target_path} make install_header_only',
         :build_path => '%{project_path}',
-        :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
+        # FIXME: now -O2 doesn't work on Chameleon, so set static CPPFLAGS
+        # :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
+        :build => 'STYLE_CPPFLAGS="-O0 -DDEBUG" BUILD_DIR=%{build_target_path} make -j8',
         :install => 'BUILD_DIR=%{build_target_path} make install',
         :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
