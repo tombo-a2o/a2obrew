@@ -9,6 +9,7 @@ gemset_root =  "#{rbenv_root}/versions/#{TARGET_RUBY_VERSION}/gemsets/#{TARGET_G
 
 if RUBY_VERSION != TARGET_RUBY_VERSION or ENV['GEM_HOME'] != gemset_root
   puts "You should install ruby #{TARGET_RUBY_VERSION} with rbenv and rbenv-gemset"
+  puts "Current ruby version is '#{RUBY_VERSION}' and gem home is #{ENV['GEM_HOME']}"
   exit(1)
 end
 
