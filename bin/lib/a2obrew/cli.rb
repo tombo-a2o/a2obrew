@@ -6,27 +6,8 @@ require 'mkmf'; module MakeMakefile::Logging; @logfile = File::NULL; end
 require 'colorize'
 require 'fileutils'
 
-INIT_SCRIPT = <<EOT
-echo "FIXME: Implement rbenv init"
-EOT
-
 module A2OBrew
   class CLI < Thor
-    desc 'init [OPTIONS]', 'show shell script enables shims and autocompletion'
-    def init(*args)
-      print = false
-      no_rehash = false
-
-      args.arch {|arg|
-        if arg == '-'
-          print = true
-        elsif arg == '--no-rehash'
-          no_rehash = true
-        end
-      }
-      puts INIT_SCRIPT
-    end
-
     desc 'commands', 'show all commands of a2obrew'
     def commands
       require 'pp'
@@ -35,9 +16,34 @@ module A2OBrew
       }
     end
 
-    desc 'emsdk_env', 'show shell script loading emscripten environment value'
-    def emsdk_env
-      puts "source #{emsdk_path}/emsdk_env.sh"
+    desc 'init [OPTIONS]', 'show shell script enables shims and autocompletion'
+    def init(*args)
+      print = false
+
+      args.each {|arg|
+        if arg == '-'
+          print = true
+        end
+      }
+
+      if print
+        puts <<INIT
+source "#{a2obrew_path}/bin/completions/a2obrew.#{current_shell}"
+source "#{emsdk_path}/emsdk_env.sh"
+INIT
+      else
+        puts <<USAGE
+# Load emsdk_env automatically by appending
+# the following to #{shell_rc_path}
+
+eval "$(a2obrew init -)"
+USAGE
+      end
+    end
+
+    desc 'completions COMMAND', 'list completions for the COMMAND'
+    def completions(command)
+      puts `#{$PROGRAM_NAME} #{command} --complete`
     end
 
     desc 'update [PROJECT_NAME]', 'update a2obrew and dependent repositories'
@@ -57,34 +63,44 @@ module A2OBrew
     end
 
     desc 'autogen PROJECT_NAME', 'autogen dependent repositories'
+    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     def autogen(proj_name=nil)
+      puts_build_completion(options, false)
       build_main(:autogen, proj_name)
     end
 
     desc 'configure PROJECT_NAME', 'configure dependent repositories'
+    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def configure(proj_name=nil)
+      puts_build_completion(options)
       target = options[:target]
       build_main(:configure, proj_name, target)
     end
 
     desc 'build PROJECT_NAME', 'build dependent repositories'
+    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def build(proj_name=nil)
+      puts_build_completion(options)
       target = options[:target]
       build_main(:build, proj_name, target)
     end
 
     desc 'install PROJECT_NAME', 'install dependent repositories'
+    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def install(proj_name=nil)
+      puts_build_completion(options)
       target = options[:target]
       build_main(:install, proj_name, target)
     end
 
     desc 'clean PROJECT_NAME', 'clean dependent repositories'
+    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def clean(proj_name=nil)
+      puts_build_completion(options)
       target = options[:target]
       build_main(:clean, proj_name, target)
     end
@@ -136,7 +152,7 @@ module A2OBrew
     # die unless emcc
     def check_emsdk_env
       if find_executable('emcc').nil?
-        error_exit("Cannot find emcc. Execute 'eval $(#{$PROGRAM_NAME} emsdk_env)'")
+        error_exit("Cannot find emcc. Execute the command below.\n\neval \"$(a2obrew init -)\"")
       end
     end
 
@@ -205,6 +221,26 @@ module A2OBrew
       end
     end
 
+    def current_shell
+      File.basename(ENV['SHELL']).intern
+    end
+
+    def shell_rc_path
+      case current_shell
+      when :zsh
+        '~/.zshrc'
+      when :bash
+        if File.exists?("#{ENV['HOME']}/.bashrc") and not File.exists?("#{ENV['HOME']}/.bash_profile")
+          '~/.bashrc'
+        else
+          '~/.bash_profile'
+        end
+      else
+        # cannot detect
+        'your shell profile'
+      end
+    end
+
     def build_path(project_path, target, project_conf)
       if project_conf[:build_path]
         project_conf[:build_path] % {
@@ -230,6 +266,22 @@ module A2OBrew
     def error_exit(message)
       puts "a2obrew: #{message}"
       exit(1)
+    end
+
+    def project_names
+      A2OCONF[:depends][:projects].map {|proj| proj[:name] }
+    end
+
+    def puts_build_completion(options, with_target=true)
+      if options[:complete]
+        if with_target
+          A2OCONF[:targets].each {|target|
+            puts "--target=#{target}"
+          }
+        end
+        puts project_names.join("\n")
+        exit(0)
+      end
     end
 
     def mkdir_p(path)
