@@ -27,6 +27,14 @@ module A2OBrew
       puts INIT_SCRIPT
     end
 
+    desc 'commands', 'show all commands of a2obrew'
+    def commands
+      require 'pp'
+      self.class.commands.each {|command|
+        puts command[0]
+      }
+    end
+
     desc 'env', 'show shell script loading emscripten environment value'
     def env
       puts "source #{emsdk_path}/emsdk_env.sh"
