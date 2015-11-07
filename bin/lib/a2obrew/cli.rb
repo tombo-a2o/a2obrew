@@ -85,6 +85,7 @@ module A2OBrew
 
     def build_main(command, proj_name, target=nil)
       check_emsdk_env
+      check_target(target)
       depends = A2OCONF[:depends]
       depends[:projects].each {|proj|
         unless proj_name.nil? or proj[:name] == proj_name
@@ -188,6 +189,12 @@ module A2OBrew
     def emscripten_system_local_path
       # FIXME: use $EMSCRIPTEN
       "#{emsdk_path}/emscripten/a2o/system/local"
+    end
+
+    def check_target(target)
+      unless target.nil? or A2OCONF[:targets].has_key?(target.intern)
+        error_exit("Invalid target '#{target}'. You must specify #{A2OCONF[:targets].keys.join('/')}.")
+      end
     end
 
     def build_path(project_path, target, project_conf)
