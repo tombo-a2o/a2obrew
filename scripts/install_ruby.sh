@@ -11,12 +11,11 @@ else
   eval "$(rbenv init -)"
   case "${SHELL}" in
   *"bash")
-    echo "export PATH=\"\$HOME/.rbenv/bin:\$PATH\"" >> ${HOME}/.bash_profile
-    echo "eval \"\$(rbenv init -)\"" >> ~/.bash_profile
+    echo "[[ -s \"\${HOME}/.rbenv/bin/rbenv\" ]] && export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\"" >> ${HOME}/.bash_profile
     ;;
   *"zsh")
+    echo "[[ -s \"\${HOME}/.rbenv/bin/rbenv\" ]] && export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\"" >> ${HOME}/.zshrc
     echo "export PATH=\"\$HOME/.rbenv/bin:\$PATH\"" >> ${HOME}/.zshrc
-    echo "eval \"\$(rbenv init -)\"" >> ~/.zshrc
     ;;
   *)
     echo "Unknown shell"

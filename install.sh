@@ -4,14 +4,16 @@ OS=`uname`
 
 if [ "$OS" = "Darwin" ]; then
   ./scripts/mac/install.sh
-elif [ "$OS" = "linux" ]; then
-  . /etc/lsb-release
+elif [ "$OS" = "Linux" ]; then
   if which apt-get; then
     ./scripts/ubuntu/install.sh
   else
-    echo "* UNKNOWN OS"
+    echo "* UNKNOWN LINUX"
     exit 1
   fi
+else
+  echo "* UNKNOWN OS"
+  exit 1
 fi
 
 # Install Ruby for a2obrew CLI
