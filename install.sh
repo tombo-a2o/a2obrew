@@ -14,24 +14,71 @@ elif [ "$OS" = "linux" ]; then
   fi
 fi
 
+# Install Ruby for a2obrew CLI
+./scripts/install_ruby.sh
+
+# Install LLs for emscripten
 ./scripts/install_node.sh
 ./scripts/install_python.sh
+# Install emscripten
 ./scripts/install_emsdk.sh
+
+source emsdk/emsdk_env.sh > /dev/null
 
 if [ $# == 1 ]; then
     if [ "$1" = "rebuild" ]; then
-        ./scripts/clean_libraries.sh
+        bin/a2obrew clean
     fi
 fi
 
-./scripts/build_libbsd.sh
-./scripts/build_blocks_runtime.sh
-./scripts/build_objc4.sh
-./scripts/build_ICU.sh
-./scripts/build_libdispatch_em.sh
-./scripts/build_cairo.sh
-./scripts/build_openssl.sh
-./scripts/build_freetype.sh
-
-./scripts/build_frameworks.sh install_header_only
-./scripts/build_frameworks.sh install
+bin/a2obrew update
+bin/a2obrew autogen
+# install basic libraries
+# libbsd
+bin/a2obrew configure libbsd
+bin/a2obrew build libbsd
+bin/a2obrew install libbsd
+# blocks-runtime
+bin/a2obrew configure blocks-runtime
+bin/a2obrew build blocks-runtime
+bin/a2obrew install blocks-runtime
+# objc4
+bin/a2obrew configure objc4
+bin/a2obrew build objc4
+bin/a2obrew install objc4
+# ICU
+bin/a2obrew configure icu
+bin/a2obrew build icu
+bin/a2obrew install icu
+# libdispatch
+bin/a2obrew configure libdispatch
+bin/a2obrew build libdispatch
+bin/a2obrew install libdispatch
+# pixman
+bin/a2obrew configure pixman
+bin/a2obrew build pixman
+bin/a2obrew install pixman
+# cairo
+bin/a2obrew configure cairo
+bin/a2obrew build cairo
+bin/a2obrew install cairo
+# openssl
+bin/a2obrew configure openssl
+bin/a2obrew build openssl
+bin/a2obrew install openssl
+# freetype
+bin/a2obrew configure freetype
+bin/a2obrew build freetype
+bin/a2obrew install freetype
+# Foundation
+bin/a2obrew configure Foundation
+bin/a2obrew build Foundation
+bin/a2obrew install Foundation
+# cocotron
+bin/a2obrew configure cocotron
+bin/a2obrew build cocotron
+bin/a2obrew install cocotron
+# Chameleon
+bin/a2obrew configure Chameleon
+bin/a2obrew build Chameleon
+bin/a2obrew install Chameleon

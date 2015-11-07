@@ -8,20 +8,11 @@ Thumbs.db
 # Mac OS X
 .DS_Store
 
-# Fetched files
+# Emscripten
 emsdk/
-downloads/
-objc4/
-icu/
-libdispatch/
-libdispatch-linux/
-libpwq/
-libkqueue/
-blocks-runtime/
-Foundation/
-libbsd/
-Chameleon
-cocotron
-openssl
-cairo
-pixman
+
+# Ruby
+Gemfile.lock
+
+# Depends
+depends/

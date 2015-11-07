@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
+TARGET_RUBY_VERSION = '2.2.2'
+TARGET_GEMSET_NAME = 'a2o'
+
+rbenv_root = ENV['RBENV_ROOT']
+gemset_root =  "#{rbenv_root}/versions/#{TARGET_RUBY_VERSION}/gemsets/#{TARGET_GEMSET_NAME}"
+
+if RUBY_VERSION != TARGET_RUBY_VERSION or ENV['GEM_HOME'] != gemset_root
+  puts "You should install ruby #{TARGET_RUBY_VERSION} with rbenv and rbenv-gemset"
+  exit(1)
+end
+
+script_path = File.dirname(__FILE__)
+
+$LOAD_PATH << "#{script_path}/lib"
+config = File.expand_path("#{script_path}/../a2oconfig.rb")
+
+require 'a2obrew/cli'
+require config
+
+A2OBrew::CLI.start(ARGV)
