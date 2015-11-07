@@ -24,6 +24,8 @@ else
   esac
 fi
 
+echo `which rbenv`
+
 if [ -d ${HOME}/.rbenv/plugins/ruby-build ]; then
   echo "* ruby-build has already been installed"
   if ! rbenv install --list | grep " 2\\.2\\.2" > /dev/null; then
@@ -39,15 +41,15 @@ else
   git clone git://github.com/jf/rbenv-gemset.git $HOME/.rbenv/plugins/rbenv-gemset
 fi
 
+if rbenv versions --bare | grep "2\\.2\\.2" > /dev/null; then
+  echo "* Ruby 2.2.2 with rbenv has already been installed"
+else
+  rbenv install 2.2.2
+fi
+
 if ! gem list --local | grep "bundler " > /dev/null; then
   gem install bundler
   rbenv rehash
 fi
 
 bundle install
-
-if rbenv versions --bare | grep "2\\.2\\.2" > /dev/null; then
-  echo "* Ruby 2.2.2 with rbenv has already been installed"
-else
-  rbenv install 2.2.2
-fi
