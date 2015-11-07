@@ -24,8 +24,6 @@ else
   esac
 fi
 
-echo `which rbenv`
-
 if [ -d ${HOME}/.rbenv/plugins/ruby-build ]; then
   echo "* ruby-build has already been installed"
   if ! rbenv install --list | grep " 2\\.2\\.2" > /dev/null; then

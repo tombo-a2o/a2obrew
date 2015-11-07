@@ -26,6 +26,8 @@ fi
 ./scripts/install_emsdk.sh
 
 source emsdk/emsdk_env.sh > /dev/null
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
 
 if [ $# == 1 ]; then
     if [ "$1" = "rebuild" ]; then
