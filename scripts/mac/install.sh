@@ -40,3 +40,17 @@ if brew list coreutils > /dev/null; then
 else
   brew install coreutils
 fi
+
+# Install cmake
+if brew list cmake > /dev/null; then
+  echo "* cmake is installed"
+else
+  brew install cmake
+fi
+
+# Install Ninja
+if brew list ninja > /dev/null; then
+  echo "* ninja is installed"
+else
+  brew install ninja
+fi
