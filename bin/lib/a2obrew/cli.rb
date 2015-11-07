@@ -46,12 +46,8 @@ USAGE
       puts `#{$PROGRAM_NAME} #{command} --complete`
     end
 
-    desc 'update [PROJECT_NAME]', 'update a2obrew and dependent repositories'
+    desc 'update [PROJECT_NAME]', 'update dependent repositories'
     def update(proj_name=nil)
-      if proj_name.nil? or proj[:name] == 'a2obrew'
-        git_update(a2obrew_path, nil, nil)
-      end
-      # TODO: reload A2OCONF for reloading config
       depends = A2OCONF[:depends]
       depends[:projects].each {|proj|
         unless proj_name.nil? or proj[:name] == proj_name
