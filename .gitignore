@@ -8,7 +8,7 @@ Thumbs.db
 # Mac OS X
 .DS_Store
 
-# Fetched files
+# Emscripten
 emsdk/
 
 # Ruby
