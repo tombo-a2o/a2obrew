@@ -17,7 +17,7 @@ echo 'export PATH="$HOME/a2obrew/bin:$PATH"' >> ~/.bash_profile
 echo 'export PATH="$HOME/a2obrew/bin:$PATH"' >> ~/.zshrc
 ```
 
-3. Add `a2obrew init` to your shell to enable shims and autocompletion.
+3. Add `a2obrew init` to your shell to enable autocompletion and emsdk environment variables.
 
 ```sh
 # bash
@@ -33,7 +33,7 @@ echo 'eval "$(a2obrew init -)"' >> ~/.zshrc
 type a2obrew
 ```
 
-## Update
+## Update dependent libraries from git
 
 ```sh
 # update all
@@ -63,5 +63,5 @@ a2obrew build --target=debug cocotron
 # install built binaries
 a2obrew install --target=debug
 # clean built binaries
-a2obrew clean debug
+a2obrew clean --target=debug
 ```
