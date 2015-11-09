@@ -10,7 +10,6 @@ module A2OBrew
   class CLI < Thor
     desc 'commands', 'show all commands of a2obrew'
     def commands
-      require 'pp'
       self.class.commands.each {|command|
         puts command[0]
       }
@@ -129,8 +128,10 @@ USAGE
             end
             build_target_path = build_target_path(proj_path, target, proj)
 
-            mkdir_p(work_path)
-            mkdir_p(build_target_path)
+            unless command == :clean
+              mkdir_p(work_path)
+              mkdir_p(build_target_path)
+            end
 
             cmd = proj[command] % {
               :project_path => proj_path,
