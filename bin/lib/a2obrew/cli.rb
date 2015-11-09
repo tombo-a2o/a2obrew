@@ -154,10 +154,10 @@ USAGE
 
     # git pull if remote updated
     def git_update(root_path, branch_name, repository_uri)
-      if File.directory?(root_path)
+      git_path = "#{root_path}/.git"
+      if File.directory?(root_path) and File.directory?(git_path)
         # git clone has already done
 
-        git_path = "#{root_path}/.git"
         git_command = "git --git-dir=#{git_path} --work-tree=#{root_path}"
 
         # Change current branch if needed
