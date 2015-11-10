@@ -8,7 +8,14 @@
 git clone git@github.com:tomboinc/a2obrew.git $HOME/a2obrew
 ```
 
-2. Add `$HOME/a2obrew/bin` to your `$PATH` for access to the `a2obrew` command-line utility
+2. Execute install.sh
+
+```sh
+cd $HOME/a2obrew
+./install.sh
+```
+
+3. Add `$HOME/a2obrew/bin` to your `$PATH` for access to the `a2obrew` command-line utility
 
 ```sh
 # bash
@@ -17,7 +24,7 @@ echo 'export PATH="$HOME/a2obrew/bin:$PATH"' >> ~/.bash_profile
 echo 'export PATH="$HOME/a2obrew/bin:$PATH"' >> ~/.zshrc
 ```
 
-3. Add `a2obrew init` to your shell to enable autocompletion and emsdk environment variables.
+4. Add `a2obrew init` to your shell to enable autocompletion and emsdk environment variables. After that, you can use a2obrew and emscripten commands (ex. emcc).
 
 ```sh
 # bash
@@ -26,7 +33,7 @@ echo 'eval "$(a2obrew init -)"' >> ~/.bash_profile
 echo 'eval "$(a2obrew init -)"' >> ~/.zshrc
 ```
 
-4. Restart your shell so that PATH changes take effect. (Opening a new
+5. Restart your shell so that PATH changes take effect. (Opening a new
   terminal tab will usually do it.) Now check if a2obrew was set up:
 
 ```sh
