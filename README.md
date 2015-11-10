@@ -67,6 +67,8 @@ a2obrew build --target=debug
 a2obrew build --target=debug
 # You can build specific library
 a2obrew build --target=debug cocotron
+# You can build specific libraries
+a2obrew build --target=debug Foundation cocotron Chameleon
 # install built binaries
 a2obrew install --target=debug
 # clean built binaries
