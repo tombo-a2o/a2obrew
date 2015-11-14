@@ -45,6 +45,8 @@ else
   rbenv install 2.2.2
 fi
 
+rbenv gemset create 2.2.2 a2o
+
 if ! gem list --local | grep "bundler " > /dev/null; then
   gem install bundler
   rbenv rehash
