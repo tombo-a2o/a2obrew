@@ -35,6 +35,7 @@ fi
 
 if [ -d ${HOME}/.rbenv/plugins/rbenv-gemset ]; then
   echo "* rbenv-gemset has already been installed"
+  cd ${HOME}/.rbenv/plugins/rbenv-gemset && git pull
 else
   git clone git://github.com/jf/rbenv-gemset.git $HOME/.rbenv/plugins/rbenv-gemset
 fi
