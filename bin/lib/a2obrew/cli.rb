@@ -10,7 +10,6 @@ module A2OBrew
   class CLI < Thor
     desc 'commands', 'show all commands of a2obrew'
     def commands
-      require 'pp'
       self.class.commands.each {|command|
         puts command[0]
       }
@@ -46,11 +45,11 @@ USAGE
       puts `#{$PROGRAM_NAME} #{command} --complete`
     end
 
-    desc 'update [PROJECT_NAME]', 'update dependent repositories'
-    def update(proj_name=nil)
+    desc 'update PROJECT_NAMES', 'update dependent repositories'
+    def update(*proj_names)
       depends = A2OCONF[:depends]
       depends[:projects].each {|proj|
-        unless proj_name.nil? or proj[:name] == proj_name
+        unless proj_names.length == 0 or proj_names.include?(proj[:name])
           next
         end
         proj_path = "#{depends[:path]}/#{proj[:path]}"
@@ -58,57 +57,57 @@ USAGE
       }
     end
 
-    desc 'autogen PROJECT_NAME', 'autogen dependent repositories'
+    desc 'autogen PROJECT_NAMES', 'autogen dependent repositories'
     method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
-    def autogen(proj_name=nil)
+    def autogen(*proj_names)
       puts_build_completion(options, false)
-      build_main(:autogen, proj_name)
+      build_main(:autogen, proj_names)
     end
 
-    desc 'configure PROJECT_NAME', 'configure dependent repositories'
+    desc 'configure PROJECT_NAMES', 'configure dependent repositories'
     method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
-    def configure(proj_name=nil)
+    def configure(*proj_names)
       puts_build_completion(options)
       target = options[:target]
-      build_main(:configure, proj_name, target)
+      build_main(:configure, proj_names, target)
     end
 
-    desc 'build PROJECT_NAME', 'build dependent repositories'
+    desc 'build PROJECT_NAMES', 'build dependent repositories'
     method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
-    def build(proj_name=nil)
+    def build(*proj_names)
       puts_build_completion(options)
       target = options[:target]
-      build_main(:build, proj_name, target)
+      build_main(:build, proj_names, target)
     end
 
-    desc 'install PROJECT_NAME', 'install dependent repositories'
+    desc 'install PROJECT_NAMES', 'install dependent repositories'
     method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
-    def install(proj_name=nil)
+    def install(*proj_names)
       puts_build_completion(options)
       target = options[:target]
-      build_main(:install, proj_name, target)
+      build_main(:install, proj_names, target)
     end
 
-    desc 'clean PROJECT_NAME', 'clean dependent repositories'
+    desc 'clean PROJECT_NAMES', 'clean dependent repositories'
     method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
-    def clean(proj_name=nil)
+    def clean(*proj_names)
       puts_build_completion(options)
       target = options[:target]
-      build_main(:clean, proj_name, target)
+      build_main(:clean, proj_names, target)
     end
 
     private
 
-    def build_main(command, proj_name, target=nil)
+    def build_main(command, proj_names, target=nil)
       check_emsdk_env
       check_target(target)
       depends = A2OCONF[:depends]
       depends[:projects].each {|proj|
-        unless proj_name.nil? or proj[:name] == proj_name
+        unless proj_names.length == 0 or proj_names.include?(proj[:name])
           next
         end
 
@@ -129,8 +128,10 @@ USAGE
             end
             build_target_path = build_target_path(proj_path, target, proj)
 
-            mkdir_p(work_path)
-            mkdir_p(build_target_path)
+            unless command == :clean
+              mkdir_p(work_path)
+              mkdir_p(build_target_path)
+            end
 
             cmd = proj[command] % {
               :project_path => proj_path,
@@ -154,10 +155,10 @@ USAGE
 
     # git pull if remote updated
     def git_update(root_path, branch_name, repository_uri)
-      if File.directory?(root_path)
+      git_path = "#{root_path}/.git"
+      if File.directory?(root_path) and File.directory?(git_path)
         # git clone has already done
 
-        git_path = "#{root_path}/.git"
         git_command = "git --git-dir=#{git_path} --work-tree=#{root_path}"
 
         # Change current branch if needed
