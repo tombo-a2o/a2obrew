@@ -14,6 +14,9 @@ A2OCONF = {
     :release => {
       :cppflags => '-O2',
     },
+    :profile => {
+      :cppflags => '-O0 -DDEBUG --tracing',
+    },
   },
   :depends => {
     :path => "#{A2O_PATH}/depends",
