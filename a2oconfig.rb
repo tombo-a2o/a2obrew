@@ -49,7 +49,7 @@ A2OCONF = {
         :branch => 'feature/emscripten',
         :build_path => '%{project_path}',
         :build => 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make -j8',
-        :install => 'BUILD=%{build_target_path} make install',
+        :install => 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make install',
         :clean => 'BUILD=%{build_target_path} make clean',
       },
       {
@@ -99,7 +99,7 @@ BUILD
         :branch => 'feature/emscripten',
         :build_path => '%{project_path}',
         :build => 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make -j8',
-        :install => 'BUILD=%{build_target_path} make install',
+        :install => 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make install',
         :clean => 'BUILD=%{build_target_path} make clean',
       },
       {
@@ -121,6 +121,8 @@ AUTOGEN
         :path => 'cairo',
         :repository_uri => 'git://anongit.freedesktop.org/git/cairo',
         :autogen => 'NOCONFIGURE=1 ./autogen.sh',
+        :build_path => '%{project_path}/embuild/%{target}',
+        :build_target_path => '%{project_path}/embuild/%{target}',
         :configure => <<EMCONFIGURE,
 emconfigure %{project_path}/configure \
     --prefix=%{emscripten_system_local_path} \
@@ -173,7 +175,7 @@ EMCONFIGURE
         :autogen => 'BUILD_DIR=%{build_target_path} make install_header_only',
         :build_path => '%{project_path}',
         :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
-        :install => 'BUILD_DIR=%{build_target_path} make install',
+        :install => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
         :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
           System/Accounts
@@ -205,7 +207,7 @@ EMCONFIGURE
         :autogen => 'BUILD_DIR=%{build_target_path} make install_header_only',
         :build_path => '%{project_path}',
         :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
-        :install => 'BUILD_DIR=%{build_target_path} make install',
+        :install => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
         :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
           AppKit
@@ -227,7 +229,7 @@ EMCONFIGURE
         # FIXME: now -O2 doesn't work on Chameleon, so set static CPPFLAGS
         # :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
         :build => 'STYLE_CPPFLAGS="-O0 -DDEBUG" BUILD_DIR=%{build_target_path} make -j8',
-        :install => 'BUILD_DIR=%{build_target_path} make install',
+        :install => 'STYLE_CPPFLAGS="-O0 -DDEBUG" BUILD_DIR=%{build_target_path} make install',
         :clean => 'BUILD_DIR=%{build_target_path} make clean',
         :frameworks => %w(
           UIKit
