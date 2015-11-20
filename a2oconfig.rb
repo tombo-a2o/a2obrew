@@ -106,6 +106,7 @@ BUILD
         :name => 'pixman',
         :path => 'pixman',
         :repository_uri => 'git://anongit.freedesktop.org/git/pixman.git',
+        :branch => '0.32',
         :autogen => <<AUTOGEN,
 sed -e "s/AM_INIT_AUTOMAKE(\\\[foreign dist-bzip2\\\])/AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects])/g" configure.ac > tmp
 mv tmp configure.ac
@@ -120,6 +121,7 @@ AUTOGEN
         :name => 'cairo',
         :path => 'cairo',
         :repository_uri => 'git://anongit.freedesktop.org/git/cairo',
+        :branch => '1.14',
         :autogen => 'NOCONFIGURE=1 ./autogen.sh',
         :build_path => '%{project_path}/embuild/%{target}',
         :build_target_path => '%{project_path}/embuild/%{target}',
