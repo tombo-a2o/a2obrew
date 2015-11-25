@@ -335,7 +335,9 @@ USAGE
 
     def cmd_exec(cmd)
       puts_delimiter(cmd)
-      puts `#{cmd}`
+      pid = fork
+      exec(cmd) if pid.nil?
+      Process.waitpid(pid)
       $?
     end
 
