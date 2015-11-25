@@ -224,15 +224,17 @@ RULES
         end
       end
 
-      infoplist = File.join(bundle_dir(target, build_config), 'Info.plist')
-      resources << infoplist
+      infoplist_path = build_config.build_settings['INFOPLIST_FILE']
+      if infoplist_path
+        infoplist = File.join(bundle_dir(target, build_config), 'Info.plist')
+        resources << infoplist
 
-      builds << {
-        outputs: [infoplist],
-        rule_name: 'cp_r',
-        # TODO: fix Info.plist path
-        inputs: [File.join(target.product_name, 'Resources/Info.plist')],
-      }
+        builds << {
+          outputs: [infoplist],
+          rule_name: 'cp_r',
+          inputs: [infoplist_path],
+        }
+      end
 
       # UIKit bundle
       framework_resources = file_recursive_copy("#{ENV['EMSCRIPTEN']}/system/frameworks/UIKit.framework/Resources/", "#{framework_bundle_dir(target, build_config)}/UIKit.framework/Resources/")
@@ -301,8 +303,10 @@ RULES
       framework_ref_options = REFERENCE_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' ')
       header_options = (header_dirs + target_header_dirs).map { |dir| "-I./#{dir}" }.join(' ')
 
-      # FIXME: fetch pch path from xcodeproj
-      prefix_pch = "#{target.product_name}/Prefix.pch"
+      if expand(bs['GCC_PRECOMPILE_PREFIX_HEADER'], :bool)
+        prefix_pch = bs['GCC_PREFIX_HEADER']
+        prefix_pch_options = "-include #{prefix_pch}"
+      end
 
       # build sources
       phase.files_references.each do |file|
@@ -319,14 +323,14 @@ RULES
         end
         file_opt += ' -fobjc-arc' unless file_opt =~ /-fno-objc-arc/
 
-        cflags = [framework_dir_options, framework_ref_options, header_options, lib_options, file_opt].join(' ')
+        cflags = [framework_dir_options, framework_ref_options, header_options, lib_options, prefix_pch_options, file_opt].join(' ')
 
         builds << {
           outputs: [object],
           rule_name: 'cc',
           inputs: [source_path, prefix_pch],
           variables: {
-            'cflags' => "#{cflags} -include #{prefix_pch}",
+            'cflags' => cflags,
             'source' => source_path,
           }
         }
@@ -334,18 +338,18 @@ RULES
 
       # stubs
       # FIXME: remove
-      %w(AidAd_dummy.m Parse_dummy.m).each do |source_path|
+      Dir.glob('*_dummy.m').each do |source_path|
         object = File.join(objects_dir(target, build_config), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
-        cflags = [framework_dir_options, framework_ref_options, header_options, lib_options].join(' ')
+        cflags = [framework_dir_options, framework_ref_options, header_options, lib_options, prefix_pch_options].join(' ')
 
         builds << {
           outputs: [object],
           rule_name: 'cc',
           inputs: [source_path, prefix_pch],
           variables: {
-            'cflags' => "#{cflags} -include #{prefix_pch}",
+            'cflags' => cflags,
             'source' => source_path,
           }
         }
