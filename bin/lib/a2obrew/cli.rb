@@ -44,7 +44,13 @@ USAGE
 
     desc 'completions COMMAND', 'list completions for the COMMAND'
     def completions(command)
-      puts `#{$PROGRAM_NAME} #{command} --complete`
+      case command.intern
+      when :update, :autogen
+        puts_build_completion(options, false)
+      when :configure, :build, :install, :clean
+        puts_build_completion(options, true)
+      # TODO: xcodebuild
+      end
     end
 
     desc 'update PROJECT_NAMES', 'update dependent repositories'
@@ -60,70 +66,84 @@ USAGE
     end
 
     desc 'autogen PROJECT_NAMES', 'autogen dependent repositories'
-    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     def autogen(*proj_names)
-      puts_build_completion(options, false)
       build_main(:autogen, proj_names)
     end
 
     desc 'configure PROJECT_NAMES', 'configure dependent repositories'
-    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def configure(*proj_names)
-      puts_build_completion(options)
       target = options[:target]
       build_main(:configure, proj_names, target)
     end
 
     desc 'build PROJECT_NAMES', 'build dependent repositories'
-    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def build(*proj_names)
-      puts_build_completion(options)
       target = options[:target]
       build_main(:build, proj_names, target)
     end
 
     desc 'install PROJECT_NAMES', 'install dependent repositories'
-    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def install(*proj_names)
-      puts_build_completion(options)
       target = options[:target]
       build_main(:install, proj_names, target)
     end
 
     desc 'clean PROJECT_NAMES', 'clean dependent repositories'
-    method_option :complete, :type => :boolean, :default => false, :desc => 'Show completion list'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target (ex. release)'
     def clean(*proj_names)
-      puts_build_completion(options)
       target = options[:target]
       build_main(:clean, proj_names, target)
     end
 
     desc 'xcodebuild XCODEPROJ', 'build application'
-    method_option :build_configuration, :aliases => '-c', :default => 'Release', :desc => 'Build configration (ex. Release)'
-    def xcodebuild(proj_path)
+    method_option :force, :type => :boolean, :aliases => '-f', :default => false, :desc => 'Force generate ninja.build and build'
+    method_option :clean, :type => :boolean, :aliases => '-c', :default => false, :desc => 'Clean'
+    method_option :build_configuration, :aliases => '-b', :default => 'Release', :desc => 'Build configration (ex. Release)'
+    def xcodebuild(proj_path = nil)
       check_emsdk_env
+
+      # find xcoreproj directory
+      if proj_path.nil?
+        projects = Dir.glob('*.xcodeproj')
+        if projects.size == 1
+          proj_path = projects.first
+        elsif projects.size > 1
+          error_exit('There are more than one Xcode projects in the current working directory.')
+        else
+          error_exit('No Xcode project in the current working directory.')
+        end
+      end
+
+      unless FileTest.directory?(proj_path)
+        error_exit('Specify valid .xcodeproj path')
+      end
 
       # TODO: add option for target_name
       target_name = File.basename(proj_path, '.xcodeproj')
       bc = options[:build_configuration]
 
-      unless FileTest.directory?(proj_path)
-        error_exit("Specify valid .xcodeproj path")
-      end
-
       ninja_path = "ninja/#{target_name}.#{bc}.ninja.build"
 
-      if not File.exists?(ninja_path) or File.mtime(proj_path) > File.mtime(ninja_path)
+      # generate ninja.build
+      if options[:force] or not File.exists?(ninja_path) or File.mtime(proj_path) > File.mtime(ninja_path)
+        puts_delimiter("# Generate #{ninja_path}")
         xn = Xcode2Ninja.new(proj_path)
         puts "target: #{target_name} build_configration: #{bc}"
-        xn.xcode2ninja('ninja', target_name, bc)
+        gen_paths = xn.xcode2ninja('ninja', target_name, bc)
+        gen_paths.each do |path|
+          puts "Generate #{path}"
+        end
       end
 
-      cmd_exec "ninja -v -f #{ninja_path}"
+      # execute ninja
+      if options[:clean]
+        cmd_exec "ninja -v -f #{ninja_path} -t clean"
+      else
+        cmd_exec "ninja -v -f #{ninja_path}"
+      end
     end
 
     private
@@ -296,15 +316,15 @@ USAGE
     end
 
     def puts_build_completion(options, with_target=true)
-      if options[:complete]
-        if with_target
-          A2OCONF[:targets].each {|target|
-            puts "--target=#{target}"
-          }
-        end
-        puts project_names.join("\n")
-        exit(0)
+      return unless options[:complete]
+
+      if with_target
+        A2OCONF[:targets].each {|target|
+          puts "--target=#{target}"
+        }
       end
+      puts project_names.join("\n")
+      exit(0)
     end
 
     def mkdir_p(path)
@@ -314,12 +334,16 @@ USAGE
     end
 
     def cmd_exec(cmd)
-      delimiter = ('=' * 78).colorize(:color => :black, :background => :white)
-      puts delimiter
-      puts cmd.colorize(:color => :black, :background => :white)
-      puts delimiter
+      puts_delimiter(cmd)
       puts `#{cmd}`
       $?
+    end
+
+    def puts_delimiter(text)
+      delimiter = ('=' * 78).colorize(:color => :black, :background => :white)
+      puts delimiter
+      puts text.colorize(:color => :black, :background => :white)
+      puts delimiter
     end
   end
 end

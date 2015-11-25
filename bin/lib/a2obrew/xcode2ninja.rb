@@ -33,6 +33,29 @@ module A2OBrew
 
     private
 
+    def xcodeproj_path
+      unless @xcodeproj_path
+        fail Informative, 'Please specify Xcode project.'
+      end
+      @xcodeproj_path
+    end
+
+    def xcodeproj_dir
+      unless @xcodeproj_dir
+        fail Informative, 'Please specify Xcode project.'
+      end
+      @xcodeproj_dir
+    end
+
+    def xcodeproj_path=(path)
+      @xcodeproj_path = path && Pathname.new(path).expand_path
+      @xcodeproj_dir = File.dirname(@xcodeproj_path)
+    end
+
+    def xcodeproj
+      @xcodeproj ||= Xcodeproj::Project.open(xcodeproj_path)
+    end
+
     def generate_ninja_build(output_dir, xcodeproj, target, build_config)
       builds = generate_build_rules(xcodeproj, target, build_config)
       write_ninja_build(output_dir, target, build_config, builds)
@@ -73,6 +96,7 @@ module A2OBrew
           f.puts ''
         end
       end
+
       path
     end
 
@@ -80,28 +104,41 @@ module A2OBrew
       # TODO: extract minimum-deployment-target from xcodeproj
       r = <<RULES
 rule ibtool_compile
+  description = ibtool compile ${out}
   command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${out}` ${in}
 
 rule ibtool_link
+  description = ibtool link ${out}
   command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link `dirname ${out}` ${in}
 
 rule cc
+  description = compile ${source} to ${out}
   command = a2o ${cflags} -c ${source} -o ${out}
 
 rule link
+  description = link to ${out}
   command = llvm-link -o ${out} ${in}
 
 rule cp_r
+  description = cp -r from ${in} to ${out}
   command = cp -r ${in} ${out}
 
+rule rm
+  description = remove {$out}
+  command = rm ${out}
+
 rule file_packager
+  description = execute emscripten's file packager to ${target}
   command = python #{ENV['EMSCRIPTEN']}/tools/file_packager.py ${target} --preload #{packager_target_dir(target, build_config)}@/ --js-output=${js_output}
 
 rule emscripten_html
+  description = generate emscripten's executable ${out}
   command = EMCC_DEBUG=1 a2o -v -s TOTAL_MEMORY=402653184 ${framework_ref_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o ${out} ${linked_objects} --pre-js ${pre_js} # --pre-js mem_check.js
 RULES
       r
     end
+
+    # paths
 
     def build_dir(target, build_config)
       "build/#{target.name}/#{build_config.name}"
@@ -142,6 +179,8 @@ RULES
     def binary_path(target, build_config)
       "#{build_dir(target, build_config)}/#{target.product_name}.bc"
     end
+
+    # phases
 
     def resources_build_phase(_xcodeproj, target, build_config, phase)
       builds = []
@@ -343,6 +382,8 @@ RULES
       # FIXME: Implement
     end
 
+    # utils
+
     def expand(value, type = nil)
       if value.is_a?(Array)
         value = value.reject do |v|
@@ -383,29 +424,6 @@ RULES
           end
         end
       end
-    end
-
-    def xcodeproj_path
-      unless @xcodeproj_path
-        fail Informative, 'Please specify Xcode project.'
-      end
-      @xcodeproj_path
-    end
-
-    def xcodeproj_dir
-      unless @xcodeproj_dir
-        fail Informative, 'Please specify Xcode project.'
-      end
-      @xcodeproj_dir
-    end
-
-    def xcodeproj_path=(path)
-      @xcodeproj_path = path && Pathname.new(path).expand_path
-      @xcodeproj_dir = File.dirname(@xcodeproj_path)
-    end
-
-    def xcodeproj
-      @xcodeproj ||= Xcodeproj::Project.open(xcodeproj_path)
     end
   end
 end
