@@ -6,6 +6,8 @@ require 'mkmf'; module MakeMakefile::Logging; @logfile = File::NULL; end
 require 'colorize'
 require 'fileutils'
 
+require_relative 'xcode2ninja'
+
 module A2OBrew
   class CLI < Thor
     desc 'commands', 'show all commands of a2obrew'
@@ -98,6 +100,30 @@ USAGE
       puts_build_completion(options)
       target = options[:target]
       build_main(:clean, proj_names, target)
+    end
+
+    desc 'xcodebuild XCODEPROJ', 'build application'
+    method_option :build_configuration, :aliases => '-c', :default => 'Release', :desc => 'Build configration (ex. Release)'
+    def xcodebuild(proj_path)
+      check_emsdk_env
+
+      # TODO: add option for target_name
+      target_name = File.basename(proj_path, '.xcodeproj')
+      bc = options[:build_configuration]
+
+      unless FileTest.directory?(proj_path)
+        error_exit("Specify valid .xcodeproj path")
+      end
+
+      ninja_path = "ninja/#{target_name}.#{bc}.ninja.build"
+
+      if not File.exists?(ninja_path) or File.mtime(proj_path) > File.mtime(ninja_path)
+        xn = Xcode2Ninja.new(proj_path)
+        puts "target: #{target_name} build_configration: #{bc}"
+        xn.xcode2ninja('ninja', target_name, bc)
+      end
+
+      cmd_exec "ninja -v -f #{ninja_path}"
     end
 
     private
