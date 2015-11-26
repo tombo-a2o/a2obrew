@@ -109,7 +109,7 @@ rule ibtool_compile
 
 rule ibtool_link
   description = ibtool link ${out}
-  command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link `dirname ${out}` ${in}
+  command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(target, build_config)} ${in}
 
 rule cc
   description = compile ${source} to ${out}
