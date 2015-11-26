@@ -51,7 +51,7 @@ a2obrew update cocotron
 
 The command just updates a2obrew itself and dependent repositories.
 
-## Build
+## Build a2obrew
 
 `debug` is a target name. The target should be `debug` or `release`. If no target is specified, the target is `release`.
 
@@ -73,4 +73,22 @@ a2obrew build --target=debug Foundation cocotron Chameleon
 a2obrew install --target=debug
 # clean built binaries
 a2obrew clean --target=debug
+```
+
+## Build an application
+
+Use `a2obrew xcodebuild`.
+
+```sh
+# If there is only one xcoreproj in current working directory, no args needed
+a2obrew xcodebuild
+# If there are 2+ xcoreproj in current working directory, specify that
+a2obrew xcodebuild SimpleApp.xcodeproj
+# If you change build configuration,
+# specify it with -b (--build\_configuration). Default is -b Release.
+a2obrew xcodebuild -b Debug
+# If you'd like to overwrite ninja.build file explicitly, specify -f (--force)
+a2obrew xcodebuild -f
+# If you'd like to clean built files, specify -c (--clean)
+a2obrew xcodebuild -c
 ```
