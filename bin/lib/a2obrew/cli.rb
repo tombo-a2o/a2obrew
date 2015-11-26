@@ -111,7 +111,7 @@ USAGE
         if projects.size == 1
           proj_path = projects.first
         elsif projects.size > 1
-          error_exit('There are more than one Xcode projects in the current working directory.')
+          error_exit('There are more than one Xcode projects in the current working directory. Specify project path expressly.')
         else
           error_exit('No Xcode project in the current working directory.')
         end
