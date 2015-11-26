@@ -43,8 +43,9 @@ USAGE
     end
 
     desc 'completions COMMAND', 'list completions for the COMMAND'
-    def completions(command)
-      case command.intern
+    def completions(*commands)
+      return if commands.length == 0
+      case commands[0].intern
       when :update, :autogen
         puts_build_completion(options, false)
       when :configure, :build, :install, :clean
