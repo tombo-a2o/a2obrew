@@ -1,4 +1,4 @@
-#/bin/bash -exu
+#!/bin/bash -exu
 # Install Ruby with rbenv
 
 RBENV=${HOME}/.rbenv

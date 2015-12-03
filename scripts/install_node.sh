@@ -1,4 +1,4 @@
-#/bin/bash -exu
+#!/bin/bash -exu
 # Install Node.js with nvm
 
 if nvm > /dev/null; then
