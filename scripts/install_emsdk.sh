@@ -17,18 +17,17 @@ if git remote -v | grep juj > /dev/null ; then
 fi
 
 git pull
-source ./emsdk_env.sh
 
-if emsdk list | grep INSTALLED | grep sdk-a2o-64bit > /dev/null; then
+if ./emsdk list | grep INSTALLED | grep sdk-a2o-64bit > /dev/null; then
   echo "* sdk-a2o-64bit is installed"
 else
-  emsdk install sdk-a2o-64bit
+  ./emsdk install sdk-a2o-64bit
 fi
 
-if emsdk list | grep INSTALLED | grep \* | grep sdk-a2o-64bit > /dev/null; then
+if ./emsdk list | grep INSTALLED | grep \* | grep sdk-a2o-64bit > /dev/null; then
   echo "* sdk-a2o-64bit is activated"
 else
-  emsdk activate sdk-a2o-64bit
+  ./emsdk activate sdk-a2o-64bit
 fi
 
 cd ..
