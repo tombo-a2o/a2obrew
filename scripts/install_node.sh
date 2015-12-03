@@ -22,7 +22,7 @@ if [ ! -e "$NVM_DIR" ]; then
   esac
 fi
 
-source ${NVM_DIR}/nvm.sh > /dev/null 2>&1
+source ${NVM_DIR}/nvm.sh > /dev/null
 
 if nvm ls 0.12.2 > /dev/null; then
   echo "* node.js 0.12.2 with nvm has already been installed"
