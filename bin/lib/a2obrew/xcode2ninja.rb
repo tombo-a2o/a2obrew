@@ -317,7 +317,7 @@ RULES
 
         settings = file.build_files[0].settings
         # TODO: set default option
-        file_opt = '-s FULL_ES2=1 -O0 -DGL_GLEXT_PROTOTYPES=1 -D__IPHONE_OS_VERSION_MIN_REQUIRED=70000 -D__CC_PLATFORM_IOS=1 -DDEBUG=1 -DCD_DEBUG=1 -DCOCOS2D_DEBUG=1 -DCC_TEXTURE_ATLAS_USE_VAO=0 -Wno-warn-absolute-paths '
+        file_opt = '-s FULL_ES2=1 -O0 -DGL_GLEXT_PROTOTYPES=1 -DDEBUG=1 -DDEBUG=1 -DCD_DEBUG=1 -DCOCOS2D_DEBUG=1 -DCC_TEXTURE_ATLAS_USE_VAO=0 -s OBJC_DEBUG=1 -Wno-warn-absolute-paths '
         if settings && settings.key?('COMPILER_FLAGS')
           file_opt += expand(settings['COMPILER_FLAGS'], :array).join(' ')
         end
@@ -371,7 +371,7 @@ RULES
           'pre_js' => data_js_path(target, build_config),
           'linked_objects' => binary_path(target, build_config),
           'framework_ref_options' => LINK_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' '),
-          'lib_options' => `PKG_CONFIG_LIBDIR=#{ENV['EMSCRIPTEN']}/system/lib/pkgconfig:#{ENV['EMSCRIPTEN']}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip,
+          'lib_options' => `PKG_CONFIG_LIBDIR=#{ENV['EMSCRIPTEN']}/system/lib/pkgconfig:#{ENV['EMSCRIPTEN']}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
         }
       }
 
