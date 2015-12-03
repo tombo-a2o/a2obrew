@@ -34,4 +34,4 @@ cd ..
 ./scripts/update_emscripten.sh
 
 source emsdk/emsdk_env.sh > /dev/null
-emcc --clear-cache
+emcc --clear-cache --clear-ports
