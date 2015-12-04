@@ -35,3 +35,4 @@ cd ..
 
 source emsdk/emsdk_env.sh > /dev/null
 emcc --clear-cache --clear-ports
+emcc -s USE_LIBPNG=1 -s USE_ZLIB=1
