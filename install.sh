@@ -28,6 +28,7 @@ fi
 source emsdk/emsdk_env.sh > /dev/null
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
+eval "$(bin/a2obrew init -)"
 
 if [ $# == 1 ]; then
     if [ "$1" = "rebuild" ]; then
