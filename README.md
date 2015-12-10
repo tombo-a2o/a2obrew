@@ -1,5 +1,11 @@
 # a2obrew
 
+## prerequests
+
+- Install Xcode 7.2+
+
+https://developer.apple.com/downloads/
+
 ## install
 
 1. Check out a2obrew into `$HOME/a2obrew`.
