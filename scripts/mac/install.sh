@@ -34,6 +34,20 @@ else
   brew install automake
 fi
 
+# Install autoconf
+if brew list autoconf > /dev/null; then
+  echo "* autoconf is installed"
+else
+  brew install autoconf
+fi
+
+# Install libtool
+if brew list libtool > /dev/null; then
+  echo "* libtool is installed"
+else
+  brew install libtool
+fi
+
 # Install coreutils
 if brew list coreutils > /dev/null; then
   echo "* coreutils is installed"
