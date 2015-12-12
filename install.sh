@@ -29,7 +29,6 @@ eval "$(rbenv init -)"
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
-source ${NVM_DIR}/nvm.sh
 
 # Install emscripten
 ./scripts/install_emsdk.sh
