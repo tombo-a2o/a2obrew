@@ -22,12 +22,19 @@ fi
 # Install LLs for emscripten
 ./scripts/install_node.sh
 ./scripts/install_python.sh
+
+# Load LLs
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
+export PATH="$HOME/.pyenv/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+source ${NVM_DIR}/nvm.sh
+
 # Install emscripten
 ./scripts/install_emsdk.sh
 
 source emsdk/emsdk_env.sh > /dev/null
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
 eval "$(bin/a2obrew init -)"
 
 if [ $# == 1 ]; then
