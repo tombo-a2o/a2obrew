@@ -1,4 +1,4 @@
-#!/bin/bash -exu
+#!/bin/bash -ex
 # Install a2o environment
 OS=`uname`
 
