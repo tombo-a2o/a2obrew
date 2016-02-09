@@ -190,8 +190,10 @@ USAGE
             exit_status = cmd_exec "cd #{work_path} && #{cmd}"
             if exit_status.exitstatus != 0
               puts ('*' * 78).colorize(:color => :red)
-              puts "Build Error: stop building #{proj[:name]}".colorize(:color => :red)
+              puts "Build Error: stop a2obrew #{command} #{proj[:name]}".colorize(:color => :red)
               puts ('*' * 78).colorize(:color => :red)
+              puts 'You can re-execute this phase with the command below.'
+              puts "a2obrew #{command} #{proj[:name]}".colorize(:color => :black, :background => :white)
               exit exit_status.exitstatus
             end
           }
