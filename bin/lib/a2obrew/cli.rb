@@ -187,7 +187,13 @@ USAGE
               :cppflags => target ? A2OCONF[:targets][target.intern][:cppflags] : nil,
             }
 
-            cmd_exec "cd #{work_path} && #{cmd}"
+            exit_status = cmd_exec "cd #{work_path} && #{cmd}"
+            if exit_status.exitstatus != 0
+              puts ('*' * 78).colorize(:color => :red)
+              puts "Build Error: stop building #{proj[:name]}".colorize(:color => :red)
+              puts ('*' * 78).colorize(:color => :red)
+              exit exit_status.exitstatus
+            end
           }
         end
       }
