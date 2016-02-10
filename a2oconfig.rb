@@ -68,27 +68,17 @@ emconfigure \
   --disable-samples \
   --disable-extras \
   --disable-tools \
-  --with-data-packaging=files \
+  --with-data-packaging=archive \
   --prefix=%{emscripten_system_local_path} \
   --with-cross-build=`pwd`/../#{ICU_NATIVE_DIR} \
-  CPPFLAGS="%{cppflags}"
+  CPPFLAGS="%{cppflags} -DUCONFIG_NO_LEGACY_CONVERSION=1 -DUCONFIG_NO_COLLATION=1 -DUCONFIG_NO_TRANSLITERATION=1"
 CONFIGURE
         :build_path => '%{project_path}/buildEmscripten%{target}',
         :build_target_path => '%{project_path}/buildEmscripten%{target}',
         :build => <<BUILD,
 emmake make ARFLAGS=rv -j8
-cd lib
-for archive in `ls *.a`; do
-    bc=`basename ${archive} .a`.bc
-    llvm-ar t ${archive} > files
-    llvm-ar x ${archive}
-    llvm-link -o ${bc} `cat files`
-    rm ${archive}
-    llvm-ar r ${archive} ${bc}
-    rm `cat files`
-    rm files
-    rm -f ${bc}
-done
+opt-static-lib lib/libicui18n.a ../public_funcs.txt
+opt-static-lib lib/libicuuc.a
 BUILD
         :install => 'make install',
       },
