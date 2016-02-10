@@ -154,10 +154,7 @@ USAGE
         command = "ninja -v -f #{ninja_path}"
       end
 
-      stat = cmd_exec command
-      if stat.exitstatus != 0
-        error_exit 'xcodebuild error'
-      end
+      cmd_exec command, 'xcodebuild error'
     end
 
     private
@@ -202,10 +199,7 @@ USAGE
               :cppflags => target ? A2OCONF[:targets][target.intern][:cppflags] : nil,
             }
 
-            exit_status = cmd_exec "cd #{work_path} && #{cmd}"
-            if exit_status.exitstatus != 0
-              error_exit "Build Error: stop a2obrew #{command} #{proj[:name]}".colorize(:color => :red), exit_status.exitstatus
-            end
+            cmd_exec "cd #{work_path} && #{cmd}", "Build Error: stop a2obrew #{command} #{proj[:name]}"
           }
         end
       }
@@ -230,18 +224,11 @@ USAGE
         current_branch = `#{git_command} rev-parse --abbrev-ref HEAD`
 
         if branch_name and current_branch != branch_name
-          exit_status = cmd_exec "#{git_command} checkout #{branch_name}"
-          if exit_status.exitstatus != 0
-            error_exit "fail to change the branch from #{current_branch} to #{branch_name}"
-          end
+          cmd_exec "#{git_command} checkout #{branch_name}", "fail to change the branch from #{current_branch} to #{branch_name}"
         end
 
         # check the repository is up to date or not
-        exit_status = cmd_exec "#{git_command} remote update"
-        if exit_status.exitstatus != 0
-          error_exit 'fail to git remote update'
-        end
-
+        cmd_exec "#{git_command} remote update", 'fail to git remote update'
         local = `#{git_command} rev-parse @`
         remote = `#{git_command} rev-parse @{u}`
         base = `#{git_command} merge-base @ @{u}`
@@ -250,10 +237,7 @@ USAGE
           puts "#{root_path} is up to date."
         elsif local == base
           # git pull if needed
-          stat = cmd_exec "#{git_command} pull"
-          if stat.exitstatus != 0
-            error_exit "git pull fails on #{root_path}"
-          end
+          cmd_exec "#{git_command} pull", "git pull fails on #{root_path}"
         elsif remote == base
           error_exit "You must do 'git push' on #{root_path}"
         else
@@ -267,10 +251,7 @@ USAGE
         else
           branch_option = ''
         end
-        stat = cmd_exec "git clone #{repository_uri} #{branch_option} #{root_path}"
-        if stat.exitstatus != 0
-          error_exit "git clone fails from #{repository_uri} with the branch #{branch_name} to #{root_path}"
-        end
+        cmd_exec "git clone #{repository_uri} #{branch_option} #{root_path}", "git clone fails from #{repository_uri} with the branch #{branch_name} to #{root_path}"
       end
     end
 
@@ -370,12 +351,17 @@ USAGE
       end
     end
 
-    def cmd_exec(cmd)
+    def cmd_exec(cmd, error_msg = nil)
       puts_delimiter(cmd)
       pid = fork
       exec(cmd) if pid.nil?
       Process.waitpid(pid)
-      $?
+      stat = $?
+      if stat.exitstatus != 0
+        error_msg ||= "Error: #{cmd}"
+        error_exit error_msg, stat.exitstatus
+      end
+      stat
     end
 
     def puts_delimiter(text)
