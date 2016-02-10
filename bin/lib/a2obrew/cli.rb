@@ -10,6 +10,12 @@ require_relative 'xcode2ninja'
 
 module A2OBrew
   class CLI < Thor
+    def initialize(*args)
+      super
+
+      @current_command = "a2obrew #{ARGV.join(' ')}"
+    end
+
     desc 'commands', 'show all commands of a2obrew'
     def commands
       self.class.commands.each {|command|
@@ -58,6 +64,8 @@ USAGE
     def update(*proj_names)
       depends = A2OCONF[:depends]
       depends[:projects].each {|proj|
+        @current_command = "a2obrew update #{proj[:name]}"
+
         unless proj_names.length == 0 or proj_names.include?(proj[:name])
           next
         end
@@ -141,9 +149,14 @@ USAGE
 
       # execute ninja
       if options[:clean]
-        cmd_exec "ninja -v -f #{ninja_path} -t clean"
+        command = "ninja -v -f #{ninja_path} -t clean"
       else
-        cmd_exec "ninja -v -f #{ninja_path}"
+        command = "ninja -v -f #{ninja_path}"
+      end
+
+      stat = cmd_exec command
+      if stat.exitstatus != 0
+        error_exit 'xcodebuild error'
       end
     end
 
@@ -154,6 +167,8 @@ USAGE
       check_target(target)
       depends = A2OCONF[:depends]
       depends[:projects].each {|proj|
+        @current_command = "a2obrew #{command} #{proj[:name]}"
+
         unless proj_names.length == 0 or proj_names.include?(proj[:name])
           next
         end
@@ -189,12 +204,7 @@ USAGE
 
             exit_status = cmd_exec "cd #{work_path} && #{cmd}"
             if exit_status.exitstatus != 0
-              puts ('*' * 78).colorize(:color => :red)
-              puts "Build Error: stop a2obrew #{command} #{proj[:name]}".colorize(:color => :red)
-              puts ('*' * 78).colorize(:color => :red)
-              puts 'You can re-execute this phase with the command below.'
-              puts "a2obrew #{command} #{proj[:name]}".colorize(:color => :black, :background => :white)
-              exit exit_status.exitstatus
+              error_exit "Build Error: stop a2obrew #{command} #{proj[:name]}".colorize(:color => :red), exit_status.exitstatus
             end
           }
         end
@@ -220,11 +230,18 @@ USAGE
         current_branch = `#{git_command} rev-parse --abbrev-ref HEAD`
 
         if branch_name and current_branch != branch_name
-          cmd_exec "#{git_command} checkout #{branch_name}"
+          exit_status = cmd_exec "#{git_command} checkout #{branch_name}"
+          if exit_status.exitstatus != 0
+            error_exit "fail to change the branch from #{current_branch} to #{branch_name}"
+          end
         end
 
         # check the repository is up to date or not
-        cmd_exec "#{git_command} remote update"
+        exit_status = cmd_exec "#{git_command} remote update"
+        if exit_status.exitstatus != 0
+          error_exit 'fail to git remote update'
+        end
+
         local = `#{git_command} rev-parse @`
         remote = `#{git_command} rev-parse @{u}`
         base = `#{git_command} merge-base @ @{u}`
@@ -250,7 +267,10 @@ USAGE
         else
           branch_option = ''
         end
-        cmd_exec "git clone #{repository_uri} #{branch_option} #{root_path}"
+        stat = cmd_exec "git clone #{repository_uri} #{branch_option} #{root_path}"
+        if stat.exitstatus != 0
+          error_exit "git clone fails from #{repository_uri} with the branch #{branch_name} to #{root_path}"
+        end
       end
     end
 
@@ -315,9 +335,17 @@ USAGE
       end
     end
 
-    def error_exit(message)
-      puts "a2obrew: #{message}"
-      exit(1)
+    def error_exit(message, exit_status = 1)
+      puts ('*' * 78).colorize(:color => :red)
+      puts "a2obrew: #{message}".colorize(:color => :red)
+      puts ('*' * 78).colorize(:color => :red)
+
+      if @current_command
+        puts 'You can re-execute this phase with the command below.'
+        puts @current_command.colorize(:color => :black, :background => :white)
+      end
+
+      exit exit_status
     end
 
     def project_names
