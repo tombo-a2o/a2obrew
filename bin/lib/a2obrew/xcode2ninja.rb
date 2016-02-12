@@ -133,7 +133,7 @@ rule file_packager
 
 rule emscripten_html
   description = generate emscripten's executable ${out}
-  command = EMCC_DEBUG=1 a2o -v -s TOTAL_MEMORY=402653184 ${framework_ref_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o ${out} ${linked_objects} --pre-js ${pre_js} # --pre-js mem_check.js
+  command = EMCC_DEBUG=1 a2o -v -s TOTAL_MEMORY=402653184 ${framework_ref_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o ${out} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n # --pre-js mem_check.js
 RULES
       r
     end
@@ -240,6 +240,16 @@ RULES
       framework_resources = file_recursive_copy("#{ENV['EMSCRIPTEN']}/system/frameworks/UIKit.framework/Resources/", "#{framework_bundle_dir(target, build_config)}/UIKit.framework/Resources/")
       builds += framework_resources[:builds]
       resources += framework_resources[:outputs]
+      
+      # ICU data_path
+      icu_data_in = "#{ENV['EMSCRIPTEN']}/system/local/share/icu/54.1/icudt54l.dat"
+      icu_data_out = "#{packager_target_dir(target, build_config)}/System/icu/icu.dat"
+      builds << {
+        outputs: [icu_data_out],
+        rule_name: "cp_r",
+        inputs: [icu_data_in],
+      }
+      resources << icu_data_out
 
       # file_packager
       t = data_path(target, build_config)
