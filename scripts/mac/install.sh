@@ -68,3 +68,10 @@ if brew list ninja > /dev/null; then
 else
   brew install ninja
 fi
+
+# Install pkg-config
+if brew list pkg-config > /dev/null; then
+  echo "* pkg-config is installed"
+else
+  brew install pkg-config
+fi
