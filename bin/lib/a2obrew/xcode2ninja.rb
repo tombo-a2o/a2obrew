@@ -5,7 +5,7 @@ require 'pathname'
 module A2OBrew
 
   REFERENCE_FRAMEWORKS = %w(UIKit Security ImageIO GoogleMobileAds CoreGraphics)
-  LINK_FRAMEWORKS = %w(UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText)
+  LINK_FRAMEWORKS = %w(UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText Social)
 
   class Xcode2Ninja
     def initialize(xcodeproj_path)
