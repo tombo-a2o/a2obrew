@@ -38,7 +38,7 @@ A2OCONF = {
         :repository_uri => 'git@github.com:mheily/blocks-runtime.git',
         :autogen => 'autoreconf -i || autoreconf -i',
         :configure => 'AR=emar emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --enable-static --disable-shared CFLAGS="%{cppflags}"',
-        :build => 'make -j8 && rm a.out*',
+        :build => 'make -j8 && rm -f a.out*',
         :install => 'make install',
         :clean => 'make clean',
       },
