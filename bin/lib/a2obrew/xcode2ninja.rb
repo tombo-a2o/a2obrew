@@ -351,7 +351,7 @@ RULES
         objects << object
 
         settings = file.build_files[0].settings
-        file_opt = ' '
+        file_opt = '-Wno-warn-absolute-paths '
         if settings && settings.key?('COMPILER_FLAGS')
           file_opt += expand(settings['COMPILER_FLAGS'], :array).join(' ')
         end
