@@ -5,59 +5,60 @@ A2O_PATH = File.expand_path(File.dirname(__FILE__))
 
 ICU_NATIVE_DIR = `uname` =~ /\ADarwin/ ? 'buildMac' : 'buildLinux'
 
+# rubocop:disable Metrics/LineLength
 A2OCONF = {
-  :targets => {
-    :debug => {
+  targets: {
+    debug: {
       # :cppflags => '-g -O0 -DDEBUG',
-      :cppflags => '-O0 -DDEBUG',
+      cppflags: '-O0 -DDEBUG'
     },
-    :release => {
-      :cppflags => '-O2',
+    release: {
+      cppflags: '-O2'
     },
-    :profile => {
-      :cppflags => '-O0 -DDEBUG --tracing',
-    },
+    profile: {
+      cppflags: '-O0 -DDEBUG --tracing'
+    }
   },
-  :depends => {
-    :path => "#{A2O_PATH}/depends",
-    :projects => [
+  depends: {
+    path: "#{A2O_PATH}/depends",
+    projects: [
       {
-        :name => 'libbsd',
-        :path => 'libbsd',
-        :repository_uri => 'git@github.com:tomboinc/libbsd.git',
-        :branch => 'feature/emscripten',
-        :autogen => './autogen',
-        :configure => 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags}"',
-        :build => 'make -j8',
-        :install => 'make install',
-        :clean => 'make clean',
+        name: 'libbsd',
+        path: 'libbsd',
+        repository_uri: 'git@github.com:tomboinc/libbsd.git',
+        branch: 'feature/emscripten',
+        autogen: './autogen',
+        configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags}"',
+        build: 'make -j8',
+        install: 'make install',
+        clean: 'make clean'
       },
       {
-        :name => 'blocks-runtime',
-        :path => 'blocks-runtime',
-        :repository_uri => 'git@github.com:mheily/blocks-runtime.git',
-        :autogen => 'autoreconf -i || autoreconf -i',
-        :configure => 'AR=emar emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --enable-static --disable-shared CFLAGS="%{cppflags}"',
-        :build => 'make -j8 && rm -f a.out*',
-        :install => 'make install',
-        :clean => 'make clean',
+        name: 'blocks-runtime',
+        path: 'blocks-runtime',
+        repository_uri: 'git@github.com:mheily/blocks-runtime.git',
+        autogen: 'autoreconf -i || autoreconf -i',
+        configure: 'AR=emar emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --enable-static --disable-shared CFLAGS="%{cppflags}"',
+        build: 'make -j8 && rm -f a.out*',
+        install: 'make install',
+        clean: 'make clean'
       },
       {
-        :name => 'objc4',
-        :path => 'objc4',
-        :repository_uri => 'git@github.com:tomboinc/objc4.git',
-        :branch => 'feature/emscripten',
-        :build_path => '%{project_path}',
-        :build => 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make -j8',
-        :install => 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make install',
-        :clean => 'BUILD=%{build_target_path} make clean',
+        name: 'objc4',
+        path: 'objc4',
+        repository_uri: 'git@github.com:tomboinc/objc4.git',
+        branch: 'feature/emscripten',
+        build_path: '%{project_path}',
+        build: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make -j8',
+        install: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make install',
+        clean: 'BUILD=%{build_target_path} make clean'
       },
       {
-        :name => 'icu',
-        :path => 'icu',
-        :repository_uri => 'git@github.com:fchiba/icu.git',
-        :branch => 'prebuilt',
-        :configure => <<CONFIGURE,
+        name: 'icu',
+        path: 'icu',
+        repository_uri: 'git@github.com:fchiba/icu.git',
+        branch: 'prebuilt',
+        configure: <<CONFIGURE,
 emconfigure \
   %{project_path}/source/configure \
   --enable-static \
@@ -73,49 +74,49 @@ emconfigure \
   --with-cross-build=`pwd`/../#{ICU_NATIVE_DIR} \
   CPPFLAGS="%{cppflags} -DUCONFIG_NO_LEGACY_CONVERSION=1 -DUCONFIG_NO_COLLATION=1 -DUCONFIG_NO_TRANSLITERATION=1"
 CONFIGURE
-        :build_path => '%{project_path}/buildEmscripten%{target}',
-        :build_target_path => '%{project_path}/buildEmscripten%{target}',
-        :build => <<BUILD,
+        build_path: '%{project_path}/buildEmscripten%{target}',
+        build_target_path: '%{project_path}/buildEmscripten%{target}',
+        build: <<BUILD,
 emmake make ARFLAGS=rv -j8
 opt-static-lib lib/libicui18n.a ../public_funcs.txt
 opt-static-lib lib/libicuuc.a
 BUILD
-        :install => 'make install',
+        install: 'make install'
       },
       {
-        :name => 'libdispatch',
-        :path => 'libdispatch',
-        :repository_uri => 'git@github.com:tomboinc/libdispatch.git',
-        :branch => 'feature/emscripten',
-        :build_path => '%{project_path}',
-        :build => 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make -j8',
-        :install => 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make install',
-        :clean => 'BUILD=%{build_target_path} make clean',
+        name: 'libdispatch',
+        path: 'libdispatch',
+        repository_uri: 'git@github.com:tomboinc/libdispatch.git',
+        branch: 'feature/emscripten',
+        build_path: '%{project_path}',
+        build: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make -j8',
+        install: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make install',
+        clean: 'BUILD=%{build_target_path} make clean'
       },
       {
-        :name => 'pixman',
-        :path => 'pixman',
-        :repository_uri => 'git://anongit.freedesktop.org/git/pixman.git',
-        :branch => '0.32',
-        :autogen => <<AUTOGEN,
+        name: 'pixman',
+        path: 'pixman',
+        repository_uri: 'git://anongit.freedesktop.org/git/pixman.git',
+        branch: '0.32',
+        autogen: <<AUTOGEN,
 sed -e "s/AM_INIT_AUTOMAKE(\\\[foreign dist-bzip2\\\])/AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects])/g" configure.ac > tmp
 mv tmp configure.ac
 NOCONFIGURE=1 ./autogen.sh || autoreconf -i
 AUTOGEN
-        :configure => 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --enable-shared=no --enable-static=yes CPPFLAGS="%{cppflags}"',
-        :build => 'make -j8',
-        :install => 'make install',
-        :clean => 'make clean',
+        configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --enable-shared=no --enable-static=yes CPPFLAGS="%{cppflags}"',
+        build: 'make -j8',
+        install: 'make install',
+        clean: 'make clean'
       },
       {
-        :name => 'cairo',
-        :path => 'cairo',
-        :repository_uri => 'git://anongit.freedesktop.org/git/cairo',
-        :branch => '1.14',
-        :autogen => 'NOCONFIGURE=1 ./autogen.sh',
-        :build_path => '%{project_path}/embuild/%{target}',
-        :build_target_path => '%{project_path}/embuild/%{target}',
-        :configure => <<EMCONFIGURE,
+        name: 'cairo',
+        path: 'cairo',
+        repository_uri: 'git://anongit.freedesktop.org/git/cairo',
+        branch: '1.14',
+        autogen: 'NOCONFIGURE=1 ./autogen.sh',
+        build_path: '%{project_path}/embuild/%{target}',
+        build_target_path: '%{project_path}/embuild/%{target}',
+        configure: <<EMCONFIGURE,
 emconfigure %{project_path}/configure \
     --prefix=%{emscripten_system_local_path} \
     --enable-shared=no \
@@ -132,44 +133,44 @@ emconfigure %{project_path}/configure \
     CFLAGS="-DCAIRO_NO_MUTEX=1" \
     CPPFLAGS="%{cppflags}"
 EMCONFIGURE
-        :build => 'make -j8',
-        :install => 'make install',
-        :clean => 'make clean',
+        build: 'make -j8',
+        install: 'make install',
+        clean: 'make clean'
       },
       {
         # NOTE: openssl doesn't support target
-        :name => 'openssl',
-        :path => 'openssl',
-        :repository_uri => 'git@github.com:gunyarakun/openssl.git',
-        :branch => 'feature/emscripten',
-        :configure => 'emconfigure sh %{project_path}/Configure -no-asm no-ssl3 no-comp no-hw no-engine enable-deprecated no-shared no-dso no-gmp --openssldir=%{emscripten_system_local_path} linux-generic32',
-        :build_path => '%{project_path}',
-        :build_target_path => '%{project_path}',
-        :build => 'emmake make build_libs -j8',
-        :install => 'emmake make install_emscripten',
-        :clean => 'make clean',
+        name: 'openssl',
+        path: 'openssl',
+        repository_uri: 'git@github.com:gunyarakun/openssl.git',
+        branch: 'feature/emscripten',
+        configure: 'emconfigure sh %{project_path}/Configure -no-asm no-ssl3 no-comp no-hw no-engine enable-deprecated no-shared no-dso no-gmp --openssldir=%{emscripten_system_local_path} linux-generic32',
+        build_path: '%{project_path}',
+        build_target_path: '%{project_path}',
+        build: 'emmake make build_libs -j8',
+        install: 'emmake make install_emscripten',
+        clean: 'make clean'
       },
       {
-        :name => 'freetype',
-        :path => 'freetype',
-        :repository_uri => 'git@github.com:fchiba/freetype.git',
-        :branch => 'master',
-        :configure => 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared --with-zlib=no --with-png=no CPPFLAGS=%{cppflags}',
-        :build => 'emmake make -j8',
-        :install => 'emmake make install',
-        :clean => 'emmake make clean',
+        name: 'freetype',
+        path: 'freetype',
+        repository_uri: 'git@github.com:fchiba/freetype.git',
+        branch: 'master',
+        configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared --with-zlib=no --with-png=no CPPFLAGS=%{cppflags}',
+        build: 'emmake make -j8',
+        install: 'emmake make install',
+        clean: 'emmake make clean'
       },
       {
-        :name => 'Foundation',
-        :path => 'Foundation',
-        :repository_uri => 'git@github.com:tomboinc/Foundation.git',
-        :branch => 'feature/emscripten',
-        :autogen => 'BUILD_DIR=%{build_target_path} make install_header_only',
-        :build_path => '%{project_path}',
-        :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
-        :install => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
-        :clean => 'BUILD_DIR=%{build_target_path} make clean',
-        :frameworks => %w(
+        name: 'Foundation',
+        path: 'Foundation',
+        repository_uri: 'git@github.com:tomboinc/Foundation.git',
+        branch: 'feature/emscripten',
+        autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
+        build_path: '%{project_path}',
+        build: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
+        install: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
+        clean: 'BUILD_DIR=%{build_target_path} make clean',
+        frameworks: %w(
           System/Accounts
           System/AdSupport
           System/AudioToolbox
@@ -189,19 +190,19 @@ EMCONFIGURE
           System/Social
           System/StoreKit
           System/SystemConfiguration
-        ),
+        )
       },
       {
-        :name => 'cocotron',
-        :path => 'cocotron',
-        :repository_uri => 'git@github.com:tomboinc/cocotron.git',
-        :branch => 'feature/emscripten',
-        :autogen => 'BUILD_DIR=%{build_target_path} make install_header_only',
-        :build_path => '%{project_path}',
-        :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
-        :install => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
-        :clean => 'BUILD_DIR=%{build_target_path} make clean',
-        :frameworks => %w(
+        name: 'cocotron',
+        path: 'cocotron',
+        repository_uri: 'git@github.com:tomboinc/cocotron.git',
+        branch: 'feature/emscripten',
+        autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
+        build_path: '%{project_path}',
+        build: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
+        install: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
+        clean: 'BUILD_DIR=%{build_target_path} make clean',
+        frameworks: %w(
           AppKit
           CommonCrypto
           CoreData
@@ -209,24 +210,24 @@ EMCONFIGURE
           CoreText
           Onyx2D
           QuartzCore
-        ),
+        )
       },
       {
-        :name => 'Chameleon',
-        :path => 'Chameleon',
-        :repository_uri => 'git@github.com:tomboinc/Chameleon.git',
-        :branch => 'feature/with_cocotron',
-        :autogen => 'BUILD_DIR=%{build_target_path} make install_header_only',
-        :build_path => '%{project_path}',
+        name: 'Chameleon',
+        path: 'Chameleon',
+        repository_uri: 'git@github.com:tomboinc/Chameleon.git',
+        branch: 'feature/with_cocotron',
+        autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
+        build_path: '%{project_path}',
         # FIXME: now -O2 doesn't work on Chameleon, so set static CPPFLAGS
         # :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
-        :build => 'STYLE_CPPFLAGS="-O0 -DDEBUG" BUILD_DIR=%{build_target_path} make -j8',
-        :install => 'STYLE_CPPFLAGS="-O0 -DDEBUG" BUILD_DIR=%{build_target_path} make install',
-        :clean => 'BUILD_DIR=%{build_target_path} make clean',
-        :frameworks => %w(
+        build: 'STYLE_CPPFLAGS="-O0 -DDEBUG" BUILD_DIR=%{build_target_path} make -j8',
+        install: 'STYLE_CPPFLAGS="-O0 -DDEBUG" BUILD_DIR=%{build_target_path} make install',
+        clean: 'BUILD_DIR=%{build_target_path} make clean',
+        frameworks: %w(
           UIKit
-        ),
-      },
-    ],
-  },
+        )
+      }
+    ]
+  }
 }

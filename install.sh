@@ -93,3 +93,6 @@ bin/a2obrew install cocotron
 bin/a2obrew configure Chameleon
 bin/a2obrew build Chameleon
 bin/a2obrew install Chameleon
+
+# Install commit hooks
+./scripts/install_commit_hooks.sh

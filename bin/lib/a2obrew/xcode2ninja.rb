@@ -2,30 +2,39 @@ require 'xcodeproj'
 require 'fileutils'
 require 'pathname'
 
-module A2OBrew
+# rubocop:disable Metrics/ParameterLists
 
+module A2OBrew
   # TODO: Move to active_project_config
   REFERENCE_FRAMEWORKS = %w(UIKit Security ImageIO GoogleMobileAds CoreGraphics)
   # TODO: Move to active_project_config
-  LINK_FRAMEWORKS = %w(UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText Social AVFoundation)
+  LINK_FRAMEWORKS = %w(
+    UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
+    CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
+    Social AVFoundation
+  )
 
-  class Xcode2Ninja
+  class Xcode2Ninja # rubocop:disable Metrics/ClassLength
     def initialize(xcodeproj_path)
       self.xcodeproj_path = xcodeproj_path
     end
 
-    def xcode2ninja(output_dir, xcodeproj_target = nil, build_config_name = nil, active_project_config = {}, a2o_target = nil)
-      unless @xcodeproj_path
-        fail Informative, 'Please specify Xcode project.'
-      end
+    def xcode2ninja(output_dir, # rubocop:disable Metrics/MethodLength
+                    xcodeproj_target = nil, build_config_name = nil,
+                    active_project_config = {}, a2o_target = nil)
+      fail Informative, 'Please specify Xcode project.' unless @xcodeproj_path
 
       gen_paths = []
 
       xcodeproj.targets.each do |target|
-        next if xcodeproj_target and target.name != xcodeproj_target
+        next if xcodeproj_target && target.name != xcodeproj_target
         target.build_configurations.each do |build_config|
-          next if build_config_name and build_config.name != build_config_name
-          gen_path = generate_ninja_build(output_dir, xcodeproj, target, build_config, active_project_config, a2o_target)
+          next if build_config_name && build_config.name != build_config_name
+          gen_path = generate_ninja_build(
+            output_dir,
+            xcodeproj, target, build_config,
+            active_project_config, a2o_target
+          )
           gen_paths << gen_path
         end
       end
@@ -36,16 +45,12 @@ module A2OBrew
     private
 
     def xcodeproj_path
-      unless @xcodeproj_path
-        fail Informative, 'Please specify Xcode project.'
-      end
+      fail Informative, 'Please specify Xcode project.' unless @xcodeproj_path
       @xcodeproj_path
     end
 
     def xcodeproj_dir
-      unless @xcodeproj_dir
-        fail Informative, 'Please specify Xcode project.'
-      end
+      fail Informative, 'Please specify Xcode project.' unless @xcodeproj_dir
       @xcodeproj_dir
     end
 
@@ -80,10 +85,8 @@ module A2OBrew
       end.flatten.compact
     end
 
-    def write_ninja_build(output_dir, target, build_config, builds, a2o_target)
-      unless File.directory?(output_dir)
-        FileUtils.mkdir_p(output_dir)
-      end
+    def write_ninja_build(output_dir, target, build_config, builds, a2o_target) # rubocop:disable Metrics/MethodLength
+      FileUtils.mkdir_p(output_dir) unless File.directory?(output_dir)
 
       path = File.join(output_dir, "#{a2o_target}.ninja.build")
       File.open(path, 'w:UTF-8') do |f|
@@ -102,7 +105,8 @@ module A2OBrew
       path
     end
 
-    def rules(target, build_config, a2o_target)
+    # rubocop:disable Metrics/LineLength
+    def rules(target, _build_config, a2o_target) # rubocop:disable Metrics/MethodLength
       # TODO: extract minimum-deployment-target from xcodeproj
       r = <<RULES
 rule ibtool_compile
@@ -139,6 +143,7 @@ rule html
 RULES
       r
     end
+    # rubocop:enable Metrics/LineLength
 
     # paths
 
@@ -192,16 +197,13 @@ RULES
       # }
       # TODO: Use Ruby 2.3 and Hash#dig
       flags = active_project_config[:flags]
-      if flags
-        flags[rule]
-      else
-        nil
-      end
+      flags[rule] if flags
     end
 
     # phases
 
-    def resources_build_phase(_xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+    def resources_build_phase(_xcodeproj, target, build_config, phase, _active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength
+      # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
       resources = []
       phase.files_references.each do |files_ref|
@@ -224,18 +226,18 @@ RULES
             builds << {
               outputs: [tmp_path],
               rule_name: 'ibtool_compile',
-              inputs: [local_path],
+              inputs: [local_path]
             }
             builds << {
               outputs: [remote_path],
               rule_name: 'ibtool_link',
-              inputs: [tmp_path],
+              inputs: [tmp_path]
             }
           else
             builds << {
               outputs: [remote_path],
               rule_name: 'cp_r',
-              inputs: [local_path],
+              inputs: [local_path]
             }
           end
 
@@ -251,12 +253,15 @@ RULES
         builds << {
           outputs: [infoplist],
           rule_name: 'cp_r',
-          inputs: [infoplist_path],
+          inputs: [infoplist_path]
         }
       end
 
       # UIKit bundle
-      framework_resources = file_recursive_copy("#{ENV['EMSCRIPTEN']}/system/frameworks/UIKit.framework/Resources/", "#{framework_bundle_dir(a2o_target)}/UIKit.framework/Resources/")
+      framework_resources = file_recursive_copy(
+        "#{ENV['EMSCRIPTEN']}/system/frameworks/UIKit.framework/Resources/",
+        "#{framework_bundle_dir(a2o_target)}/UIKit.framework/Resources/"
+      )
       builds += framework_resources[:builds]
       resources += framework_resources[:outputs]
 
@@ -265,8 +270,8 @@ RULES
       icu_data_out = "#{packager_target_dir(a2o_target)}/System/icu/icu.dat"
       builds << {
         outputs: [icu_data_out],
-        rule_name: "cp_r",
-        inputs: [icu_data_in],
+        rule_name: 'cp_r',
+        inputs: [icu_data_in]
       }
       resources << icu_data_out
 
@@ -279,14 +284,14 @@ RULES
         inputs: resources,
         variables: {
           'target' => t,
-          'js_output' => j,
+          'js_output' => j
         }
       }
 
       builds
     end
 
-    def file_recursive_copy(in_dir, out_dir)
+    def file_recursive_copy(in_dir, out_dir) # rubocop:disable Metrics/MethodLength
       builds = []
       outputs = []
 
@@ -300,19 +305,20 @@ RULES
         builds << {
           outputs: [output_path],
           rule_name: 'cp_r',
-          inputs: [path.to_s],
+          inputs: [path.to_s]
         }
         outputs << output_path
       end
 
       {
         builds: builds,
-        outputs: outputs,
+        outputs: outputs
       }
     end
 
-    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-      # FIXME: Implement
+    # rubocop:disable Metrics/LineLength
+    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+      # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
       objects = []
 
@@ -411,18 +417,19 @@ RULES
 
       builds
     end
+    # rubocop:enable Metrics/LineLength
 
-    def frameworks_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+    def frameworks_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
     end
 
-    def shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+    def shell_script_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
     end
 
     # utils
 
-    def expand(value, type = nil)
+    def expand(value, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/LineLength
       if value.is_a?(Array)
         value = value.reject do |v|
           v == '$(inherited)'
@@ -445,6 +452,7 @@ RULES
           if value.nil?
             nil
           else
+            # rubocop:disable Metrics/BlockNesting
             value.gsub(/\$\([A-Za-z0-9_]+\)/) do |m|
               case m
               when '$(PROJECT_DIR)'
