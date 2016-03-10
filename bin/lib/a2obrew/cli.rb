@@ -107,17 +107,33 @@ USAGE
       build_main(:clean, proj_names, target)
     end
 
-    # FIXME: proj_path, xcodeproj_target and build_configuration should be set in a2o_build_config.rb
-    desc 'xcodebuild XCODEPROJ', 'build application'
+    PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'
+    desc 'xcodebuild', 'build application with config file'
     method_option :force, :type => :boolean, :aliases => '-f', :default => false, :desc => 'Force generate ninja.build and build'
     method_option :clean, :type => :boolean, :aliases => '-c', :default => false, :desc => 'Clean'
+    method_option :project_config, :aliases => '-p', :desc => 'Project config ruby path'
     method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target for a2o(ex. release)'
-    method_option :xcodeproj_target, :aliases => '-x', :desc => 'Build target for xcodeproj. Default is retrieved by xcodeproj path'
-    method_option :build_configuration, :aliases => '-b', :default => 'Release', :desc => 'Build configration on xcodeproj(ex. Release)'
     def xcodebuild(proj_path = nil)
       check_emsdk_env
 
-      # find xcoreproj directory
+      # Load project config if exists
+      project_config_path = options[:project_config]
+
+      unless project_config_path.nil? or File.exist?(project_config_path)
+        error_exit "Specified #{project_config_path} not found"
+      end
+
+      project_config_path ||= PROJECT_CONFIG_RB_PATH
+
+      if File.exist?(project_config_path)
+        proj_config = read_project_config(project_config_path)
+      else
+        proj_config = {}
+      end
+
+      # set, find and check proj_path
+      proj_path = proj_config[:xcodeproj_path]
+
       if proj_path.nil?
         projects = Dir.glob('*.xcodeproj')
         if projects.size == 1
@@ -133,24 +149,41 @@ USAGE
         error_exit('Specify valid .xcodeproj path')
       end
 
-      xcodeproj_target = options[:xcodeproj_target] || File.basename(proj_path, '.xcodeproj')
-      bc = options[:build_configuration]
-      a2o_target = options[:target]
+      xcodeproj_target = proj_config[:xcodeproj_target] || File.basename(proj_path, '.xcodeproj')
+      a2o_target = options[:target].intern
 
-      ninja_path = "ninja/#{xcodeproj_target}.#{bc}.#{a2o_target}.ninja.build"
+      begin
+        active_project_config = proj_config[:a2o_targets][a2o_target]
+      rescue
+        active_project_config = {}
+      end
+
+      xcodeproj_build_config = active_project_config[:xcodeproj_build_config]
+      unless xcodeproj_build_config
+        xcodeproj_build_config = {
+          :debug => 'Debug',
+          :release => 'Release',
+        }[a2o_target]
+
+        error_exit('Cannot determine xcodeproj_build_config') unless xcodeproj_build_config
+      end
+
+      ninja_path = "ninja/#{a2o_target}.ninja.build"
 
       # generate ninja.build
       if options[:force] or not File.exists?(ninja_path) or File.mtime(proj_path) > File.mtime(ninja_path)
         puts_delimiter("# Generate #{ninja_path}")
-        xn = Xcode2Ninja.new(proj_path)
         puts <<EOF
-xcodeproj:
-  xcodeproj_target: #{xcodeproj_target}
-  build_configration: #{bc}
 a2o:
+  project_config_path: #{project_config_path}
   target: #{a2o_target}
+xcodeproj:
+  proj_path: #{proj_path}
+  xcodeproj_target: #{xcodeproj_target}
+  xocdeproj_build_config: #{xcodeproj_build_config}
 EOF
-        gen_paths = xn.xcode2ninja('ninja', xcodeproj_target, bc, a2o_target)
+        xn = Xcode2Ninja.new(proj_path)
+        gen_paths = xn.xcode2ninja('ninja', xcodeproj_target, xcodeproj_build_config, active_project_config, a2o_target)
         gen_paths.each do |path|
           puts "Generate #{path}"
         end
@@ -378,6 +411,18 @@ EOF
       puts delimiter
       puts text.colorize(:color => :black, :background => :white)
       puts delimiter
+    end
+
+    def read_project_config(path)
+      if File.exist?(path)
+        config = eval File.read(path)
+        unless config[:version] == 1
+          fail Informative, '#{BUILD_CONFIG_RB_PATH} version should be 1'
+        end
+        config
+      else
+        {}
+      end
     end
   end
 end

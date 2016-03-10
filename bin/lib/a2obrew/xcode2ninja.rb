@@ -4,30 +4,28 @@ require 'pathname'
 
 module A2OBrew
 
-  # TODO: Move to a2o_project_config.rb
+  # TODO: Move to active_project_config
   REFERENCE_FRAMEWORKS = %w(UIKit Security ImageIO GoogleMobileAds CoreGraphics)
-  # TODO: Move to a2o_project_config.rb
+  # TODO: Move to active_project_config
   LINK_FRAMEWORKS = %w(UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText Social AVFoundation)
-  BUILD_CONFIG_RB_PATH = 'a2o_project_config.rb'
 
   class Xcode2Ninja
     def initialize(xcodeproj_path)
       self.xcodeproj_path = xcodeproj_path
     end
 
-    def xcode2ninja(output_dir, xcodeproj_target = nil, build_config_name = nil, a2o_target = nil)
+    def xcode2ninja(output_dir, xcodeproj_target = nil, build_config_name = nil, active_project_config = {}, a2o_target = nil)
       unless @xcodeproj_path
         fail Informative, 'Please specify Xcode project.'
       end
 
       gen_paths = []
-      a2o_project_config = read_a2o_project_config(a2o_target)
 
       xcodeproj.targets.each do |target|
         next if xcodeproj_target and target.name != xcodeproj_target
         target.build_configurations.each do |build_config|
           next if build_config_name and build_config.name != build_config_name
-          gen_path = generate_ninja_build(output_dir, xcodeproj, target, build_config, a2o_project_config, a2o_target)
+          gen_path = generate_ninja_build(output_dir, xcodeproj, target, build_config, active_project_config, a2o_target)
           gen_paths << gen_path
         end
       end
@@ -36,18 +34,6 @@ module A2OBrew
     end
 
     private
-
-    def read_a2o_project_config(a2o_target)
-      if File.exist?(BUILD_CONFIG_RB_PATH)
-        config = eval File.read(BUILD_CONFIG_RB_PATH)
-        unless config[:version] == 1
-          fail Informative, '#{BUILD_CONFIG_RB_PATH} version should be 1'
-        end
-        config[:a2o_targets][a2o_target.intern]
-      else
-        {}
-      end
-    end
 
     def xcodeproj_path
       unless @xcodeproj_path
@@ -72,22 +58,22 @@ module A2OBrew
       @xcodeproj ||= Xcodeproj::Project.open(xcodeproj_path)
     end
 
-    def generate_ninja_build(output_dir, xcodeproj, target, build_config, a2o_project_config, a2o_target)
-      builds = generate_build_rules(xcodeproj, target, build_config, a2o_project_config, a2o_target)
+    def generate_ninja_build(output_dir, xcodeproj, target, build_config, active_project_config, a2o_target)
+      builds = generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target)
       write_ninja_build(output_dir, target, build_config, builds, a2o_target)
     end
 
-    def generate_build_rules(xcodeproj, target, build_config, a2o_project_config, a2o_target)
+    def generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target)
       target.build_phases.map do |phase|
         case phase
         when Xcodeproj::Project::Object::PBXResourcesBuildPhase
-          resources_build_phase(xcodeproj, target, build_config, phase, a2o_project_config, a2o_target)
+          resources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
         when Xcodeproj::Project::Object::PBXSourcesBuildPhase
-          sources_build_phase(xcodeproj, target, build_config, phase, a2o_project_config, a2o_target)
+          sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
         when Xcodeproj::Project::Object::PBXFrameworksBuildPhase
-          frameworks_build_phase(xcodeproj, target, build_config, phase, a2o_project_config, a2o_target)
+          frameworks_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
         when Xcodeproj::Project::Object::PBXShellScriptBuildPhase
-          shell_script_build_phase(xcodeproj, target, build_config, phase, a2o_project_config, a2o_target)
+          shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
         else
           fail Informative, "Don't support the phase #{phase.class.name}."
         end
@@ -99,7 +85,7 @@ module A2OBrew
         FileUtils.mkdir_p(output_dir)
       end
 
-      path = File.join(output_dir, "#{target.name}.#{build_config.name}.#{a2o_target}.ninja.build")
+      path = File.join(output_dir, "#{a2o_target}.ninja.build")
       File.open(path, 'w:UTF-8') do |f|
         f.puts rules(target, build_config, a2o_target)
         f.puts ''
@@ -125,7 +111,7 @@ rule ibtool_compile
 
 rule ibtool_link
   description = ibtool link ${out}
-  command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(target, build_config, a2o_target)} ${in}
+  command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${in}
 
 rule cc
   description = compile ${source} to ${out}
@@ -145,7 +131,7 @@ rule rm
 
 rule file_packager
   description = execute emscripten's file packager to ${target}
-  command = python #{ENV['EMSCRIPTEN']}/tools/file_packager.py ${target} --preload #{packager_target_dir(target, build_config, a2o_target)}@/ --js-output=${js_output}
+  command = python #{ENV['EMSCRIPTEN']}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output}
 
 rule html
   description = generate emscripten's executable ${out}
@@ -156,47 +142,47 @@ RULES
 
     # paths
 
-    def build_dir(target, build_config, a2o_target)
-      "build/#{target.name}/#{build_config.name}/#{a2o_target}/"
+    def build_dir(a2o_target)
+      "build/#{a2o_target}/"
     end
 
-    def packager_target_dir(target, build_config, a2o_target)
-      "#{build_dir(target, build_config, a2o_target)}/package"
+    def packager_target_dir(a2o_target)
+      "#{build_dir(a2o_target)}/package"
     end
 
-    def bundle_dir(target, build_config, a2o_target)
-      "#{packager_target_dir(target, build_config, a2o_target)}/Contents"
+    def bundle_dir(a2o_target)
+      "#{packager_target_dir(a2o_target)}/Contents"
     end
 
-    def framework_bundle_dir(target, build_config, a2o_target)
-      "#{packager_target_dir(target, build_config, a2o_target)}/frameworks"
+    def framework_bundle_dir(a2o_target)
+      "#{packager_target_dir(a2o_target)}/frameworks"
     end
 
-    def resources_dir(target, build_config, a2o_target)
-      "#{bundle_dir(target, build_config, a2o_target)}/Resources"
+    def resources_dir(a2o_target)
+      "#{bundle_dir(a2o_target)}/Resources"
     end
 
-    def objects_dir(target, build_config, a2o_target)
-      "#{build_dir(target, build_config, a2o_target)}/objects"
+    def objects_dir(a2o_target)
+      "#{build_dir(a2o_target)}/objects"
     end
 
-    def data_path(target, build_config, a2o_target)
-      "#{build_dir(target, build_config, a2o_target)}/#{target.product_name}.dat"
+    def data_path(target, a2o_target)
+      "#{build_dir(a2o_target)}/#{target.product_name}.dat"
     end
 
-    def data_js_path(target, build_config, a2o_target)
-      "#{build_dir(target, build_config, a2o_target)}/#{target.product_name}Data.js"
+    def data_js_path(target, a2o_target)
+      "#{build_dir(a2o_target)}/#{target.product_name}Data.js"
     end
 
-    def html_path(target, build_config, a2o_target)
-      "#{build_dir(target, build_config, a2o_target)}/#{target.product_name}.html"
+    def html_path(target, a2o_target)
+      "#{build_dir(a2o_target)}/#{target.product_name}.html"
     end
 
-    def binary_path(target, build_config, a2o_target)
-      "#{build_dir(target, build_config, a2o_target)}/#{target.product_name}.bc"
+    def binary_path(target, a2o_target)
+      "#{build_dir(a2o_target)}/#{target.product_name}.bc"
     end
 
-    def a2o_project_flags(a2o_project_config, rule)
+    def a2o_project_flags(active_project_config, rule)
       # {
       #   flags: {
       #     cc: '-O0',
@@ -205,7 +191,7 @@ RULES
       #   }
       # }
       # TODO: Use Ruby 2.3 and Hash#dig
-      flags = a2o_project_config[:flags]
+      flags = active_project_config[:flags]
       if flags
         flags[rule]
       else
@@ -215,7 +201,7 @@ RULES
 
     # phases
 
-    def resources_build_phase(_xcodeproj, target, build_config, phase, a2o_project_config, a2o_target)
+    def resources_build_phase(_xcodeproj, target, build_config, phase, active_project_config, a2o_target)
       builds = []
       resources = []
       phase.files_references.each do |files_ref|
@@ -230,7 +216,7 @@ RULES
 
         files.each do |file|
           local_path = File.join(file.parents.map(&:path).select { |path| path }, file.path)
-          remote_path = File.join(resources_dir(target, build_config, a2o_target), file.path)
+          remote_path = File.join(resources_dir(a2o_target), file.path)
 
           if File.extname(file.path) == '.storyboard'
             remote_path += 'c'
@@ -259,7 +245,7 @@ RULES
 
       infoplist_path = build_config.build_settings['INFOPLIST_FILE']
       if infoplist_path
-        infoplist = File.join(bundle_dir(target, build_config, a2o_target), 'Info.plist')
+        infoplist = File.join(bundle_dir(a2o_target), 'Info.plist')
         resources << infoplist
 
         builds << {
@@ -270,13 +256,13 @@ RULES
       end
 
       # UIKit bundle
-      framework_resources = file_recursive_copy("#{ENV['EMSCRIPTEN']}/system/frameworks/UIKit.framework/Resources/", "#{framework_bundle_dir(target, build_config, a2o_target)}/UIKit.framework/Resources/")
+      framework_resources = file_recursive_copy("#{ENV['EMSCRIPTEN']}/system/frameworks/UIKit.framework/Resources/", "#{framework_bundle_dir(a2o_target)}/UIKit.framework/Resources/")
       builds += framework_resources[:builds]
       resources += framework_resources[:outputs]
 
       # ICU data_path
       icu_data_in = "#{ENV['EMSCRIPTEN']}/system/local/share/icu/54.1/icudt54l.dat"
-      icu_data_out = "#{packager_target_dir(target, build_config, a2o_target)}/System/icu/icu.dat"
+      icu_data_out = "#{packager_target_dir(a2o_target)}/System/icu/icu.dat"
       builds << {
         outputs: [icu_data_out],
         rule_name: "cp_r",
@@ -285,8 +271,8 @@ RULES
       resources << icu_data_out
 
       # file_packager
-      t = data_path(target, build_config, a2o_target)
-      j = data_js_path(target, build_config, a2o_target)
+      t = data_path(target, a2o_target)
+      j = data_js_path(target, a2o_target)
       builds << {
         outputs: [t, j],
         rule_name: 'file_packager',
@@ -325,7 +311,7 @@ RULES
       }
     end
 
-    def sources_build_phase(xcodeproj, target, build_config, phase, a2o_project_config, a2o_target)
+    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
       # FIXME: Implement
       builds = []
       objects = []
@@ -354,7 +340,7 @@ RULES
       # build sources
       phase.files_references.each do |file|
         source_path = File.join(file.parents.map(&:path).select { |path| path }, file.path)
-        object = File.join(objects_dir(target, build_config, a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
+        object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
 
         objects << object
 
@@ -374,7 +360,7 @@ RULES
           variables: {
             'cflags' => cflags,
             'source' => source_path,
-            'conf_cc_flags' => a2o_project_flags(a2o_project_config, :cc)
+            'conf_cc_flags' => a2o_project_flags(active_project_config, :cc)
           }
         }
       end
@@ -382,7 +368,7 @@ RULES
       # stubs
       # FIXME: remove
       Dir.glob('*_dummy.m').each do |source_path|
-        object = File.join(objects_dir(target, build_config, a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
+        object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
         cflags = [framework_dir_options, framework_ref_options, header_options, lib_options, prefix_pch_options].join(' ')
@@ -394,43 +380,43 @@ RULES
           variables: {
             'cflags' => cflags,
             'source' => source_path,
-            'conf_cc_flags' => a2o_project_flags(a2o_project_config, :cc)
+            'conf_cc_flags' => a2o_project_flags(active_project_config, :cc)
           }
         }
       end
 
       # link
       builds << {
-        outputs: [binary_path(target, build_config, a2o_target)],
+        outputs: [binary_path(target, a2o_target)],
         rule_name: 'link',
         inputs: objects,
         variables: {
-          'conf_link_flags' => a2o_project_flags(a2o_project_config, :link)
+          'conf_link_flags' => a2o_project_flags(active_project_config, :link)
         }
       }
 
       # executable
       builds << {
-        outputs: [html_path(target, build_config, a2o_target)],
+        outputs: [html_path(target, a2o_target)],
         rule_name: 'html',
-        inputs: [data_js_path(target, build_config, a2o_target), binary_path(target, build_config, a2o_target)],
+        inputs: [data_js_path(target, a2o_target), binary_path(target, a2o_target)],
         variables: {
-          'pre_js' => data_js_path(target, build_config, a2o_target),
-          'linked_objects' => binary_path(target, build_config, a2o_target),
+          'pre_js' => data_js_path(target, a2o_target),
+          'linked_objects' => binary_path(target, a2o_target),
           'framework_ref_options' => LINK_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{ENV['EMSCRIPTEN']}/system/lib/pkgconfig:#{ENV['EMSCRIPTEN']}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
-          'conf_html_flags' => a2o_project_flags(a2o_project_config, :html)
+          'conf_html_flags' => a2o_project_flags(active_project_config, :html)
         }
       }
 
       builds
     end
 
-    def frameworks_build_phase(xcodeproj, target, build_config, phase, a2o_project_config, a2o_target)
+    def frameworks_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
       # FIXME: Implement
     end
 
-    def shell_script_build_phase(xcodeproj, target, build_config, phase, a2o_project_config, a2o_target)
+    def shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
       # FIXME: Implement
     end
 
