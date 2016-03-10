@@ -107,10 +107,13 @@ USAGE
       build_main(:clean, proj_names, target)
     end
 
+    # FIXME: proj_path, xcodeproj_target and build_configuration should be set in a2o_build_config.rb
     desc 'xcodebuild XCODEPROJ', 'build application'
     method_option :force, :type => :boolean, :aliases => '-f', :default => false, :desc => 'Force generate ninja.build and build'
     method_option :clean, :type => :boolean, :aliases => '-c', :default => false, :desc => 'Clean'
-    method_option :build_configuration, :aliases => '-b', :default => 'Release', :desc => 'Build configration (ex. Release)'
+    method_option :target, :aliases => '-t', :default => 'release', :desc => 'Build target for a2o(ex. release)'
+    method_option :xcodeproj_target, :aliases => '-x', :desc => 'Build target for xcodeproj. Default is retrieved by xcodeproj path'
+    method_option :build_configuration, :aliases => '-b', :default => 'Release', :desc => 'Build configration on xcodeproj(ex. Release)'
     def xcodebuild(proj_path = nil)
       check_emsdk_env
 
@@ -130,18 +133,24 @@ USAGE
         error_exit('Specify valid .xcodeproj path')
       end
 
-      # TODO: add option for target_name
-      target_name = File.basename(proj_path, '.xcodeproj')
+      xcodeproj_target = options[:xcodeproj_target] || File.basename(proj_path, '.xcodeproj')
       bc = options[:build_configuration]
+      a2o_target = options[:target]
 
-      ninja_path = "ninja/#{target_name}.#{bc}.ninja.build"
+      ninja_path = "ninja/#{xcodeproj_target}.#{bc}.#{a2o_target}.ninja.build"
 
       # generate ninja.build
       if options[:force] or not File.exists?(ninja_path) or File.mtime(proj_path) > File.mtime(ninja_path)
         puts_delimiter("# Generate #{ninja_path}")
         xn = Xcode2Ninja.new(proj_path)
-        puts "target: #{target_name} build_configration: #{bc}"
-        gen_paths = xn.xcode2ninja('ninja', target_name, bc)
+        puts <<EOF
+xcodeproj:
+  xcodeproj_target: #{xcodeproj_target}
+  build_configration: #{bc}
+a2o:
+  target: #{a2o_target}
+EOF
+        gen_paths = xn.xcode2ninja('ninja', xcodeproj_target, bc, a2o_target)
         gen_paths.each do |path|
           puts "Generate #{path}"
         end
