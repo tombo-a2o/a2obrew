@@ -133,7 +133,7 @@ rule file_packager
 
 rule emscripten_html
   description = generate emscripten's executable ${out}
-  command = EMCC_DEBUG=1 a2o -v -s TOTAL_MEMORY=134217728 ${framework_ref_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o ${out} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n # --pre-js mem_check.js
+  command = EMCC_DEBUG=1 a2o -v -s TOTAL_MEMORY=134217728 ${framework_ref_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o ${out} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n --shell-file ManboMobile.html # --pre-js mem_check.js
 RULES
       r
     end
