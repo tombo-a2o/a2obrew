@@ -6,13 +6,13 @@ require 'pathname'
 
 module A2OBrew
   # TODO: Move to active_project_config
-  REFERENCE_FRAMEWORKS = %w(UIKit Security ImageIO GoogleMobileAds CoreGraphics)
+  REFERENCE_FRAMEWORKS = %w(UIKit Security ImageIO GoogleMobileAds CoreGraphics).freeze
   # TODO: Move to active_project_config
   LINK_FRAMEWORKS = %w(
     UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
     CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
     Social AVFoundation
-  )
+  ).freeze
 
   class Xcode2Ninja # rubocop:disable Metrics/ClassLength
     def initialize(xcodeproj_path)
@@ -22,7 +22,7 @@ module A2OBrew
     def xcode2ninja(output_dir, # rubocop:disable Metrics/MethodLength
                     xcodeproj_target = nil, build_config_name = nil,
                     active_project_config = {}, a2o_target = nil)
-      fail Informative, 'Please specify Xcode project.' unless @xcodeproj_path
+      raise Informative, 'Please specify Xcode project.' unless @xcodeproj_path
 
       gen_paths = []
 
@@ -45,12 +45,12 @@ module A2OBrew
     private
 
     def xcodeproj_path
-      fail Informative, 'Please specify Xcode project.' unless @xcodeproj_path
+      raise Informative, 'Please specify Xcode project.' unless @xcodeproj_path
       @xcodeproj_path
     end
 
     def xcodeproj_dir
-      fail Informative, 'Please specify Xcode project.' unless @xcodeproj_dir
+      raise Informative, 'Please specify Xcode project.' unless @xcodeproj_dir
       @xcodeproj_dir
     end
 
@@ -80,7 +80,7 @@ module A2OBrew
         when Xcodeproj::Project::Object::PBXShellScriptBuildPhase
           shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
         else
-          fail Informative, "Don't support the phase #{phase.class.name}."
+          raise Informative, "Don't support the phase #{phase.class.name}."
         end
       end.flatten.compact
     end
@@ -105,7 +105,6 @@ module A2OBrew
       path
     end
 
-    # rubocop:disable Metrics/LineLength
     def rules(target, _build_config, a2o_target) # rubocop:disable Metrics/MethodLength
       # TODO: extract minimum-deployment-target from xcodeproj
       r = <<RULES
@@ -143,7 +142,6 @@ rule html
 RULES
       r
     end
-    # rubocop:enable Metrics/LineLength
 
     # paths
 
@@ -213,7 +211,7 @@ RULES
         when Xcodeproj::Project::Object::PBXVariantGroup
           files = files_ref.files
         else
-          fail Informative, "Don't support the file #{files_ref.class.name}."
+          raise Informative, "Don't support the file #{files_ref.class.name}."
         end
 
         files.each do |file|
@@ -429,7 +427,7 @@ RULES
 
     # utils
 
-    def expand(value, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/LineLength
+    def expand(value, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/LineLength
       if value.is_a?(Array)
         value = value.reject do |v|
           v == '$(inherited)'
@@ -464,7 +462,7 @@ RULES
                 # FIXME: currently ignores
                 ''
               else
-                fail Informative, "Not support for #{m}"
+                raise Informative, "Not support for #{m}"
               end
             end
           end

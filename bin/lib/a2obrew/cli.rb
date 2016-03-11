@@ -54,7 +54,7 @@ USAGE
 
     desc 'completions COMMAND', 'list completions for the COMMAND'
     def completions(*commands)
-      return if commands.length == 0
+      return if commands.empty?
       case commands[0].intern
       when :update, :autogen
         puts_build_completion(options, false)
@@ -70,7 +70,7 @@ USAGE
       depends[:projects].each do |proj|
         @current_command = "a2obrew update #{proj[:name]}"
 
-        next unless proj_names.length == 0 || proj_names.include?(proj[:name])
+        next unless proj_names.empty? || proj_names.include?(proj[:name])
         proj_path = "#{depends[:path]}/#{proj[:path]}"
         git_update(proj_path, proj[:branch], proj[:repository_uri])
       end
@@ -109,7 +109,7 @@ USAGE
       build_main(:clean, proj_names, target)
     end
 
-    PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'
+    PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'.freeze
     desc 'xcodebuild', 'build application with config file'
     method_option :force, type: :boolean, aliases: '-f', default: false, desc: 'Force generate ninja.build and build'
     method_option :clean, type: :boolean, aliases: '-c', default: false, desc: 'Clean'
@@ -133,16 +133,16 @@ USAGE
       depends[:projects].each do |proj|
         @current_command = "a2obrew #{command} #{proj[:name]}"
 
-        next unless proj_names.length == 0 || proj_names.include?(proj[:name])
+        next unless proj_names.empty? || proj_names.include?(proj[:name])
         next if proj[command].nil?
 
         proj_base_path = "#{depends[:path]}/#{proj[:path]}"
 
-        if proj[:frameworks]
-          proj_paths = proj[:frameworks].map { |framework| "#{proj_base_path}/#{framework}" }
-        else
-          proj_paths = [proj_base_path]
-        end
+        proj_paths = if proj[:frameworks]
+                       proj[:frameworks].map { |framework| "#{proj_base_path}/#{framework}" }
+                     else
+                       [proj_base_path]
+                     end
 
         proj_paths.each do |proj_path|
           work_path = if command == :autogen
@@ -212,11 +212,11 @@ EOF
         end
       else
         # git clone hasn't done yet, so do git clone
-        if branch_name
-          branch_option = "--branch #{branch_name}"
-        else
-          branch_option = ''
-        end
+        branch_option = if branch_name
+                          "--branch #{branch_name}"
+                        else
+                          ''
+                        end
         cmd_exec "git clone #{repository_uri} #{branch_option} #{root_path}", "git clone fails from #{repository_uri} with the branch #{branch_name} to #{root_path}" # rubocop:disable Metrics/LineLength
       end
     end
@@ -339,7 +339,7 @@ EOF
       if File.exist?(path)
         config = eval File.read(path) # rubocop:disable Lint/Eval
         unless config[:version] == 1
-          fail Informative, '#{BUILD_CONFIG_RB_PATH} version should be 1'
+          raise Informative, '#{BUILD_CONFIG_RB_PATH} version should be 1'
         end
         config
       else
@@ -354,11 +354,11 @@ EOF
 
       project_config_path ||= PROJECT_CONFIG_RB_PATH
 
-      if File.exist?(project_config_path)
-        proj_config = read_project_config(project_config_path)
-      else
-        proj_config = {}
-      end
+      proj_config = if File.exist?(project_config_path)
+                      read_project_config(project_config_path)
+                    else
+                      {}
+                    end
 
       proj_config
     end
@@ -384,7 +384,7 @@ EOF
 
     def find_xcodeproj_build_config(active_project_config)
       xcodeproj_build_config = active_project_config[:xcodeproj_build_config]
-      unless xcodeproj_build_config # rubocop:disable Style/GuardClause
+      unless xcodeproj_build_config
         xcodeproj_build_config = {
           debug: 'Debug',
           release: 'Release'

@@ -3,7 +3,7 @@
 
 A2O_PATH = File.expand_path(File.dirname(__FILE__))
 
-ICU_NATIVE_DIR = `uname` =~ /\ADarwin/ ? 'buildMac' : 'buildLinux'
+ICU_NATIVE_DIR = `uname`.start_with?('Darwin') ? 'buildMac' : 'buildLinux'
 
 # rubocop:disable Metrics/LineLength
 A2OCONF = {
@@ -219,8 +219,6 @@ EMCONFIGURE
         branch: 'feature/with_cocotron',
         autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
         build_path: '%{project_path}',
-        # FIXME: now -O2 doesn't work on Chameleon, so set static CPPFLAGS
-        # :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
         build: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
         install: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
@@ -230,4 +228,4 @@ EMCONFIGURE
       }
     ]
   }
-}
+}.freeze
