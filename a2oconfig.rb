@@ -221,8 +221,8 @@ EMCONFIGURE
         build_path: '%{project_path}',
         # FIXME: now -O2 doesn't work on Chameleon, so set static CPPFLAGS
         # :build => 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
-        build: 'STYLE_CPPFLAGS="-O0 -DDEBUG" BUILD_DIR=%{build_target_path} make -j8',
-        install: 'STYLE_CPPFLAGS="-O0 -DDEBUG" BUILD_DIR=%{build_target_path} make install',
+        build: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
+        install: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
         frameworks: %w(
           UIKit
