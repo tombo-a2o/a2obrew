@@ -146,7 +146,7 @@ RULES
     # paths
 
     def build_dir(a2o_target)
-      "build/#{a2o_target}/"
+      "build/#{a2o_target}"
     end
 
     def packager_target_dir(a2o_target)
