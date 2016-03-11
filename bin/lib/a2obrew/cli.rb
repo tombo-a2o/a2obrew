@@ -360,7 +360,7 @@ EOF
                       {}
                     end
 
-      proj_config
+      [project_config_path, proj_config]
     end
 
     def search_xcodeproj_path(xcodeproj_path)
@@ -398,14 +398,17 @@ EOF
 
     def generate_ninja_build(options) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
       a2o_target = options[:target].intern
-      proj_config = load_project_config(options[:project_config])
+      proj_config_path, proj_config = load_project_config(options[:project_config])
       xcodeproj_path = search_xcodeproj_path(options[:xcodeproj_path])
       xcodeproj_target = proj_config[:xcodeproj_target] || File.basename(xcodeproj_path, '.xcodeproj')
       active_project_config = fetch_active_project_config(proj_config, a2o_target)
       xcodeproj_build_config = find_xcodeproj_build_config(active_project_config)
       ninja_path = "ninja/#{a2o_target}.ninja.build"
 
-      if options[:force] || !File.exist?(ninja_path) || (File.mtime(xcodeproj_path) > File.mtime(ninja_path))
+      if options[:force] ||
+         !File.exist?(ninja_path) ||
+         (File.mtime(xcodeproj_path) > File.mtime(ninja_path)) ||
+         (File.mtime(proj_config_path) > File.mtime(ninja_path))
         puts_delimiter("# Generate #{ninja_path}")
         puts <<EOF
 a2o:
