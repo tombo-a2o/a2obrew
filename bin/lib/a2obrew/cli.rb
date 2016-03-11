@@ -133,7 +133,8 @@ USAGE
       depends[:projects].each do |proj|
         @current_command = "a2obrew #{command} #{proj[:name]}"
 
-        next unless proj_names.length == 0 || proj_names.include?(proj[:name]) || proj[command]
+        next unless proj_names.length == 0 || proj_names.include?(proj[:name])
+        next if proj[command].nil?
 
         proj_base_path = "#{depends[:path]}/#{proj[:path]}"
 
