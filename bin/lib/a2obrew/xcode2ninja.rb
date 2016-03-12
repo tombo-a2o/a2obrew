@@ -1,6 +1,7 @@
 require 'xcodeproj'
 require 'fileutils'
 require 'pathname'
+require 'rexml/document' # For parsing storyboard
 
 # rubocop:disable Metrics/ParameterLists
 
@@ -108,13 +109,9 @@ module A2OBrew
     def rules(target, _build_config, a2o_target) # rubocop:disable Metrics/MethodLength
       # TODO: extract minimum-deployment-target from xcodeproj
       r = <<RULES
-rule ibtool_compile
-  description = ibtool compile ${out}
-  command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${out}` ${in}
-
-rule ibtool_link
-  description = ibtool link ${out}
-  command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${in}
+rule ibtool
+  description = ibtool ${in}
+  command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${temp_dir}
 
 rule cc
   description = compile ${source} to ${out}
@@ -221,15 +218,18 @@ RULES
           if File.extname(file.path) == '.storyboard'
             remote_path += 'c'
             tmp_path = File.join('tmp', remote_path)
+
+            nps = get_nib_paths_from_storyboard(local_path)
+            nps << 'Info.plist'
+            nib_paths = nps.map { |np| File.join(remote_path, np) }
+
             builds << {
-              outputs: [tmp_path],
-              rule_name: 'ibtool_compile',
-              inputs: [local_path]
-            }
-            builds << {
-              outputs: [remote_path],
-              rule_name: 'ibtool_link',
-              inputs: [tmp_path]
+              outputs: nib_paths,
+              rule_name: 'ibtool',
+              inputs: [local_path],
+              variables: {
+                'temp_dir' => tmp_path
+              }
             }
           else
             f = file_recursive_copy(local_path, remote_path)
@@ -465,6 +465,26 @@ RULES
             end
           end
         end
+      end
+    end
+
+    def get_nib_paths_from_storyboard(storyboard_path) # rubocop:disable Metrics/AbcSize
+      d = REXML::Document.new(File.read(storyboard_path))
+
+      nib_list = []
+
+      d.elements.each('//*[@storyboardIdentifier]') do |e|
+        nib_list << e.attribute('storyboardIdentifier').to_s
+        next unless e.name.intern == :viewController
+        prefix = e.attributes['id'].to_s
+        e.each_element('view') do |v|
+          view_id = v.attributes['id'].to_s
+          nib_list << "#{prefix}-view-#{view_id}"
+        end
+      end
+
+      nib_list.sort.map do |nib_prefix|
+        "#{nib_prefix}.nib"
       end
     end
   end
