@@ -135,7 +135,7 @@ rule file_packager
 
 rule html
   description = generate emscripten's executable ${out}
-  command = EMCC_DEBUG=1 a2o -v ${framework_ref_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o ${out} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n ${conf_html_flags}
+  command = EMCC_DEBUG=1 a2o -v ${framework_ref_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n ${conf_html_flags}
 RULES
       r
     end
@@ -176,6 +176,14 @@ RULES
 
     def html_path(target, a2o_target)
       "#{build_dir(a2o_target)}/#{target.product_name}.html"
+    end
+
+    def html_mem_path(target, a2o_target)
+      "#{html_path(target,a2o_target)}.mem"
+    end
+
+    def js_path(target, a2o_target)
+      "#{build_dir(a2o_target)}/#{target.product_name}.js"
     end
 
     def binary_path(target, a2o_target)
@@ -231,12 +239,12 @@ RULES
                 'temp_dir' => tmp_path
               }
             }
+            resources += nib_paths
           else
             f = file_recursive_copy(local_path, remote_path)
             builds += f[:builds]
+            resources += f[:outputs]
           end
-
-          resources << remote_path
         end
       end
 
@@ -399,7 +407,7 @@ RULES
 
       # executable
       builds << {
-        outputs: [html_path(target, a2o_target)],
+        outputs: [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)],
         rule_name: 'html',
         inputs: [data_js_path(target, a2o_target), binary_path(target, a2o_target)],
         variables: {
