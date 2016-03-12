@@ -262,10 +262,7 @@ RULES
       end
 
       # UIKit bundle
-      framework_resources = file_recursive_copy(
-        "#{ENV['EMSCRIPTEN']}/system/frameworks/UIKit.framework/Resources/",
-        "#{framework_bundle_dir(a2o_target)}/UIKit.framework/Resources/"
-      )
+      framework_resources = system_framework_resources(a2o_target)
       builds += framework_resources[:builds]
       resources += framework_resources[:outputs]
 
@@ -494,6 +491,23 @@ RULES
       nib_list.sort.map do |nib_prefix|
         "#{nib_prefix}.nib"
       end
+    end
+
+    def system_framework_resources(a2o_target)
+      path_prefix = "#{ENV['EMSCRIPTEN']}/system/frameworks/"
+      out_prefix = framework_bundle_dir(a2o_target)
+      builds = []
+      outputs = []
+      Dir.glob("#{path_prefix}*.framework/Resources/") do |path|
+        rel_path = path[path_prefix.length..-1]
+        out_path = File.join(out_prefix, rel_path)
+
+        f = file_recursive_copy(path, out_path)
+        builds += f[:builds]
+        outputs += f[:outputs]
+      end
+
+      { builds: builds, outputs: outputs }
     end
   end
 end
