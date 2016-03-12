@@ -179,14 +179,14 @@ RULES
     end
 
     def html_mem_path(target, a2o_target)
-      "#{html_path(target,a2o_target)}.mem"
+      "#{html_path(target, a2o_target)}.mem"
     end
 
     def js_path(target, a2o_target)
       "#{build_dir(a2o_target)}/#{target.product_name}.js"
     end
 
-    def binary_path(target, a2o_target)
+    def bitcode_path(target, a2o_target)
       "#{build_dir(a2o_target)}/#{target.product_name}.bc"
     end
 
@@ -397,7 +397,7 @@ RULES
 
       # link
       builds << {
-        outputs: [binary_path(target, a2o_target)],
+        outputs: [bitcode_path(target, a2o_target)],
         rule_name: 'link',
         inputs: objects,
         variables: {
@@ -409,10 +409,10 @@ RULES
       builds << {
         outputs: [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)],
         rule_name: 'html',
-        inputs: [data_js_path(target, a2o_target), binary_path(target, a2o_target)],
+        inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target)],
         variables: {
           'pre_js' => data_js_path(target, a2o_target),
-          'linked_objects' => binary_path(target, a2o_target),
+          'linked_objects' => bitcode_path(target, a2o_target),
           'framework_ref_options' => LINK_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{ENV['EMSCRIPTEN']}/system/lib/pkgconfig:#{ENV['EMSCRIPTEN']}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'conf_html_flags' => a2o_project_flags(active_project_config, :html)
