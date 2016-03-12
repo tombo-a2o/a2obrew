@@ -232,11 +232,8 @@ RULES
               inputs: [tmp_path]
             }
           else
-            builds << {
-              outputs: [remote_path],
-              rule_name: 'cp_r',
-              inputs: [local_path]
-            }
+            f = file_recursive_copy(local_path, remote_path)
+            builds += f[:builds]
           end
 
           resources << remote_path
@@ -248,6 +245,7 @@ RULES
         infoplist = File.join(bundle_dir(a2o_target), 'Info.plist')
         resources << infoplist
 
+        # NOTE: Should we use file_recursive_copy here?
         builds << {
           outputs: [infoplist],
           rule_name: 'cp_r',
