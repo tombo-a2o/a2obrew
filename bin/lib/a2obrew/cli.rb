@@ -119,8 +119,7 @@ USAGE
       check_emsdk_env
 
       ninja_path = generate_ninja_build(options)
-      ninja_command = generate_ninja_command(ninja_path, options[:clean])
-      cmd_exec ninja_command, 'xcodebuild error'
+      execute_ninja_command(ninja_path, options[:clean])
     end
 
     private
@@ -437,11 +436,12 @@ EOF
       active_project_config
     end
 
-    def generate_ninja_command(ninja_path, clean)
+    def execute_ninja_command(ninja_path, clean)
       if clean
-        "ninja -v -f #{ninja_path} -t clean"
+        cmd_exec "ninja -v -f #{ninja_path} -t clean", 'ninja clean error'
+        cmd_exec "rm -f #{ninja_path}", "remove ninja file error: #{ninja_path}"
       else
-        "ninja -v -f #{ninja_path}"
+        cmd_exec "ninja -v -f #{ninja_path}", 'ninja build error'
       end
     end
   end
