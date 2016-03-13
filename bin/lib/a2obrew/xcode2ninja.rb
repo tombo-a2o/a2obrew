@@ -166,6 +166,10 @@ RULES
       "#{build_dir(a2o_target)}/objects"
     end
 
+    def frameworks_dir
+      "#{ENV['EMSCRIPTEN']}/system/frameworks/"
+    end
+
     def data_path(target, a2o_target)
       "#{build_dir(a2o_target)}/#{target.product_name}.dat"
     end
@@ -331,13 +335,13 @@ RULES
       # build settings
       bs = build_config.build_settings
       lib_dirs = expand(bs['LIBRARY_SEARCH_PATHS'], :array)
-      framework_dirs = expand(bs['FRAMEWORK_SEARCH_PATHS'], :array)
-      target_header_dirs = expand(bs['HEADER_SEARCH_PATHS'], :array)
+      framework_search_paths = expand(bs['FRAMEWORK_SEARCH_PATHS'], :array)
+      header_search_paths = expand(bs['HEADER_SEARCH_PATHS'], :array)
 
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
-      framework_dir_options = framework_dirs.map { |f| "-F#{f}" }.join(' ')
+      framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
       framework_ref_options = REFERENCE_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' ')
-      header_options = (header_dirs + target_header_dirs).map { |dir| "-I./#{dir}" }.join(' ')
+      header_options = (header_dirs + header_search_paths).map { |dir| "-I./#{dir}" }.join(' ')
 
       if expand(bs['GCC_PRECOMPILE_PREFIX_HEADER'], :bool)
         prefix_pch = bs['GCC_PREFIX_HEADER']
@@ -403,10 +407,11 @@ RULES
       }
 
       # executable
+      system_framework_dirs = LINK_FRAMEWORKS.map { |f| "#{frameworks_dir}#{f}.framework/" }
       builds << {
         outputs: [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)],
         rule_name: 'html',
-        inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target)],
+        inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + system_framework_dirs,
         variables: {
           'pre_js' => data_js_path(target, a2o_target),
           'linked_objects' => bitcode_path(target, a2o_target),
@@ -494,7 +499,7 @@ RULES
     end
 
     def system_framework_resources(a2o_target)
-      path_prefix = "#{ENV['EMSCRIPTEN']}/system/frameworks/"
+      path_prefix = frameworks_dir
       out_prefix = framework_bundle_dir(a2o_target)
       builds = []
       outputs = []
