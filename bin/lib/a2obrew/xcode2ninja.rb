@@ -407,10 +407,16 @@ RULES
       }
 
       # executable
+
+      # detect emscripten file changes
+      dep_paths = file_list("#{emscripten_dir}/src/")
+      LINK_FRAMEWORKS.each do |f|
+        dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
+      end
       builds << {
         outputs: [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)],
         rule_name: 'html',
-        inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target), "#{emscripten_dir}/"],
+        inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + dep_paths,
         variables: {
           'pre_js' => data_js_path(target, a2o_target),
           'linked_objects' => bitcode_path(target, a2o_target),
@@ -511,6 +517,15 @@ RULES
       end
 
       { builds: builds, outputs: outputs }
+    end
+
+    def file_list(dir)
+      files = []
+      Pathname(dir).find do |path|
+        next unless path.file?
+        files << path
+      end
+      files
     end
   end
 end
