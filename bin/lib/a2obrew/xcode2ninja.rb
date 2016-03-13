@@ -6,9 +6,6 @@ require 'rexml/document' # For parsing storyboard
 # rubocop:disable Metrics/ParameterLists
 
 module A2OBrew
-  # TODO: Move to active_project_config
-  REFERENCE_FRAMEWORKS = %w(UIKit Security ImageIO GoogleMobileAds CoreGraphics).freeze
-  # TODO: Move to active_project_config
   LINK_FRAMEWORKS = %w(
     UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
     CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
@@ -135,7 +132,7 @@ rule file_packager
 
 rule html
   description = generate emscripten's executable ${out}
-  command = EMCC_DEBUG=1 a2o -v ${framework_ref_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n ${conf_html_flags}
+  command = EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n ${conf_html_flags}
 RULES
       r
     end
@@ -340,7 +337,6 @@ RULES
 
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
-      framework_ref_options = REFERENCE_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' ')
       header_options = (header_dirs + header_search_paths).map { |dir| "-I./#{dir}" }.join(' ')
 
       if expand(bs['GCC_PRECOMPILE_PREFIX_HEADER'], :bool)
@@ -362,7 +358,7 @@ RULES
         end
         file_opt += ' -fobjc-arc' unless file_opt =~ /-fno-objc-arc/
 
-        cflags = [framework_dir_options, framework_ref_options, header_options, lib_options, prefix_pch_options, file_opt].join(' ')
+        cflags = [framework_dir_options, header_options, lib_options, prefix_pch_options, file_opt].join(' ')
 
         builds << {
           outputs: [object],
@@ -382,7 +378,7 @@ RULES
         object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
-        cflags = [framework_dir_options, framework_ref_options, header_options, lib_options, prefix_pch_options].join(' ')
+        cflags = [framework_dir_options, header_options, lib_options, prefix_pch_options].join(' ')
 
         builds << {
           outputs: [object],
@@ -415,7 +411,7 @@ RULES
         variables: {
           'pre_js' => data_js_path(target, a2o_target),
           'linked_objects' => bitcode_path(target, a2o_target),
-          'framework_ref_options' => LINK_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' '),
+          'framework_options' => LINK_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{ENV['EMSCRIPTEN']}/system/lib/pkgconfig:#{ENV['EMSCRIPTEN']}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'conf_html_flags' => a2o_project_flags(active_project_config, :html)
         }
