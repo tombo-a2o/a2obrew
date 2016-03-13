@@ -163,8 +163,12 @@ RULES
       "#{build_dir(a2o_target)}/objects"
     end
 
+    def emscripten_dir
+      ENV['EMSCRIPTEN']
+    end
+
     def frameworks_dir
-      "#{ENV['EMSCRIPTEN']}/system/frameworks/"
+      "#{emscripten_dir}/system/frameworks"
     end
 
     def data_path(target, a2o_target)
@@ -268,7 +272,7 @@ RULES
       resources += framework_resources[:outputs]
 
       # ICU data_path
-      icu_data_in = "#{ENV['EMSCRIPTEN']}/system/local/share/icu/54.1/icudt54l.dat"
+      icu_data_in = "#{emscripten_dir}/system/local/share/icu/54.1/icudt54l.dat"
       icu_data_out = "#{packager_target_dir(a2o_target)}/System/icu/icu.dat"
       builds << {
         outputs: [icu_data_out],
@@ -403,16 +407,15 @@ RULES
       }
 
       # executable
-      system_framework_dirs = LINK_FRAMEWORKS.map { |f| "#{frameworks_dir}#{f}.framework/" }
       builds << {
         outputs: [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)],
         rule_name: 'html',
-        inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + system_framework_dirs,
+        inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target), "#{emscripten_dir}/"],
         variables: {
           'pre_js' => data_js_path(target, a2o_target),
           'linked_objects' => bitcode_path(target, a2o_target),
           'framework_options' => LINK_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' '),
-          'lib_options' => `PKG_CONFIG_LIBDIR=#{ENV['EMSCRIPTEN']}/system/lib/pkgconfig:#{ENV['EMSCRIPTEN']}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
+          'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'conf_html_flags' => a2o_project_flags(active_project_config, :html)
         }
       }
@@ -495,12 +498,11 @@ RULES
     end
 
     def system_framework_resources(a2o_target)
-      path_prefix = frameworks_dir
       out_prefix = framework_bundle_dir(a2o_target)
       builds = []
       outputs = []
-      Dir.glob("#{path_prefix}*.framework/Resources/") do |path|
-        rel_path = path[path_prefix.length..-1]
+      Dir.glob("#{frameworks_dir}/*.framework/Resources/") do |path|
+        rel_path = path[(frameworks_dir.length + 1)..-1]
         out_path = File.join(out_prefix, rel_path)
 
         f = file_recursive_copy(path, out_path)
