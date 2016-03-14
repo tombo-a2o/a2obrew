@@ -126,9 +126,11 @@ rule rm
   description = remove {$out}
   command = rm ${out}
 
+# FIXME: try --lz4 option after upgrading emscripten
+# NOTE: Could we use --use-preload-cache ?
 rule file_packager
   description = execute emscripten's file packager to ${target}
-  command = python #{ENV['EMSCRIPTEN']}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output}
+  command = python #{ENV['EMSCRIPTEN']}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy --separate-metadata
 
 rule html
   description = generate emscripten's executable ${out}
@@ -177,6 +179,10 @@ RULES
 
     def data_js_path(target, a2o_target)
       "#{build_dir(a2o_target)}/#{target.product_name}Data.js"
+    end
+
+    def data_js_metadata_path(target, a2o_target)
+      "#{data_js_path(target, a2o_target)}.metadata"
     end
 
     def html_path(target, a2o_target)
@@ -285,7 +291,11 @@ RULES
       t = data_path(target, a2o_target)
       j = data_js_path(target, a2o_target)
       builds << {
-        outputs: [t, j],
+        outputs: [
+          t,
+          j,
+          data_js_metadata_path(target, a2o_target)
+        ],
         rule_name: 'file_packager',
         inputs: resources,
         variables: {
