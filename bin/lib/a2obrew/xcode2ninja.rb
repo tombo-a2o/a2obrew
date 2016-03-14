@@ -272,12 +272,12 @@ RULES
         }
       end
 
-      # UIKit bundle
+      # Framework resources
       framework_resources = system_framework_resources(a2o_target)
       builds += framework_resources[:builds]
       resources += framework_resources[:outputs]
 
-      # ICU data_path
+      # ICU data
       icu_data_in = "#{emscripten_dir}/system/local/share/icu/54.1/icudt54l.dat"
       icu_data_out = "#{packager_target_dir(a2o_target)}/System/icu/icu.dat"
       builds << {
