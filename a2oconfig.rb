@@ -94,50 +94,6 @@ BUILD
         clean: 'BUILD=%{build_target_path} make clean'
       },
       {
-        name: 'pixman',
-        path: 'pixman',
-        repository_uri: 'git://anongit.freedesktop.org/git/pixman.git',
-        branch: '0.32',
-        autogen: <<AUTOGEN,
-sed -e "s/AM_INIT_AUTOMAKE(\\\[foreign dist-bzip2\\\])/AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects])/g" configure.ac > tmp
-mv tmp configure.ac
-NOCONFIGURE=1 ./autogen.sh || autoreconf -i
-AUTOGEN
-        configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --enable-shared=no --enable-static=yes CPPFLAGS="%{cppflags}"',
-        build: 'make -j8',
-        install: 'make install',
-        clean: 'make clean'
-      },
-      {
-        name: 'cairo',
-        path: 'cairo',
-        repository_uri: 'git://anongit.freedesktop.org/git/cairo',
-        branch: '1.14',
-        autogen: 'NOCONFIGURE=1 ./autogen.sh',
-        build_path: '%{project_path}/embuild/%{target}',
-        build_target_path: '%{project_path}/embuild/%{target}',
-        configure: <<EMCONFIGURE,
-emconfigure %{project_path}/configure \
-    --prefix=%{emscripten_system_local_path} \
-    --enable-shared=no \
-    --enable-static=yes \
-    --enable-gl=yes \
-    --enable-pthread=no \
-    --enable-png=no \
-    --enable-script=no \
-    --enable-interpreter=no \
-    --enable-ps=no \
-    --enable-pdf=no \
-    --enable-svg=no \
-    --host=x86_64-apple-darwin14.5.0 \
-    CFLAGS="-DCAIRO_NO_MUTEX=1" \
-    CPPFLAGS="%{cppflags}"
-EMCONFIGURE
-        build: 'make -j8',
-        install: 'make install',
-        clean: 'make clean'
-      },
-      {
         # NOTE: openssl doesn't support target
         name: 'openssl',
         path: 'openssl',

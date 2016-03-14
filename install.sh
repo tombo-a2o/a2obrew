@@ -65,14 +65,6 @@ bin/a2obrew install icu
 bin/a2obrew configure libdispatch
 bin/a2obrew build libdispatch
 bin/a2obrew install libdispatch
-# pixman
-bin/a2obrew configure pixman
-bin/a2obrew build pixman
-bin/a2obrew install pixman
-# cairo
-bin/a2obrew configure cairo
-bin/a2obrew build cairo
-bin/a2obrew install cairo
 # openssl
 bin/a2obrew configure openssl
 bin/a2obrew build openssl
