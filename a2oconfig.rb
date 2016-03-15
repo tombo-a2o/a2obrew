@@ -111,7 +111,7 @@ BUILD
         path: 'freetype',
         repository_uri: 'git@github.com:fchiba/freetype.git',
         branch: 'master',
-        configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared --with-zlib=no --with-png=no CPPFLAGS=%{cppflags}',
+        configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared --with-zlib=no --with-png=no CPPFLAGS="%{cppflags}"',
         build: 'emmake make -j8',
         install: 'emmake make install',
         clean: 'emmake make clean'
