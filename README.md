@@ -86,15 +86,12 @@ a2obrew clean --target=debug
 Use `a2obrew xcodebuild`.
 
 ```sh
-# If there is only one xcoreproj in current working directory, no args needed
+# If there is a2o_project_config.rb
 a2obrew xcodebuild
-# If there are 2+ xcoreproj in current working directory, specify that
-a2obrew xcodebuild SimpleApp.xcodeproj
-# If you change build configuration,
-# specify it with -b (--build\_configuration). Default is -b Release.
-a2obrew xcodebuild -b Debug
-# If you'd like to overwrite ninja.build file explicitly, specify -f (--force)
-a2obrew xcodebuild -f
+# If you want to use other project config file,
+a2obrew xcodebuild -p my_project_config.rb
+# if you change build target (ex. debug/release/profile)
+a2obrew xcodebuild -t debug
 # If you'd like to clean built files, specify -c (--clean)
 a2obrew xcodebuild -c
 ```
