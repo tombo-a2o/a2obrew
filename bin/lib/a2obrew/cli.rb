@@ -111,7 +111,6 @@ USAGE
 
     PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'.freeze
     desc 'xcodebuild', 'build application with config file'
-    method_option :force, type: :boolean, aliases: '-f', default: false, desc: 'Force generate ninja.build and build'
     method_option :clean, type: :boolean, aliases: '-c', default: false, desc: 'Clean'
     method_option :project_config, aliases: '-p', desc: 'Project config ruby path'
     method_option :target, aliases: '-t', default: 'release', desc: 'Build target for a2o(ex. release)'
@@ -395,7 +394,7 @@ EOF
       xcodeproj_build_config
     end
 
-    def generate_ninja_build(options) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+    def generate_ninja_build(options) # rubocop:disable Metrics/MethodLength
       a2o_target = options[:target].intern
       proj_config_path, proj_config = load_project_config(options[:project_config])
       xcodeproj_path = search_xcodeproj_path(options[:xcodeproj_path])
@@ -404,24 +403,20 @@ EOF
       xcodeproj_build_config = find_xcodeproj_build_config(active_project_config)
       ninja_path = "ninja/#{a2o_target}.ninja.build"
 
-      if options[:force] ||
-         !File.exist?(ninja_path) ||
-         (File.mtime(xcodeproj_path) > File.mtime(ninja_path)) ||
-         (File.mtime(proj_config_path) > File.mtime(ninja_path))
-        puts_delimiter("# Generate #{ninja_path}")
-        puts <<EOF
+      puts_delimiter("# Generate #{ninja_path}")
+      puts <<EOF
 a2o:
   target: #{a2o_target}
+  proj_config_path: #{proj_config_path}
 xcodeproj:
   xcodeproj_path: #{xcodeproj_path}
   xcodeproj_target: #{xcodeproj_target}
   xocdeproj_build_config: #{xcodeproj_build_config}
 EOF
-        xn = Xcode2Ninja.new(xcodeproj_path)
-        gen_paths = xn.xcode2ninja('ninja', xcodeproj_target, xcodeproj_build_config, active_project_config, a2o_target)
-        gen_paths.each do |path|
-          puts "Generate #{path}"
-        end
+      xn = Xcode2Ninja.new(xcodeproj_path)
+      gen_paths = xn.xcode2ninja('ninja', xcodeproj_target, xcodeproj_build_config, active_project_config, a2o_target)
+      gen_paths.each do |path|
+        puts "Generate #{path}"
       end
 
       ninja_path
