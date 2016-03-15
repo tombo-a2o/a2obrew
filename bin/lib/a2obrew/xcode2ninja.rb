@@ -11,6 +11,8 @@ module A2OBrew
     CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
     Social AVFoundation
   ).freeze
+  # NOTE: --separate-metadata on file packager was buggy so we decided not to use it
+  SEPARATE_METADATA = false
 
   class Xcode2Ninja # rubocop:disable Metrics/ClassLength
     def initialize(xcodeproj_path)
@@ -130,7 +132,7 @@ rule rm
 # NOTE: Could we use --use-preload-cache ?
 rule file_packager
   description = execute emscripten's file packager to ${target}
-  command = python #{ENV['EMSCRIPTEN']}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy --separate-metadata
+  command = python #{ENV['EMSCRIPTEN']}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options}
 
 rule html
   description = generate emscripten's executable ${out}
@@ -290,17 +292,20 @@ RULES
       # file_packager
       t = data_path(target, a2o_target)
       j = data_js_path(target, a2o_target)
+      outputs = [t, j]
+      options = ''
+      if SEPARATE_METADATA
+        outputs << data_js_metadata_path(target, a2o_target)
+        options += ' --separate-metadata'
+      end
       builds << {
-        outputs: [
-          t,
-          j,
-          data_js_metadata_path(target, a2o_target)
-        ],
+        outputs: outputs,
         rule_name: 'file_packager',
         inputs: resources,
         variables: {
           'target' => t,
-          'js_output' => j
+          'js_output' => j,
+          'options' => options
         }
       }
 
