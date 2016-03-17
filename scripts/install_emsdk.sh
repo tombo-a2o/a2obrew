@@ -34,7 +34,7 @@ else
 fi
 
 source ./emsdk_env.sh > /dev/null
-emcc -O2 -s USE_LIBPNG=1 -s USE_ZLIB=1 ../scripts/install-emscripten-ports.c
+emcc -O3 -s USE_LIBPNG=1 -s USE_ZLIB=1 ../scripts/install-emscripten-ports.c
 
 cd ..
 ./scripts/update_emscripten.sh
