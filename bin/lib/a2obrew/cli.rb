@@ -16,6 +16,8 @@ require_relative 'xcode2ninja'
 
 module A2OBrew
   class CLI < Thor # rubocop:disable Metrics/ClassLength
+    PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'.freeze
+
     def initialize(*args)
       super
 
@@ -109,16 +111,16 @@ USAGE
       build_main(:clean, proj_names, target)
     end
 
-    PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'.freeze
     desc 'xcodebuild', 'build application with config file'
     method_option :clean, type: :boolean, aliases: '-c', default: false, desc: 'Clean'
     method_option :project_config, aliases: '-p', desc: 'Project config ruby path'
     method_option :target, aliases: '-t', default: 'release', desc: 'Build target for a2o(ex. release)'
+    method_option :jobs, type: :numeric, aliases: '-j', desc: 'the number of jobs to run simultaneously'
     def xcodebuild
       check_emsdk_env
 
       ninja_path = generate_ninja_build(options)
-      execute_ninja_command(ninja_path, options[:clean])
+      execute_ninja_command(ninja_path, options)
     end
 
     private
@@ -431,12 +433,13 @@ EOF
       active_project_config
     end
 
-    def execute_ninja_command(ninja_path, clean)
-      if clean
+    def execute_ninja_command(ninja_path, options)
+      if options[:clean]
         cmd_exec "ninja -v -f #{ninja_path} -t clean", 'ninja clean error'
         cmd_exec "rm -f #{ninja_path}", "remove ninja file error: #{ninja_path}"
       else
-        cmd_exec "ninja -v -f #{ninja_path}", 'ninja build error'
+        jobs = "-j #{options[:jobs]}" if options[:jobs]
+        cmd_exec "ninja -v -f #{ninja_path} #{jobs}", 'ninja build error'
       end
     end
   end
