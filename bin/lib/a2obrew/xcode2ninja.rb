@@ -256,7 +256,8 @@ module A2OBrew
             }
             resources += nib_paths
           else
-            f = file_recursive_copy(local_path, resources_dir(a2o_target))
+            # All resource files are stored in the same directory
+            f = file_recursive_copy(local_path, resources_dir(a2o_target), File.dirname(local_path))
             builds += f[:builds]
             resources += f[:outputs]
           end
