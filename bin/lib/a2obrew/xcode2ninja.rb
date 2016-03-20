@@ -215,6 +215,13 @@ module A2OBrew
       builds = []
       rules = []
       resources = []
+
+      rules << {
+        rule_name: 'ibtool',
+        description: 'ibtool ${in}',
+        command: "ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${temp_dir}" # rubocop:disable LineLength
+      }
+
       phase.files_references.each do |files_ref|
         case files_ref
         when Xcodeproj::Project::Object::PBXFileReference
@@ -247,9 +254,11 @@ module A2OBrew
             }
             resources += nib_paths
           else
-            f = file_recursive_copy(local_path, remote_path)
-            builds += f[:builds]
-            resources += f[:outputs]
+            builds << {
+              outputs: [remote_path],
+              rule_name: 'cp_r',
+              inputs: [local_path]
+            }
           end
         end
       end
@@ -283,6 +292,16 @@ module A2OBrew
       resources << icu_data_out
 
       # file_packager
+      #
+      # FIXME: try --lz4 option after upgrading emscripten
+      # NOTE: Could we use --use-preload-cache ?
+
+      rules << {
+        rule_name: 'file_packager',
+        description: 'execute file packager to ${target}',
+        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options}" # rubocop:disable LineLength
+      }
+
       t = data_path(target, a2o_target)
       j = data_js_path(target, a2o_target)
       outputs = [t, j]
@@ -302,21 +321,6 @@ module A2OBrew
         }
       }
 
-      # add rules
-      rules << {
-        rule_name: 'ibtool',
-        description: 'ibtool ${in}',
-        command: "ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${temp_dir}" # rubocop:disable LineLength
-      }
-
-      # FIXME: try --lz4 option after upgrading emscripten
-      # NOTE: Could we use --use-preload-cache ?
-      rules << {
-        rule_name: 'file_packager',
-        description: 'execute file packager to ${target}',
-        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options}" # rubocop:disable LineLength
-      }
-
       [builds, rules]
     end
 
@@ -325,12 +329,14 @@ module A2OBrew
       outputs = []
 
       in_path = Pathname(in_dir)
+      raise if in_path.file?
 
       in_path.find do |path|
         next unless path.file?
 
         rel_path = path.relative_path_from(in_path)
         output_path = File.join(out_dir, rel_path.to_s)
+
         builds << {
           outputs: [output_path],
           rule_name: 'cp_r',
