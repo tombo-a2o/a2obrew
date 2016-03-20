@@ -64,38 +64,51 @@ module A2OBrew
     end
 
     def generate_ninja_build(output_dir, xcodeproj, target, build_config, active_project_config, a2o_target)
-      builds = generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target)
-      write_ninja_build(output_dir, target, build_config, builds, a2o_target)
+      builds, rules = generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target)
+      write_ninja_build(output_dir, target, build_config, a2o_target, builds, rules)
     end
 
-    def generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target)
-      target.build_phases.map do |phase|
-        case phase
-        when Xcodeproj::Project::Object::PBXResourcesBuildPhase
-          resources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-        when Xcodeproj::Project::Object::PBXSourcesBuildPhase
-          sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-        when Xcodeproj::Project::Object::PBXFrameworksBuildPhase
-          frameworks_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-        when Xcodeproj::Project::Object::PBXShellScriptBuildPhase
-          shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-        else
-          raise Informative, "Don't support the phase #{phase.class.name}."
-        end
-      end.flatten.compact
+    def generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/LineLength
+      builds = []
+      rules = basic_rules
+
+      target.build_phases.each do |phase|
+        e = case phase
+            when Xcodeproj::Project::Object::PBXResourcesBuildPhase
+              resources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+            when Xcodeproj::Project::Object::PBXSourcesBuildPhase
+              sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+            when Xcodeproj::Project::Object::PBXFrameworksBuildPhase
+              frameworks_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+            when Xcodeproj::Project::Object::PBXShellScriptBuildPhase
+              shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+            else
+              raise Informative, "Don't support the phase #{phase.class.name}."
+            end
+
+        builds += e[0]
+        rules += e[1]
+      end
+
+      [builds, rules]
     end
 
-    def write_ninja_build(output_dir, target, build_config, builds, a2o_target) # rubocop:disable Metrics/MethodLength
+    def write_ninja_build(output_dir, _target, _build_config, a2o_target, builds, rules) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength
       FileUtils.mkdir_p(output_dir) unless File.directory?(output_dir)
 
       path = File.join(output_dir, "#{a2o_target}.ninja.build")
       File.open(path, 'w:UTF-8') do |f|
-        f.puts rules(target, build_config, a2o_target)
-        f.puts ''
+        rules.each do |r|
+          f.puts "rule #{r[:rule_name]}"
+          f.puts "  description = #{r[:description]}" if r[:description]
+          f.puts "  command = #{r[:command]}"
+          f.puts ''
+        end
+
         builds.each do |b|
           f.puts "build #{b[:outputs].join(' ')}: #{b[:rule_name]} #{b[:inputs].join(' ')}"
-          variables = b[:variables] || []
-          variables.each do |k, v|
+          build_variables = b[:build_variables] || []
+          build_variables.each do |k, v|
             f.puts "  #{k} = #{v}"
           end
           f.puts ''
@@ -105,40 +118,19 @@ module A2OBrew
       path
     end
 
-    def rules(target, _build_config, a2o_target) # rubocop:disable Metrics/MethodLength
-      # TODO: extract minimum-deployment-target from xcodeproj
-      r = <<RULES
-rule ibtool
-  description = ibtool ${in}
-  command = ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${temp_dir}
-
-rule cc
-  description = compile ${source} to ${out}
-  command = a2o ${cflags} -c ${source} -o ${out} ${conf_cc_flags}
-
-rule link
-  description = link to ${out}
-  command = llvm-link -o ${out} ${in} ${conf_link_flags}
-
-rule cp_r
-  description = cp -r from ${in} to ${out}
-  command = cp -r ${in} ${out}
-
-rule rm
-  description = remove {$out}
-  command = rm ${out}
-
-# FIXME: try --lz4 option after upgrading emscripten
-# NOTE: Could we use --use-preload-cache ?
-rule file_packager
-  description = execute emscripten's file packager to ${target}
-  command = python #{ENV['EMSCRIPTEN']}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options}
-
-rule html
-  description = generate emscripten's executable ${out}
-  command = EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n ${conf_html_flags}
-RULES
-      r
+    def basic_rules
+      [
+        {
+          rule_name: 'cp_r',
+          description: 'cp -r from ${in} to ${out}',
+          command: 'cp -r ${in} ${out}'
+        },
+        {
+          rule_name: 'rm',
+          description: 'remove ${out}',
+          command: 'rm ${out}'
+        }
+      ]
     end
 
     # paths
@@ -221,6 +213,7 @@ RULES
     def resources_build_phase(_xcodeproj, target, build_config, phase, _active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength
       # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
+      rules = []
       resources = []
       phase.files_references.each do |files_ref|
         case files_ref
@@ -248,7 +241,7 @@ RULES
               outputs: nib_paths,
               rule_name: 'ibtool',
               inputs: [local_path],
-              variables: {
+              build_variables: {
                 'temp_dir' => tmp_path
               }
             }
@@ -302,14 +295,29 @@ RULES
         outputs: outputs,
         rule_name: 'file_packager',
         inputs: resources,
-        variables: {
+        build_variables: {
           'target' => t,
           'js_output' => j,
           'options' => options
         }
       }
 
-      builds
+      # add rules
+      rules << {
+        rule_name: 'ibtool',
+        description: 'ibtool ${in}',
+        command: "ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${temp_dir}" # rubocop:disable LineLength
+      }
+
+      # FIXME: try --lz4 option after upgrading emscripten
+      # NOTE: Could we use --use-preload-cache ?
+      rules << {
+        rule_name: 'file_packager',
+        description: 'execute file packager to ${target}',
+        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options}" # rubocop:disable LineLength
+      }
+
+      [builds, rules]
     end
 
     def file_recursive_copy(in_dir, out_dir) # rubocop:disable Metrics/MethodLength
@@ -341,6 +349,7 @@ RULES
     def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
       # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
+      rules = []
       objects = []
 
       header_dirs = xcodeproj.main_group.recursive_children.select { |g| g.path && File.extname(g.path) == '.h' }.map do |g|
@@ -364,6 +373,16 @@ RULES
       end
 
       # build sources
+
+      cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options].join(' ')
+      conf_cc_flags = a2o_project_flags(active_project_config, :cc)
+
+      rules << {
+        rule_name: 'cc',
+        description: 'compile ${source} to ${out}',
+        command: "a2o -Wno-warn-absolute-paths #{cc_flags} ${file_cflags} -c ${source} -o ${out} #{conf_cc_flags}"
+      }
+
       phase.files_references.each do |file|
         source_path = File.join(file.parents.map(&:path).select { |path| path }, file.path)
         object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
@@ -371,22 +390,20 @@ RULES
         objects << object
 
         settings = file.build_files[0].settings
-        file_opt = '-Wno-warn-absolute-paths '
+        file_cflags = []
         if settings && settings.key?('COMPILER_FLAGS')
-          file_opt += expand(settings['COMPILER_FLAGS'], :array).join(' ')
+          file_cflags += expand(settings['COMPILER_FLAGS'], :array)
         end
-        file_opt += ' -fobjc-arc' unless file_opt =~ /-fno-objc-arc/
-
-        cflags = [framework_dir_options, header_options, lib_options, prefix_pch_options, file_opt].join(' ')
+        file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
 
         builds << {
           outputs: [object],
           rule_name: 'cc',
+          # TODO: dependency of framework
           inputs: [source_path, prefix_pch],
-          variables: {
-            'cflags' => cflags,
-            'source' => source_path,
-            'conf_cc_flags' => a2o_project_flags(active_project_config, :cc)
+          build_variables: {
+            'file_cflags' => file_cflags.join(' '),
+            'source' => source_path
           }
         }
       end
@@ -397,28 +414,29 @@ RULES
         object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
-        cflags = [framework_dir_options, header_options, lib_options, prefix_pch_options].join(' ')
-
         builds << {
           outputs: [object],
           rule_name: 'cc',
           inputs: [source_path, prefix_pch],
-          variables: {
-            'cflags' => cflags,
-            'source' => source_path,
-            'conf_cc_flags' => a2o_project_flags(active_project_config, :cc)
+          build_variables: {
+            'source' => source_path
           }
         }
       end
 
       # link
+      conf_link_flags = a2o_project_flags(active_project_config, :link)
+
+      rules << {
+        rule_name: 'link',
+        description: 'link to ${out}',
+        command: "llvm-link -o ${out} ${in} #{conf_link_flags}"
+      }
+
       builds << {
         outputs: [bitcode_path(target, a2o_target)],
         rule_name: 'link',
-        inputs: objects,
-        variables: {
-          'conf_link_flags' => a2o_project_flags(active_project_config, :link)
-        }
+        inputs: objects
       }
 
       # executable
@@ -428,29 +446,40 @@ RULES
       LINK_FRAMEWORKS.each do |f|
         dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
       end
+
+      # generate html
+      conf_html_flags = a2o_project_flags(active_project_config, :html)
+
+      rules << {
+        rule_name: 'html',
+        description: 'generate executables: ${out}',
+        command: "EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n #{conf_html_flags}"
+      }
+
       builds << {
         outputs: [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)],
         rule_name: 'html',
         inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + dep_paths,
-        variables: {
+        build_variables: {
           'pre_js' => data_js_path(target, a2o_target),
           'linked_objects' => bitcode_path(target, a2o_target),
           'framework_options' => LINK_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' '),
-          'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
-          'conf_html_flags' => a2o_project_flags(active_project_config, :html)
+          'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto'
         }
       }
 
-      builds
+      [builds, rules]
     end
     # rubocop:enable Metrics/LineLength
 
     def frameworks_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
+      [[], []]
     end
 
     def shell_script_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
+      [[], []]
     end
 
     # utils
