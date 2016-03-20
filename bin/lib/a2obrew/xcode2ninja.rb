@@ -101,6 +101,8 @@ module A2OBrew
         rules.each do |r|
           f.puts "rule #{r[:rule_name]}"
           f.puts "  description = #{r[:description]}" if r[:description]
+          f.puts "  deps = #{r[:deps]}" if r[:deps]
+          f.puts "  depfile = #{r[:depfile]}" if r[:depfile]
           f.puts "  command = #{r[:command]}"
           f.puts ''
         end
@@ -386,7 +388,9 @@ module A2OBrew
       rules << {
         rule_name: 'cc',
         description: 'compile ${source} to ${out}',
-        command: "a2o -Wno-warn-absolute-paths #{cc_flags} ${file_cflags} -c ${source} -o ${out} #{conf_cc_flags}"
+        deps: 'gcc',
+        depfile: '${out}.d',
+        command: "a2o -MMD -MF ${out}.d -Wno-warn-absolute-paths #{cc_flags} ${file_cflags} -c ${source} -o ${out} #{conf_cc_flags}"
       }
 
       phase.files_references.each do |file|
