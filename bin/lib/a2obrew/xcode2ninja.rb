@@ -409,8 +409,7 @@ module A2OBrew
         builds << {
           outputs: [object],
           rule_name: 'cc',
-          # TODO: dependency of framework
-          inputs: [source_path, prefix_pch],
+          inputs: [source_path],
           build_variables: {
             'file_cflags' => file_cflags.join(' '),
             'source' => source_path
