@@ -236,9 +236,9 @@ module A2OBrew
 
         files.each do |file|
           local_path = File.join(file.parents.map(&:path).select { |path| path }, file.path)
-          remote_path = File.join(resources_dir(a2o_target), file.path)
 
           if File.extname(file.path) == '.storyboard'
+            remote_path = File.join(resources_dir(a2o_target), file.path)
             remote_path += 'c'
             tmp_path = File.join('tmp', remote_path)
 
@@ -256,11 +256,9 @@ module A2OBrew
             }
             resources += nib_paths
           else
-            builds << {
-              outputs: [remote_path],
-              rule_name: 'cp_r',
-              inputs: [local_path]
-            }
+            f = file_recursive_copy(local_path, resources_dir(a2o_target))
+            builds += f[:builds]
+            resources += f[:outputs]
           end
         end
       end
@@ -326,17 +324,17 @@ module A2OBrew
       [builds, rules]
     end
 
-    def file_recursive_copy(in_dir, out_dir) # rubocop:disable Metrics/MethodLength
+    def file_recursive_copy(in_dir, out_dir, in_prefix_dir = '.') # rubocop:disable Metrics/MethodLength
       builds = []
       outputs = []
 
       in_path = Pathname(in_dir)
-      raise if in_path.file?
+      in_prefix_path = Pathname(in_prefix_dir)
 
       in_path.find do |path|
         next unless path.file?
 
-        rel_path = path.relative_path_from(in_path)
+        rel_path = path.relative_path_from(in_prefix_path)
         output_path = File.join(out_dir, rel_path.to_s)
 
         builds << {
@@ -557,14 +555,12 @@ module A2OBrew
     end
 
     def system_framework_resources(a2o_target)
-      out_prefix = framework_bundle_dir(a2o_target)
       builds = []
       outputs = []
-      Dir.glob("#{frameworks_dir}/*.framework/Resources/") do |path|
-        rel_path = path[(frameworks_dir.length + 1)..-1]
-        out_path = File.join(out_prefix, rel_path)
+      out_dir = framework_bundle_dir(a2o_target)
 
-        f = file_recursive_copy(path, out_path)
+      Dir.glob("#{frameworks_dir}/*.framework/Resources/") do |path|
+        f = file_recursive_copy(path, out_dir, frameworks_dir)
         builds += f[:builds]
         outputs += f[:outputs]
       end
