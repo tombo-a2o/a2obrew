@@ -24,9 +24,6 @@ else
   ./emsdk install sdk-a2o-64bit
 fi
 
-source ./emsdk_env.sh > /dev/null
-emcc --clear-cache --clear-ports
-
 if ./emsdk list | grep INSTALLED | grep \* | grep sdk-a2o-64bit > /dev/null; then
   echo "* sdk-a2o-64bit is activated"
 else
@@ -34,6 +31,7 @@ else
 fi
 
 source ./emsdk_env.sh > /dev/null
+emcc --clear-cache --clear-ports
 emcc -O3 -s USE_LIBPNG=1 -s USE_ZLIB=1 ../scripts/install-emscripten-ports.c
 
 cd ..
