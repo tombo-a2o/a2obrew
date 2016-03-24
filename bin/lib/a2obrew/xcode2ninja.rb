@@ -294,13 +294,12 @@ module A2OBrew
 
       # file_packager
       #
-      # FIXME: try --lz4 option after upgrading emscripten
       # NOTE: Could we use --use-preload-cache ?
 
       rules << {
         rule_name: 'file_packager',
         description: 'execute file packager to ${target}',
-        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options}" # rubocop:disable LineLength
+        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options}" # rubocop:disable LineLength
       }
 
       t = data_path(target, a2o_target)
@@ -461,7 +460,7 @@ module A2OBrew
       rules << {
         rule_name: 'html',
         description: 'generate executables: ${out}',
-        command: "EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} -s NATIVE_LIBDISPATCH=1 --emrun -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n #{conf_html_flags}"
+        command: "EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} -s LZ4=1 -s NATIVE_LIBDISPATCH=1 --emrun -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n #{conf_html_flags}"
       }
 
       builds << {
