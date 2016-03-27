@@ -13,6 +13,7 @@ module A2OBrew
   ).freeze
   # NOTE: --separate-metadata on file packager was buggy so we decided not to use it
   SEPARATE_METADATA = false
+  SEPARATE_ASM = true
 
   class Xcode2Ninja # rubocop:disable Metrics/ClassLength
     def initialize(xcodeproj_path)
@@ -179,6 +180,10 @@ module A2OBrew
 
     def data_js_metadata_path(target, a2o_target)
       "#{data_js_path(target, a2o_target)}.metadata"
+    end
+
+    def asm_js_path(target, a2o_target)
+      "#{build_dir(a2o_target)}/#{target.product_name}.asm.js"
     end
 
     def html_path(target, a2o_target)
@@ -352,7 +357,7 @@ module A2OBrew
     end
 
     # rubocop:disable Metrics/LineLength
-    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity
       # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
       rules = []
@@ -457,21 +462,29 @@ module A2OBrew
       # generate html
       conf_html_flags = a2o_project_flags(active_project_config, :html)
 
+      outputs = [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)]
+
+      if SEPARATE_ASM
+        outputs << asm_js_path(target, a2o_target)
+        separate_asm_options = '--separate-asm'
+      end
+
       rules << {
         rule_name: 'html',
         description: 'generate executables: ${out}',
-        command: "EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} -s LZ4=1 -s NATIVE_LIBDISPATCH=1 --emrun -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n #{conf_html_flags}"
+        command: "EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} -s LZ4=1 -s NATIVE_LIBDISPATCH=1 --emrun -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n #{conf_html_flags}"
       }
 
       builds << {
-        outputs: [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)],
+        outputs: outputs,
         rule_name: 'html',
         inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + dep_paths,
         build_variables: {
           'pre_js' => data_js_path(target, a2o_target),
           'linked_objects' => bitcode_path(target, a2o_target),
           'framework_options' => LINK_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' '),
-          'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto'
+          'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
+          'separate_asm_options' => separate_asm_options
         }
       }
 
