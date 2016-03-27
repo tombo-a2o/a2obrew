@@ -393,7 +393,7 @@ module A2OBrew
         description: 'compile ${source} to ${out}',
         deps: 'gcc',
         depfile: '${out}.d',
-        command: "a2o -MMD -MF ${out}.d -Wno-warn-absolute-paths #{cc_flags} ${file_cflags} -c ${source} -o ${out} #{conf_cc_flags}"
+        command: "a2o -MMD -MF ${out}.d -Wno-absolute-value #{cc_flags} ${file_cflags} -c ${source} -o ${out} #{conf_cc_flags}"
       }
 
       phase.files_references.each do |file|
