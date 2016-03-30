@@ -12,6 +12,9 @@ module MakeMakefile
   end
 end
 
+require_relative 'git'
+require_relative 'util'
+require_relative 'emscripten'
 require_relative 'xcode2ninja'
 
 module A2OBrew
@@ -62,7 +65,10 @@ USAGE
         puts_build_completion(options, false)
       when :configure, :build, :install, :clean
         puts_build_completion(options, true)
-        # TODO: xcodebuild
+      when :xcodebuild
+        # TODO: implement
+      when :emscripten
+        # TODO: implement
       end
     end
 
@@ -74,7 +80,11 @@ USAGE
 
         next unless proj_names.empty? || proj_names.include?(proj[:name])
         proj_path = "#{depends[:path]}/#{proj[:path]}"
-        git_update(proj_path, proj[:branch], proj[:repository_uri])
+        begin
+          Git.update(proj_path, proj[:branch], proj[:repository_uri])
+        rescue CmdExecException => e
+          error_exit(e.msg, e.exit_status)
+        end
       end
     end
 
@@ -123,6 +133,11 @@ USAGE
       execute_ninja_command(ninja_path, options)
     end
 
+    desc 'emscripten', 'handle emscripten'
+    def emscripten
+      Emscripten.new
+    end
+
     private
 
     # TODO: Refactor to rubocop compliant
@@ -155,8 +170,8 @@ USAGE
           if command == :clean
             next unless File.exist?(work_path)
           else
-            mkdir_p(work_path)
-            mkdir_p(build_target_path)
+            Util.mkdir_p(work_path)
+            Util.mkdir_p(build_target_path)
           end
 
           cmd = proj[command] % {
@@ -166,9 +181,11 @@ USAGE
             cppflags: target ? A2OCONF[:targets][target.intern][:cppflags] : nil
           }
 
-          cmd_exec "cd #{work_path} && #{cmd}", "Build Error: stop a2obrew #{command} #{proj[:name]}"
+          Util.cmd_exec "cd #{work_path} && #{cmd}", "Build Error: stop a2obrew #{command} #{proj[:name]}"
         end
       end
+    rescue CmdExecException => e
+      error_exit(e.msg, e.exit_status)
     end
 
     # die unless emcc
@@ -178,49 +195,6 @@ Cannot find emcc. Execute the command below.
 
 eval "$(a2obrew init -)"
 EOF
-    end
-
-    # git pull if remote updated
-    def git_update(root_path, branch_name, repository_uri) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/LineLength
-      git_path = "#{root_path}/.git"
-      if File.directory?(root_path) && File.directory?(git_path)
-        # git clone has already done
-
-        git_command = "git --git-dir=#{git_path} --work-tree=#{root_path}"
-
-        # Change current branch if needed
-        current_branch = `#{git_command} rev-parse --abbrev-ref HEAD`
-
-        if branch_name && current_branch != branch_name
-          cmd_exec "#{git_command} checkout #{branch_name}", "fail to change the branch from #{current_branch} to #{branch_name}" # rubocop:disable Metrics/LineLength
-        end
-
-        # check the repository is up to date or not
-        cmd_exec "#{git_command} remote update", 'fail to git remote update'
-        local = `#{git_command} rev-parse @`
-        remote = `#{git_command} rev-parse @{u}`
-        base = `#{git_command} merge-base @ @{u}`
-
-        if local == remote
-          puts "#{root_path} is up to date."
-        elsif local == base
-          # git pull if needed
-          cmd_exec "#{git_command} pull", "git pull fails on #{root_path}"
-        elsif remote == base
-          error_exit "You must do 'git push' on #{root_path}"
-        else
-          # diverged
-          error_exit "You must update #{root_path} yourself"
-        end
-      else
-        # git clone hasn't done yet, so do git clone
-        branch_option = if branch_name
-                          "--branch #{branch_name}"
-                        else
-                          ''
-                        end
-        cmd_exec "git clone #{repository_uri} #{branch_option} #{root_path}", "git clone fails from #{repository_uri} with the branch #{branch_name} to #{root_path}" # rubocop:disable Metrics/LineLength
-      end
     end
 
     def a2obrew_path
@@ -314,29 +288,6 @@ EOF
       exit(0)
     end
 
-    def mkdir_p(path)
-      FileUtils.mkdir_p(path) unless File.directory?(path)
-    end
-
-    def cmd_exec(cmd, error_msg = nil)
-      puts_delimiter(cmd)
-      pid = fork
-      exec(cmd) if pid.nil?
-      _, stat = Process.waitpid2(pid)
-      if stat.exitstatus != 0
-        error_msg ||= "Error: #{cmd}"
-        error_exit error_msg, stat.exitstatus
-      end
-      stat
-    end
-
-    def puts_delimiter(text)
-      delimiter = ('=' * 78).colorize(color: :black, background: :white)
-      puts delimiter
-      puts text.colorize(color: :black, background: :white)
-      puts delimiter
-    end
-
     def read_project_config(path)
       if File.exist?(path)
         config = eval File.read(path) # rubocop:disable Lint/Eval
@@ -407,7 +358,7 @@ EOF
       xcodeproj_build_config = find_xcodeproj_build_config(active_project_config)
       ninja_path = "ninja/#{a2o_target}.ninja.build"
 
-      puts_delimiter("# Generate #{ninja_path}")
+      Util.puts_delimiter("# Generate #{ninja_path}")
       puts <<EOF
 a2o:
   target: #{a2o_target}
@@ -437,12 +388,14 @@ EOF
 
     def execute_ninja_command(ninja_path, options)
       if options[:clean]
-        cmd_exec "ninja -v -f #{ninja_path} -t clean", 'ninja clean error'
-        cmd_exec "rm -f #{ninja_path}", "remove ninja file error: #{ninja_path}"
+        Util.cmd_exec "ninja -v -f #{ninja_path} -t clean", 'ninja clean error'
+        Util.cmd_exec "rm -f #{ninja_path}", "remove ninja file error: #{ninja_path}"
       else
         jobs = "-j #{options[:jobs]}" if options[:jobs]
-        cmd_exec "ninja -v -f #{ninja_path} #{jobs}", 'ninja build error'
+        Util.cmd_exec "ninja -v -f #{ninja_path} #{jobs}", 'ninja build error'
       end
+    rescue CmdExecException => e
+      error_exit(e.msg, e.exit_status)
     end
   end
 end

@@ -3,6 +3,8 @@ require 'fileutils'
 require 'pathname'
 require 'rexml/document' # For parsing storyboard
 
+require_relative 'util'
+
 # rubocop:disable Metrics/ParameterLists
 
 module A2OBrew
@@ -95,7 +97,7 @@ module A2OBrew
     end
 
     def write_ninja_build(output_dir, _target, _build_config, a2o_target, builds, rules) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength
-      FileUtils.mkdir_p(output_dir) unless File.directory?(output_dir)
+      Util.mkdir_p(output_dir)
 
       path = File.join(output_dir, "#{a2o_target}.ninja.build")
       File.open(path, 'w:UTF-8') do |f|
