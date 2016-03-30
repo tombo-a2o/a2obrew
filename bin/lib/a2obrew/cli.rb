@@ -152,7 +152,9 @@ USAGE
                       end
           build_target_path = build_target_path(proj_path, target, proj)
 
-          unless command == :clean
+          if command == :clean
+            next unless File.exist?(work_path)
+          else
             mkdir_p(work_path)
             mkdir_p(build_target_path)
           end
