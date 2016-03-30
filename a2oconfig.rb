@@ -35,13 +35,12 @@ A2OCONF = {
       },
       {
         name: 'blocks-runtime',
-        path: 'blocks-runtime',
-        repository_uri: 'git@github.com:mheily/blocks-runtime.git',
-        autogen: 'autoreconf -i || autoreconf -i',
-        configure: 'AR=emar emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --enable-static --disable-shared CFLAGS="%{cppflags}"',
-        build: 'make -j8 && rm -f a.out*',
-        install: 'make install',
-        clean: 'make clean'
+        path: 'libclosure',
+        repository_uri: 'git@github.com:tomboinc/libclosure.git',
+        build_path: '%{project_path}',
+        build: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make',
+        install: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make install',
+        clean: 'BUILD=%{build_target_path} make clean'
       },
       {
         name: 'objc4',
