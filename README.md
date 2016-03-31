@@ -57,7 +57,7 @@ a2obrew update cocotron
 
 The command just updates a2obrew itself and dependent repositories.
 
-## Build a2obrew
+## Build dependent libraries
 
 `debug` is a target name. The target should be `debug` or `release`. If no target is specified, the target is `release`.
 
@@ -94,4 +94,12 @@ a2obrew xcodebuild -p my_project_config.rb
 a2obrew xcodebuild -t debug
 # If you'd like to clean built files, specify -c (--clean)
 a2obrew xcodebuild -c
+```
+
+## Update emscripten
+
+Use `a2obrew emscripten update`.
+
+```sh
+a2obrew emscripten update
 ```
