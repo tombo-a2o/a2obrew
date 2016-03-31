@@ -1,24 +1,16 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-require 'thor'
-require 'mkmf'
-require 'colorize'
 require 'fileutils'
-
-module MakeMakefile
-  module Logging
-    @logfile = File::NULL
-  end
-end
 
 require_relative 'git'
 require_relative 'util'
+require_relative 'cli_base'
 require_relative 'emscripten'
 require_relative 'xcode2ninja'
 
 module A2OBrew
-  class CLI < Thor # rubocop:disable Metrics/ClassLength
+  class CLI < CLIBase # rubocop:disable Metrics/ClassLength
     PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'.freeze
 
     def initialize(*args)
@@ -83,7 +75,7 @@ USAGE
         begin
           Git.update(proj_path, proj[:branch], proj[:repository_uri])
         rescue CmdExecException => e
-          error_exit(e.msg, e.exit_status)
+          error_exit(e.message, e.exit_status)
         end
       end
     end
@@ -133,10 +125,8 @@ USAGE
       execute_ninja_command(ninja_path, options)
     end
 
-    desc 'emscripten', 'handle emscripten'
-    def emscripten
-      Emscripten.new
-    end
+    desc 'emscripten SUBCOMMAND', 'handle emscripten'
+    subcommand 'emscripten', Emscripten
 
     private
 
@@ -185,29 +175,7 @@ USAGE
         end
       end
     rescue CmdExecException => e
-      error_exit(e.msg, e.exit_status)
-    end
-
-    # die unless emcc
-    def check_emsdk_env
-      error_exit(<<EOF) if find_executable('emcc').nil?
-Cannot find emcc. Execute the command below.
-
-eval "$(a2obrew init -)"
-EOF
-    end
-
-    def a2obrew_path
-      File.expand_path('../../../..', __FILE__)
-    end
-
-    def emsdk_path
-      "#{a2obrew_path}/emsdk"
-    end
-
-    def emscripten_system_local_path
-      # FIXME: use $EMSCRIPTEN
-      "#{emsdk_path}/emscripten/a2o/system/local"
+      error_exit(e.message, e.exit_status)
     end
 
     def check_target(target)
@@ -257,19 +225,6 @@ EOF
       else
         "#{project_path}/build/#{target}"
       end
-    end
-
-    def error_exit(message, exit_status = 1)
-      puts(('*' * 78).colorize(color: :red))
-      puts "a2obrew: #{message}".colorize(color: :red)
-      puts(('*' * 78).colorize(color: :red))
-
-      if @current_command
-        puts 'You can re-execute this phase with the command below.'
-        puts @current_command.colorize(color: :black, background: :white)
-      end
-
-      exit exit_status
     end
 
     def project_names
@@ -395,7 +350,7 @@ EOF
         Util.cmd_exec "ninja -v -f #{ninja_path} #{jobs}", 'ninja build error'
       end
     rescue CmdExecException => e
-      error_exit(e.msg, e.exit_status)
+      error_exit(e.message, e.exit_status)
     end
   end
 end

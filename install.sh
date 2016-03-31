@@ -31,7 +31,7 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 # Install emscripten
-./scripts/install_emsdk.sh
+bin/a2obrew emscripten update
 
 source emsdk/emsdk_env.sh > /dev/null
 eval "$(bin/a2obrew init -)"
