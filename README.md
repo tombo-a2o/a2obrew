@@ -46,39 +46,12 @@ echo 'eval "$(a2obrew init -)"' >> ~/.zshrc
 type a2obrew
 ```
 
-## Update dependent libraries from git
+## Upgrade whole system
+
+Use `a2obrew upgrade`.
 
 ```sh
-# update all
-a2obrew update
-# update only cocotron
-a2obrew update cocotron
-```
-
-The command just updates a2obrew itself and dependent repositories.
-
-## Build dependent libraries
-
-`debug` is a target name. The target should be `debug` or `release`. If no target is specified, the target is `release`.
-
-
-```sh
-# autogen is not needed basically after first install
-a2obrew autogen
-# configure is sometimes needed
-a2obrew configure --target=debug
-# after modifing some header and source files, you build with this command
-a2obrew build --target=debug
-# after modifing some header and source files, you build with this command
-a2obrew build --target=debug
-# You can build specific library
-a2obrew build --target=debug cocotron
-# You can build specific libraries
-a2obrew build --target=debug Foundation cocotron Chameleon
-# install built binaries
-a2obrew install --target=debug
-# clean built binaries
-a2obrew clean --target=debug
+a2obrew upgrade
 ```
 
 ## Build an application
@@ -96,10 +69,39 @@ a2obrew xcodebuild -t debug
 a2obrew xcodebuild -c
 ```
 
-## Update emscripten
+## For developers
 
-Use `a2obrew emscripten update`.
+### Update dependent libraries from git
 
 ```sh
-a2obrew emscripten update
+# update all
+a2obrew libraries update
+# update only cocotron
+a2obrew libraries update cocotron
+```
+
+The command just updates a2obrew itself and dependent repositories.
+
+### Build dependent libraries
+
+`debug` is a target name. The target should be `debug` or `release`. If no target is specified, the target is `release`.
+
+
+```sh
+# autogen is not needed basically after first install
+a2obrew libraries autogen
+# configure is sometimes needed
+a2obrew libraries configure --target=debug
+# after modifing some header and source files, you build with this command
+a2obrew libraries build --target=debug
+# after modifing some header and source files, you build with this command
+a2obrew libraries build --target=debug
+# You can build specific library
+a2obrew libraries build --target=debug cocotron
+# You can build specific libraries
+a2obrew libraries build --target=debug Foundation cocotron Chameleon
+# install built binaries
+a2obrew libraries install --target=debug
+# clean built binaries
+a2obrew libraries clean --target=debug
 ```

@@ -1,29 +1,18 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-require 'fileutils'
-
 require_relative 'git'
 require_relative 'util'
 require_relative 'cli_base'
+require_relative 'libraries'
 require_relative 'emscripten'
-require_relative 'xcode2ninja'
+require_relative 'xcodebuild'
 
 module A2OBrew
-  class CLI < CLIBase # rubocop:disable Metrics/ClassLength
-    PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'.freeze
-
-    def initialize(*args)
-      super
-
-      @current_command = "a2obrew #{ARGV.join(' ')}"
-    end
-
-    desc 'commands', 'show all commands of a2obrew'
+  class CLI < CLIBase
+    desc 'commands', 'show all commands'
     def commands
-      self.class.commands.each do |command|
-        puts command[0]
-      end
+      self.class.puts_commands
     end
 
     desc 'init [OPTIONS]', 'show shell script enables shims and autocompletion'
@@ -52,138 +41,35 @@ USAGE
     desc 'completions COMMAND', 'list completions for the COMMAND'
     def completions(*commands)
       return if commands.empty?
+
       case commands[0].intern
-      when :update, :autogen
-        puts_build_completion(options, false)
-      when :configure, :build, :install, :clean
-        puts_build_completion(options, true)
+      when :libraries
+        Libraries.completions(commands[1..-1])
       when :xcodebuild
-        # TODO: implement
+        XcodeBuild.completions(commands[1..-1])
       when :emscripten
-        # TODO: implement
+        Emscripten.completions(commands[1..-1])
       end
     end
 
-    desc 'update PROJECT_NAMES', 'update dependent repositories'
-    def update(*proj_names)
-      depends = A2OCONF[:depends]
-      depends[:projects].each do |proj|
-        @current_command = "a2obrew update #{proj[:name]}"
-
-        next unless proj_names.empty? || proj_names.include?(proj[:name])
-        proj_path = "#{depends[:path]}/#{proj[:path]}"
-        begin
-          Git.update(proj_path, proj[:branch], proj[:repository_uri])
-        rescue CmdExecException => e
-          error_exit(e.message, e.exit_status)
-        end
-      end
-    end
-
-    desc 'autogen PROJECT_NAMES', 'autogen dependent repositories'
-    def autogen(*proj_names)
-      build_main(:autogen, proj_names)
-    end
-
-    desc 'configure PROJECT_NAMES', 'configure dependent repositories'
+    desc 'upgrade', 'upgrade whole system'
     method_option :target, aliases: '-t', default: 'release', desc: 'Build target (ex. release)'
-    def configure(*proj_names)
+    def upgrade
       target = options[:target]
-      build_main(:configure, proj_names, target)
+      Libraries.new.upgrade_main([], target)
+      Emscripten.new.upgrade_main
     end
 
-    desc 'build PROJECT_NAMES', 'build dependent repositories'
-    method_option :target, aliases: '-t', default: 'release', desc: 'Build target (ex. release)'
-    def build(*proj_names)
-      target = options[:target]
-      build_main(:build, proj_names, target)
-    end
+    desc 'libraries SUBCOMMAND', 'handle libraries'
+    subcommand 'libraries', Libraries
 
-    desc 'install PROJECT_NAMES', 'install dependent repositories'
-    method_option :target, aliases: '-t', default: 'release', desc: 'Build target (ex. release)'
-    def install(*proj_names)
-      target = options[:target]
-      build_main(:install, proj_names, target)
-    end
-
-    desc 'clean PROJECT_NAMES', 'clean dependent repositories'
-    method_option :target, aliases: '-t', default: 'release', desc: 'Build target (ex. release)'
-    def clean(*proj_names)
-      target = options[:target]
-      build_main(:clean, proj_names, target)
-    end
-
-    desc 'xcodebuild', 'build application with config file'
-    method_option :clean, type: :boolean, aliases: '-c', default: false, desc: 'Clean'
-    method_option :project_config, aliases: '-p', desc: 'Project config ruby path'
-    method_option :target, aliases: '-t', default: 'release', desc: 'Build target for a2o(ex. release)'
-    method_option :jobs, type: :numeric, aliases: '-j', desc: 'the number of jobs to run simultaneously'
-    def xcodebuild
-      check_emsdk_env
-
-      ninja_path = generate_ninja_build(options)
-      execute_ninja_command(ninja_path, options)
-    end
+    desc 'xcodebuild SUBCOMMAND', 'build application with xcodeproj'
+    subcommand 'xcodebuild', XcodeBuild
 
     desc 'emscripten SUBCOMMAND', 'handle emscripten'
     subcommand 'emscripten', Emscripten
 
     private
-
-    # TODO: Refactor to rubocop compliant
-    def build_main(command, proj_names, target = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/LineLength
-      check_emsdk_env
-      check_target(target)
-      depends = A2OCONF[:depends]
-      depends[:projects].each do |proj|
-        @current_command = "a2obrew #{command} #{proj[:name]}"
-
-        next unless proj_names.empty? || proj_names.include?(proj[:name])
-        next if proj[command].nil?
-
-        proj_base_path = "#{depends[:path]}/#{proj[:path]}"
-
-        proj_paths = if proj[:frameworks]
-                       proj[:frameworks].map { |framework| "#{proj_base_path}/#{framework}" }
-                     else
-                       [proj_base_path]
-                     end
-
-        proj_paths.each do |proj_path|
-          work_path = if command == :autogen
-                        proj_path
-                      else
-                        build_path(proj_path, target, proj)
-                      end
-          build_target_path = build_target_path(proj_path, target, proj)
-
-          if command == :clean
-            next unless File.exist?(work_path)
-          else
-            Util.mkdir_p(work_path)
-            Util.mkdir_p(build_target_path)
-          end
-
-          cmd = proj[command] % {
-            project_path: proj_path,
-            build_target_path: build_target_path,
-            emscripten_system_local_path: emscripten_system_local_path,
-            cppflags: target ? A2OCONF[:targets][target.intern][:cppflags] : nil
-          }
-
-          Util.cmd_exec "cd #{work_path} && #{cmd}", "Build Error: stop a2obrew #{command} #{proj[:name]}"
-        end
-      end
-    rescue CmdExecException => e
-      error_exit(e.message, e.exit_status)
-    end
-
-    def check_target(target)
-      error_exit(<<EOF) unless target.nil? || A2OCONF[:targets].key?(target.intern)
-Invalid target '#{target}'.
-You must specify #{A2OCONF[:targets].keys.join('/')}.
-EOF
-    end
 
     def current_shell
       File.basename(ENV['SHELL']).intern
@@ -203,154 +89,6 @@ EOF
         # cannot detect
         'your shell profile'
       end
-    end
-
-    def build_path(project_path, target, project_conf)
-      if project_conf[:build_path]
-        project_conf[:build_path] % {
-          project_path: project_path,
-          target: target
-        }
-      else
-        "#{project_path}/build/#{target}"
-      end
-    end
-
-    def build_target_path(project_path, target, project_conf)
-      if project_conf[:build_target_path]
-        project_conf[:build_target_path] % {
-          project_path: project_path,
-          target: target
-        }
-      else
-        "#{project_path}/build/#{target}"
-      end
-    end
-
-    def project_names
-      A2OCONF[:depends][:projects].map { |proj| proj[:name] }
-    end
-
-    def puts_build_completion(options, with_target = true)
-      return unless options[:complete]
-
-      if with_target
-        A2OCONF[:targets].each do |target|
-          puts "--target=#{target}"
-        end
-      end
-      puts project_names.join("\n")
-      exit(0)
-    end
-
-    def read_project_config(path)
-      if File.exist?(path)
-        config = eval File.read(path) # rubocop:disable Lint/Eval
-        unless config[:version] == 1
-          raise Informative, '#{BUILD_CONFIG_RB_PATH} version should be 1'
-        end
-        config
-      else
-        {}
-      end
-    end
-
-    def load_project_config(project_config_path)
-      unless project_config_path.nil? || File.exist?(project_config_path)
-        error_exit "Specified #{project_config_path} not found"
-      end
-
-      project_config_path ||= PROJECT_CONFIG_RB_PATH
-
-      proj_config = if File.exist?(project_config_path)
-                      read_project_config(project_config_path)
-                    else
-                      {}
-                    end
-
-      [project_config_path, proj_config]
-    end
-
-    def search_xcodeproj_path(xcodeproj_path)
-      if xcodeproj_path.nil?
-        projects = Dir.glob('*.xcodeproj')
-        if projects.size == 1
-          xcodeproj_path = projects.first
-        elsif projects.size > 1
-          error_exit('There are more than one Xcode projects. Use project config.')
-        else
-          error_exit('No Xcode project in the current working directory.')
-        end
-      end
-
-      unless FileTest.directory?(xcodeproj_path)
-        error_exit('Specify valid .xcodeproj path')
-      end
-
-      xcodeproj_path
-    end
-
-    def find_xcodeproj_build_config(active_project_config)
-      xcodeproj_build_config = active_project_config[:xcodeproj_build_config]
-      unless xcodeproj_build_config
-        xcodeproj_build_config = {
-          debug: 'Debug',
-          release: 'Release'
-        }[a2o_target]
-
-        error_exit('Cannot determine xcodeproj_build_config') unless xcodeproj_build_config
-      end
-
-      xcodeproj_build_config
-    end
-
-    def generate_ninja_build(options) # rubocop:disable Metrics/MethodLength
-      a2o_target = options[:target].intern
-      proj_config_path, proj_config = load_project_config(options[:project_config])
-      xcodeproj_path = search_xcodeproj_path(options[:xcodeproj_path])
-      xcodeproj_target = proj_config[:xcodeproj_target] || File.basename(xcodeproj_path, '.xcodeproj')
-      active_project_config = fetch_active_project_config(proj_config, a2o_target)
-      xcodeproj_build_config = find_xcodeproj_build_config(active_project_config)
-      ninja_path = "ninja/#{a2o_target}.ninja.build"
-
-      Util.puts_delimiter("# Generate #{ninja_path}")
-      puts <<EOF
-a2o:
-  target: #{a2o_target}
-  proj_config_path: #{proj_config_path}
-xcodeproj:
-  xcodeproj_path: #{xcodeproj_path}
-  xcodeproj_target: #{xcodeproj_target}
-  xocdeproj_build_config: #{xcodeproj_build_config}
-EOF
-      xn = Xcode2Ninja.new(xcodeproj_path)
-      gen_paths = xn.xcode2ninja('ninja', xcodeproj_target, xcodeproj_build_config, active_project_config, a2o_target)
-      gen_paths.each do |path|
-        puts "Generate #{path}"
-      end
-
-      ninja_path
-    end
-
-    def fetch_active_project_config(proj_config, a2o_target)
-      begin
-        active_project_config = proj_config[:a2o_targets][a2o_target]
-      rescue
-        active_project_config = {}
-      end
-      active_project_config
-    end
-
-    def execute_ninja_command(ninja_path, options)
-      if options[:clean]
-        Util.cmd_exec "ninja -v -f #{ninja_path} -t clean", 'ninja clean error'
-        Util.cmd_exec "rm -f #{ninja_path}", "remove ninja file error: #{ninja_path}"
-      else
-        jobs = "-j #{options[:jobs]}" if options[:jobs]
-        Util.cmd_exec "ninja -v -f #{ninja_path} #{jobs}", 'ninja build error'
-      end
-    rescue CmdExecException => e
-      error_exit(e.message, e.exit_status)
     end
   end
 end

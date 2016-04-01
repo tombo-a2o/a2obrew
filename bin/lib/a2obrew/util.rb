@@ -1,5 +1,6 @@
 require 'mkmf'
 require 'colorize'
+require 'fileutils'
 
 module MakeMakefile
   module Logging

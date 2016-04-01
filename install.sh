@@ -31,60 +31,59 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 # Install emscripten
-bin/a2obrew emscripten update
-
+bin/a2obrew emscripten upgrade
 source emsdk/emsdk_env.sh > /dev/null
 eval "$(bin/a2obrew init -)"
 
 if [ $# == 1 ]; then
     if [ "$1" = "rebuild" ]; then
-        bin/a2obrew clean
+        bin/a2obrew libraries clean
     fi
 fi
 
-bin/a2obrew update
-bin/a2obrew autogen
-# install basic libraries
+# install dependent libraries
+bin/a2obrew libraries update
+bin/a2obrew libraries autogen
 # libbsd
-bin/a2obrew configure libbsd
-bin/a2obrew build libbsd
-bin/a2obrew install libbsd
+bin/a2obrew libraries configure libbsd
+bin/a2obrew libraries build libbsd
+bin/a2obrew libraries install libbsd
 # blocks-runtime
-bin/a2obrew configure blocks-runtime
-bin/a2obrew build blocks-runtime
-bin/a2obrew install blocks-runtime
+bin/a2obrew libraries configure blocks-runtime
+bin/a2obrew libraries build blocks-runtime
+bin/a2obrew libraries install blocks-runtime
 # objc4
-bin/a2obrew configure objc4
-bin/a2obrew build objc4
-bin/a2obrew install objc4
+bin/a2obrew libraries configure objc4
+bin/a2obrew libraries build objc4
+bin/a2obrew libraries install objc4
 # ICU
-bin/a2obrew configure icu
-bin/a2obrew build icu
-bin/a2obrew install icu
+bin/a2obrew libraries configure icu
+bin/a2obrew libraries build icu
+bin/a2obrew libraries install icu
 # libdispatch
-bin/a2obrew configure libdispatch
-bin/a2obrew build libdispatch
-bin/a2obrew install libdispatch
+bin/a2obrew libraries configure libdispatch
+bin/a2obrew libraries build libdispatch
+bin/a2obrew libraries install libdispatch
 # openssl
-bin/a2obrew configure openssl
-bin/a2obrew build openssl
-bin/a2obrew install openssl
+bin/a2obrew libraries configure openssl
+bin/a2obrew libraries build openssl
+bin/a2obrew libraries install openssl
 # freetype
-bin/a2obrew configure freetype
-bin/a2obrew build freetype
-bin/a2obrew install freetype
+bin/a2obrew libraries configure freetype
+bin/a2obrew libraries build freetype
+bin/a2obrew libraries install freetype
 # Foundation
-bin/a2obrew configure Foundation
-bin/a2obrew build Foundation
-bin/a2obrew install Foundation
+bin/a2obrew libraries configure Foundation
+bin/a2obrew libraries build Foundation
+bin/a2obrew libraries install Foundation
 # cocotron
-bin/a2obrew configure cocotron
-bin/a2obrew build cocotron
-bin/a2obrew install cocotron
+bin/a2obrew libraries configure cocotron
+bin/a2obrew libraries build cocotron
+bin/a2obrew libraries install cocotron
 # Chameleon
-bin/a2obrew configure Chameleon
-bin/a2obrew build Chameleon
-bin/a2obrew install Chameleon
+bin/a2obrew libraries configure Chameleon
+bin/a2obrew libraries build Chameleon
+bin/a2obrew libraries install Chameleon
 
 # Install commit hooks
 ./scripts/install_commit_hooks.sh

@@ -26,23 +26,44 @@ module A2OBrew
       }
     ].freeze
 
-    desc 'update', 'update emscripten repositories'
-    def update
-      update_repositories
-
-      Util.cmd_exec("cd #{a2obrew_path}/emsdk && ./emsdk install sdk-a2o-64bit && ./emsdk activate sdk-a2o-64bit && bash -c 'source ./emsdk_env.sh && emcc --clear-cache --clear-ports && emcc -O3 -s USE_LIBPNG=1 -s USE_ZLIB=1 #{a2obrew_path}/scripts/install-emscripten-ports.c'") # rubocop:disable Metrics/LineLength
-    rescue CmdExecException => e
-      error_exit(e.message, e.exit_status)
+    def self.completions(_commands)
+      # FIXME: implement
     end
 
-    private
+    desc 'update', 'update emscripten repositories'
+    def update
+      update_main
+    end
 
-    def update_repositories
-      REPOSITORYS.each do |repo|
-        Git.update("#{a2obrew_path}/#{repo[:path]}", repo[:branch], repo[:git_url])
+    desc 'build', 'build emscripten repositories'
+    def build
+      build_main
+    end
+
+    desc 'upgrade', 'update & build emscripten repositories'
+    def upgrade
+      upgrade_main
+    end
+
+    no_commands do
+      def update_main
+        REPOSITORYS.each do |repo|
+          Git.update("#{a2obrew_path}/#{repo[:path]}", repo[:branch], repo[:git_url])
+        end
+      rescue CmdExecException => e
+        error_exit(e.message, e.exit_status)
       end
-    rescue CmdExecException => e
-      error_exit(e.message, e.exit_status)
+
+      def build_main
+        Util.cmd_exec("cd #{a2obrew_path}/emsdk && ./emsdk install sdk-a2o-64bit && ./emsdk activate sdk-a2o-64bit && bash -c 'source ./emsdk_env.sh && emcc --clear-cache --clear-ports && emcc -O3 -s USE_LIBPNG=1 -s USE_ZLIB=1 #{a2obrew_path}/scripts/install-emscripten-ports.c'") # rubocop:disable Metrics/LineLength
+      rescue CmdExecException => e
+        error_exit(e.message, e.exit_status)
+      end
+
+      def upgrade_main
+        update_main
+        build_main
+      end
     end
   end
 end

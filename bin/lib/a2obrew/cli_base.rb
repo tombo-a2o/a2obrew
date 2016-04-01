@@ -9,6 +9,15 @@ module A2OBrew
       @current_command = "a2obrew #{ARGV.join(' ')}"
     end
 
+    def self.puts_commands
+      commands.each do |command|
+        puts command[0]
+      end
+      exit(0)
+    end
+
+    private_class_method :puts_commands
+
     private
 
     def error_exit(message, exit_status = 1)
