@@ -56,8 +56,8 @@ USAGE
     method_option :target, aliases: '-t', default: 'release', desc: 'Build target (ex. release)'
     def upgrade
       target = options[:target]
-      Libraries.new.upgrade_main([], target)
       Emscripten.new.upgrade_main
+      Libraries.new.upgrade_main([], target)
     end
 
     desc 'libraries SUBCOMMAND', 'handle libraries'
