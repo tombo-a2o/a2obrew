@@ -16,8 +16,6 @@ module A2OBrew
       exit(0)
     end
 
-    private_class_method :puts_commands
-
     private
 
     def error_exit(message, exit_status = 1)
