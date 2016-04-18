@@ -11,7 +11,7 @@ module A2OBrew
   LINK_FRAMEWORKS = %w(
     UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
     CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
-    Social AVFoundation
+    Social AVFoundation StoreKit
   ).freeze
   # NOTE: --separate-metadata on file packager was buggy so we decided not to use it
   SEPARATE_METADATA = false
