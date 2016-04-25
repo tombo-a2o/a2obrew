@@ -143,8 +143,10 @@ BUILD
           System/MultipeerConnectivity
           System/Security
           System/Social
-          System/StoreKit
           System/SystemConfiguration
+          System/TomboAFNetworking
+          System/TomboKit
+          System/StoreKit
         )
       },
       {
@@ -196,7 +198,7 @@ BUILD
     link_frameworks: %w(
       UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
       CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
-      Social AVFoundation StoreKit
+      Social AVFoundation StoreKit TomboAFNetworking TomboKit
     )
   }
 }.freeze
