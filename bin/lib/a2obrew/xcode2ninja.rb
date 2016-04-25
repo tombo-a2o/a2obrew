@@ -8,15 +8,6 @@ require_relative 'util'
 # rubocop:disable Metrics/ParameterLists
 
 module A2OBrew
-  LINK_FRAMEWORKS = %w(
-    UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
-    CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
-    Social AVFoundation StoreKit
-  ).freeze
-  # NOTE: --separate-metadata on file packager was buggy so we decided not to use it
-  SEPARATE_METADATA = false
-  SEPARATE_ASM = true
-
   class Xcode2Ninja # rubocop:disable Metrics/ClassLength
     def initialize(xcodeproj_path)
       self.xcodeproj_path = xcodeproj_path
@@ -313,7 +304,7 @@ module A2OBrew
       j = data_js_path(target, a2o_target)
       outputs = [t, j]
       options = ''
-      if SEPARATE_METADATA
+      if A2OCONF[:xcodebuild][:emscripten][:file_packager][:separate_metadata]
         outputs << data_js_metadata_path(target, a2o_target)
         options += ' --separate-metadata'
       end
@@ -457,7 +448,7 @@ module A2OBrew
 
       # detect emscripten file changes
       dep_paths = file_list("#{emscripten_dir}/src/")
-      LINK_FRAMEWORKS.each do |f|
+      A2OCONF[:xcodebuild][:link_frameworks].each do |f|
         dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
       end
 
@@ -466,7 +457,7 @@ module A2OBrew
 
       outputs = [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)]
 
-      if SEPARATE_ASM
+      if A2OCONF[:xcodebuild][:emscripten][:emcc][:separate_asm]
         outputs << asm_js_path(target, a2o_target)
         separate_asm_options = '--separate-asm'
       end
@@ -484,7 +475,7 @@ module A2OBrew
         build_variables: {
           'pre_js' => data_js_path(target, a2o_target),
           'linked_objects' => bitcode_path(target, a2o_target),
-          'framework_options' => LINK_FRAMEWORKS.map { |f| "-framework #{f}" }.join(' '),
+          'framework_options' => A2OCONF[:xcodebuild][:link_frameworks].map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'separate_asm_options' => separate_asm_options
         }
