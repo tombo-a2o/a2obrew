@@ -198,7 +198,7 @@ BUILD
     link_frameworks: %w(
       UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
       CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
-      Social AVFoundation StoreKit TomboAFNetworking TomboKit
+      Social AVFoundation StoreKit TomboKit
     )
   }
 }.freeze
