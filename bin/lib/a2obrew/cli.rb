@@ -4,6 +4,7 @@
 require_relative 'git'
 require_relative 'util'
 require_relative 'cli_base'
+require_relative 'platform'
 require_relative 'libraries'
 require_relative 'emscripten'
 require_relative 'xcodebuild'
@@ -68,6 +69,9 @@ USAGE
 
     desc 'emscripten SUBCOMMAND', 'handle emscripten'
     subcommand 'emscripten', Emscripten
+
+    desc 'platform SUBCOMMAND', 'handle Tombo Platform'
+    subcommand 'platform', Platform
 
     private
 

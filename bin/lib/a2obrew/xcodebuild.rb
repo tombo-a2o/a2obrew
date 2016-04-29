@@ -9,7 +9,7 @@ module A2OBrew
       # FIXME: implement
     end
 
-    desc 'xcodebuild', 'build application with config file'
+    desc 'build', 'build application with config file'
     method_option :clean, type: :boolean, aliases: '-c', default: false, desc: 'Clean'
     method_option :project_config, aliases: '-p', desc: 'Project config ruby path'
     method_option :target, aliases: '-t', default: 'release', desc: 'Build target for a2o(ex. release)'
