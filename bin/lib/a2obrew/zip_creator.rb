@@ -2,7 +2,7 @@ require 'zip'
 require 'httpclient'
 
 module A2OBrew
-  class ZipUploader
+  class ZipCreator
     def self.create_zip(output_zip_path, input_directory_path)
       Zip.sort_entries = true
       Zip.default_compression = Zlib::BEST_COMPRESSION
@@ -29,13 +29,13 @@ module A2OBrew
       end
     end
 
-    def self.upload_zip(input_path, endpoint_uri)
+    def self.upload_zip(input_path, platform_uri)
       http_client = HTTPClient.new
       File.open(input_path) do |file|
         body = {
           'contents_archive' => file
         }
-        http_client.post(endpoint_uri, body)
+        http_client.post("#{platform_uri}/application_versions", body)
       end
     end
   end

@@ -24,6 +24,10 @@ module A2OBrew
       @config['developer_credential_secret']
     end
 
+    def ssl_certificate_verify
+      @config['ssl_certificate_verify'] == 'true'
+    end
+
     private
 
     def checked_base_path(base_path)
@@ -56,6 +60,7 @@ module A2OBrew
 developer_portal_uri = #{dev_portal_uri}
 developer_credential_id = #{dev_credential_id}
 developer_credential_secret = #{dev_credential_secret}
+ssl_certificate_verify = true
 EOF
       end
     end
