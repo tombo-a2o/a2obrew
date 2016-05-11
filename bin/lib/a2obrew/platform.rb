@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+require 'json'
 require_relative 'dotfile'
 require_relative 'cli_base'
 require_relative 'zip_creator'
@@ -12,13 +13,14 @@ module A2OBrew
       @dotfile = Dotfile.new(options[:profile])
     end
 
-    desc 'deploy [input_dir] [application_version_id]', 'deploy application stored in a directory'
+    desc 'deploy [input_dir] [application_version]', 'deploy application stored in a directory'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
-    def deploy(input_dir, application_version_id)
+    def deploy(input_dir, _application_version)
       Dir.mktmpdir do |tmp_dir|
         zip_path = File.join(tmp_dir, 'deploy.zip')
         ZipCreator.create_zip(zip_path, input_dir)
-        create_application_archive(application_version_id, zip_path)
+        uploaded_file_id = create_uploaded_file(zip_path)
+        puts uploaded_file_id
       end
     end
 
@@ -53,15 +55,21 @@ module A2OBrew
       'FIXME'
     end
 
-    def create_application_archive(application_version_id, payload_path)
+    def create_uploaded_file(payload_path)
+      response = nil
       File.open(payload_path) do |payload|
         body = {
-          application_version_id: application_version_id,
-          payload: payload
+          'uploaded_file[payload]' => payload
         }
-        response = request('POST', '/application_archives.json', nil, body)
-        p response
+        response = request('POST', '/uploaded_files.json', nil, body)
       end
+
+      d = JSON.parse(response.body)['data']
+
+      raise 'Cannot upload file' unless d['type'] == 'uploaded_files' && d['id']
+      raise 'Uploaded file may be broken' if d['attributes']['size'] != File.size(payload_path)
+
+      d['id']
     end
   end
 end
