@@ -2,5 +2,5 @@
 
 # If bin directory is modified
 git diff --cached --name-only | if grep --quiet \\.rb$; then
-  rubocop -a bin a2oconfig.rb
+  rubocop -a --fail-level autocorrect bin a2oconfig.rb
 fi
