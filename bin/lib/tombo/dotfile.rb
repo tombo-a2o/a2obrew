@@ -1,7 +1,7 @@
 require 'inifile'
 require 'highline'
 
-module A2OBrew
+module Tombo
   class Dotfile
     def initialize(profile_name = nil, base_path = nil)
       @base_path = checked_base_path(base_path)

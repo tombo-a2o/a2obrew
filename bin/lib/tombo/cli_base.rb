@@ -1,19 +1,26 @@
-# encoding: utf-8
+require 'thor'
+require_relative '../a2obrew/util'
 
-require 'json'
-require_relative 'dotfile'
-require_relative 'cli_base'
-require_relative 'zip_creator'
-
-module A2OBrew
-  class PlatformCLIBase < CLIBase
+module Tombo
+  class CLIBase < Thor
     def initialize(*args)
       super
 
       @dotfile = Dotfile.new(options[:profile])
     end
 
+    def self.puts_commands
+      commands.each do |command|
+        puts command[0]
+      end
+      exit(0)
+    end
+
     private
+
+    def error_exit(message, exit_status = 1)
+      A2OBrew::Util.error_exit(message, @current_command, exit_status)
+    end
 
     def request(method, path, query = nil, body = nil, extheader = {})
       cl = HTTPClient.new
@@ -70,45 +77,5 @@ module A2OBrew
 
       d['id']
     end
-  end
-
-  class PlatformApplicationVersions < PlatformCLIBase
-    desc 'create [application_id] [version] [input_dir]', 'deploy application stored in a directory'
-    method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
-    def create(application_id, version, input_dir)
-      index_html = 'application.html'
-      error_exit("#{input_dir} must contain #{index_html}") unless File.file?(File.join(input_dir, index_html))
-
-      Dir.mktmpdir do |tmp_dir|
-        zip_path = File.join(tmp_dir, 'deploy.zip')
-        ZipCreator.create_zip(zip_path, input_dir)
-        uploaded_file_id = create_uploaded_file(zip_path)
-
-        application_version_id = create_application_version(application_id, version, uploaded_file_id)
-        puts "Create application_version: #{application_version_id} for application: #{application_id}"
-      end
-    end
-
-    private
-
-    def create_application_version(application_id, version, uploaded_file_id)
-      body = {
-        'application_version[application_id]' => application_id,
-        'application_version[version]' => version,
-        'application_version[uploaded_file_id]' => uploaded_file_id
-      }
-      json = request('POST', '/application_versions.json', nil, body)
-
-      d = json['data']
-
-      raise 'Cannot create application version' unless d['type'] == 'application_versions' && d['id']
-
-      d['id']
-    end
-  end
-
-  class Platform < CLIBase
-    desc 'application_versions SUBCOMMAND', 'handle application versions'
-    subcommand 'application_versions', PlatformApplicationVersions
   end
 end

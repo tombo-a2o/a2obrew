@@ -1,4 +1,4 @@
-# a2obrew
+# a2obrew & tombocli
 
 ## prerequests
 
@@ -71,10 +71,10 @@ a2obrew xcodebuild -c
 
 ## Upload an application
 
-Use `a2obrew platform application_versions create`.
+Use `tombocli application_versions create`.
 
 ```sh
-a2obrew platform application_versions create 67454963-23ad-4868-88bf-3c97fad31685 1.0.1-beta build/release/products
+tombocli application_versions create 67454963-23ad-4868-88bf-3c97fad31685 1.0.1-beta build/release/products
 ```
 
 ## For developers

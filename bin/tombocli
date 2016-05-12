@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
+script_path = File.dirname(__FILE__)
+
+$LOAD_PATH << "#{script_path}/lib"
+
+require 'tombo/cli'
+
+Tombo::CLI.start(ARGV)

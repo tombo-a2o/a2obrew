@@ -1,7 +1,7 @@
 require 'zip'
 require 'httpclient'
 
-module A2OBrew
+module Tombo
   class ZipCreator
     def self.create_zip(output_zip_path, input_directory_path)
       Zip.sort_entries = true
