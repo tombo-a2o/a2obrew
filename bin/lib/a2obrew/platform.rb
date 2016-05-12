@@ -13,9 +13,12 @@ module A2OBrew
       @dotfile = Dotfile.new(options[:profile])
     end
 
-    desc 'deploy [input_dir] [application_id] [version]', 'deploy application stored in a directory'
+    desc 'deploy [application_id] [version] [input_dir]', 'deploy application stored in a directory'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
-    def deploy(input_dir, application_id, version)
+    def deploy(application_id, version, input_dir)
+      index_html = 'application.html'
+      error_exit("#{input_dir} must contain #{index_html}") unless File.file?(File.join(input_dir, index_html))
+
       Dir.mktmpdir do |tmp_dir|
         zip_path = File.join(tmp_dir, 'deploy.zip')
         ZipCreator.create_zip(zip_path, input_dir)
@@ -41,7 +44,7 @@ module A2OBrew
         json['errors'].each do |error|
           puts error
         end
-        raise 'API failed'
+        error_exit('API failed')
       end
 
       json
