@@ -13,14 +13,16 @@ module A2OBrew
       @dotfile = Dotfile.new(options[:profile])
     end
 
-    desc 'deploy [input_dir] [application_version]', 'deploy application stored in a directory'
+    desc 'deploy [input_dir] [application_id] [version]', 'deploy application stored in a directory'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
-    def deploy(input_dir, _application_version)
+    def deploy(input_dir, application_id, version)
       Dir.mktmpdir do |tmp_dir|
         zip_path = File.join(tmp_dir, 'deploy.zip')
         ZipCreator.create_zip(zip_path, input_dir)
         uploaded_file_id = create_uploaded_file(zip_path)
-        puts uploaded_file_id
+
+        application_version_id = create_application_version(application_id, version, uploaded_file_id)
+        puts "Create application_version: #{application_version_id} for application: #{application_id}"
       end
     end
 
@@ -32,7 +34,17 @@ module A2OBrew
       # cl.debug_dev = STDOUT
 
       header_with_credential = credential_headers(extheader)
-      cl.request(method, @dotfile.developer_portal_uri(path), query, body, header_with_credential)
+      response = cl.request(method, @dotfile.developer_portal_uri(path), query, body, header_with_credential)
+      json = JSON.parse(response.body)
+      if json['errors'] && !json['errors'].empty?
+        puts 'API error'
+        json['errors'].each do |error|
+          puts error
+        end
+        raise 'API failed'
+      end
+
+      json
     end
 
     def credential_headers(base_headers, _content_type = 'application/json')
@@ -56,18 +68,33 @@ module A2OBrew
     end
 
     def create_uploaded_file(payload_path)
-      response = nil
+      json = nil
       File.open(payload_path) do |payload|
         body = {
           'uploaded_file[payload]' => payload
         }
-        response = request('POST', '/uploaded_files.json', nil, body)
+        json = request('POST', '/uploaded_files.json', nil, body)
       end
 
-      d = JSON.parse(response.body)['data']
+      d = json['data']
 
       raise 'Cannot upload file' unless d['type'] == 'uploaded_files' && d['id']
       raise 'Uploaded file may be broken' if d['attributes']['size'] != File.size(payload_path)
+
+      d['id']
+    end
+
+    def create_application_version(application_id, version, uploaded_file_id)
+      body = {
+        'application_version[application_id]' => application_id,
+        'application_version[version]' => version,
+        'application_version[uploaded_file_id]' => uploaded_file_id
+      }
+      json = request('POST', '/application_versions.json', nil, body)
+
+      d = json['data']
+
+      raise 'Cannot create application version' unless d['type'] == 'application_versions' && d['id']
 
       d['id']
     end
