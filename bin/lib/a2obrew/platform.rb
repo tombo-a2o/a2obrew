@@ -6,27 +6,11 @@ require_relative 'cli_base'
 require_relative 'zip_creator'
 
 module A2OBrew
-  class Platform < CLIBase
+  class PlatformCLIBase < CLIBase
     def initialize(*args)
       super
 
       @dotfile = Dotfile.new(options[:profile])
-    end
-
-    desc 'deploy [application_id] [version] [input_dir]', 'deploy application stored in a directory'
-    method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
-    def deploy(application_id, version, input_dir)
-      index_html = 'application.html'
-      error_exit("#{input_dir} must contain #{index_html}") unless File.file?(File.join(input_dir, index_html))
-
-      Dir.mktmpdir do |tmp_dir|
-        zip_path = File.join(tmp_dir, 'deploy.zip')
-        ZipCreator.create_zip(zip_path, input_dir)
-        uploaded_file_id = create_uploaded_file(zip_path)
-
-        application_version_id = create_application_version(application_id, version, uploaded_file_id)
-        puts "Create application_version: #{application_version_id} for application: #{application_id}"
-      end
     end
 
     private
@@ -86,6 +70,26 @@ module A2OBrew
 
       d['id']
     end
+  end
+
+  class PlatformApplicationVersions < PlatformCLIBase
+    desc 'create [application_id] [version] [input_dir]', 'deploy application stored in a directory'
+    method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
+    def create(application_id, version, input_dir)
+      index_html = 'application.html'
+      error_exit("#{input_dir} must contain #{index_html}") unless File.file?(File.join(input_dir, index_html))
+
+      Dir.mktmpdir do |tmp_dir|
+        zip_path = File.join(tmp_dir, 'deploy.zip')
+        ZipCreator.create_zip(zip_path, input_dir)
+        uploaded_file_id = create_uploaded_file(zip_path)
+
+        application_version_id = create_application_version(application_id, version, uploaded_file_id)
+        puts "Create application_version: #{application_version_id} for application: #{application_id}"
+      end
+    end
+
+    private
 
     def create_application_version(application_id, version, uploaded_file_id)
       body = {
@@ -101,5 +105,10 @@ module A2OBrew
 
       d['id']
     end
+  end
+
+  class Platform < CLIBase
+    desc 'application_versions SUBCOMMAND', 'handle application versions'
+    subcommand 'application_versions', PlatformApplicationVersions
   end
 end
