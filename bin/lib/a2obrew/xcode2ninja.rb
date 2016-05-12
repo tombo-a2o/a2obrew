@@ -179,8 +179,8 @@ module A2OBrew
       "#{build_dir(a2o_target)}/#{target.product_name}.asm.js"
     end
 
-    def html_path(target, a2o_target)
-      "#{build_dir(a2o_target)}/#{target.product_name}.html"
+    def html_path(_target, a2o_target)
+      "#{build_dir(a2o_target)}/application.html"
     end
 
     def html_mem_path(target, a2o_target)
