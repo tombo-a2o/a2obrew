@@ -135,8 +135,10 @@ module A2OBrew
       "build/#{a2o_target}"
     end
 
+    # paths for file packager
+
     def packager_target_dir(a2o_target)
-      "#{build_dir(a2o_target)}/package"
+      "#{build_dir(a2o_target)}/files"
     end
 
     def bundle_dir(a2o_target)
@@ -155,6 +157,38 @@ module A2OBrew
       "#{build_dir(a2o_target)}/objects"
     end
 
+    # products' paths to be packaged
+
+    def products_dir(a2o_target)
+      "#{build_dir(a2o_target)}/products"
+    end
+
+    def products_path_prefix(a2o_target)
+      "#{products_dir(a2o_target)}/application"
+    end
+
+    def data_path(_target, a2o_target)
+      "#{products_path_prefix(a2o_target)}.dat"
+    end
+
+    def js_path(_target, a2o_target)
+      "#{products_path_prefix(a2o_target)}.js"
+    end
+
+    def asm_js_path(_target, a2o_target)
+      "#{products_path_prefix(a2o_target)}.asm.js"
+    end
+
+    def html_path(_target, a2o_target)
+      "#{products_path_prefix(a2o_target)}.html"
+    end
+
+    def html_mem_path(target, a2o_target)
+      "#{html_path(target, a2o_target)}.mem"
+    end
+
+    # emscripten paths
+
     def emscripten_dir
       ENV['EMSCRIPTEN']
     end
@@ -163,36 +197,22 @@ module A2OBrew
       "#{emscripten_dir}/system/frameworks"
     end
 
-    def data_path(target, a2o_target)
-      "#{build_dir(a2o_target)}/#{target.product_name}.dat"
+    # emscripten work paths
+
+    def emscripten_work_dir(a2o_target)
+      "#{build_dir(a2o_target)}/emscripten"
     end
 
-    def data_js_path(target, a2o_target)
-      "#{build_dir(a2o_target)}/#{target.product_name}Data.js"
+    def bitcode_path(_target, a2o_target)
+      "#{emscripten_work_dir(a2o_target)}/application.bc"
+    end
+
+    def data_js_path(_target, a2o_target)
+      "#{emscripten_work_dir(a2o_target)}/data.js"
     end
 
     def data_js_metadata_path(target, a2o_target)
       "#{data_js_path(target, a2o_target)}.metadata"
-    end
-
-    def asm_js_path(target, a2o_target)
-      "#{build_dir(a2o_target)}/#{target.product_name}.asm.js"
-    end
-
-    def html_path(_target, a2o_target)
-      "#{build_dir(a2o_target)}/application.html"
-    end
-
-    def html_mem_path(target, a2o_target)
-      "#{html_path(target, a2o_target)}.mem"
-    end
-
-    def js_path(target, a2o_target)
-      "#{build_dir(a2o_target)}/#{target.product_name}.js"
-    end
-
-    def bitcode_path(target, a2o_target)
-      "#{build_dir(a2o_target)}/#{target.product_name}.bc"
     end
 
     def a2o_project_flags(active_project_config, rule)
