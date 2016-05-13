@@ -198,7 +198,7 @@ BUILD
     static_link_frameworks: %w(
       UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
       CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
-      Social AVFoundation StoreKit TomboKit CoreFoundation
+      Social AVFoundation StoreKit CoreFoundation
     ),
     dynamic_link_frameworks: %w(
       Foundation
