@@ -215,6 +215,10 @@ module A2OBrew
       "#{data_js_path(target, a2o_target)}.metadata"
     end
 
+    def shared_library_js_path(_target, a2o_target)
+      "#{emscripten_work_dir(a2o_target)}/shared.js"
+    end
+
     def a2o_project_flags(active_project_config, rule)
       # {
       #   flags: {
@@ -464,11 +468,37 @@ module A2OBrew
         inputs: objects
       }
 
+      # dynamic link libraries
+      rules << {
+        rule_name: 'shared_library_js',
+        description: 'List of shared libraries to be linked',
+        command: 'echo "Module.dynamicLibraries = [${shared_libraries}];" > ${out}'
+      }
+
+      builds << {
+        outputs: [shared_library_js_path(target, a2o_target)],
+        rule_name: 'shared_library_js',
+        inputs: objects,
+        build_variables: {
+          'shared_libraries' => A2OCONF[:xcodebuild][:dynamic_link_frameworks].map { |f| "'#{f}.so.js'" }.join(',')
+        }
+      }
+
+      A2OCONF[:xcodebuild][:dynamic_link_frameworks].each do |f|
+        source = "#{frameworks_dir}/#{f}.framework/#{f}.so.js"
+        dest = "#{products_dir(a2o_target)}/#{f}.so.js"
+        builds << {
+          outputs: [dest],
+          rule_name: 'cp_r',
+          inputs: [source]
+        }
+      end
+
       # executable
 
       # detect emscripten file changes
       dep_paths = file_list("#{emscripten_dir}/src/")
-      A2OCONF[:xcodebuild][:link_frameworks].each do |f|
+      A2OCONF[:xcodebuild][:static_link_frameworks].each do |f|
         dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
       end
 
@@ -485,17 +515,18 @@ module A2OBrew
       rules << {
         rule_name: 'html',
         description: 'generate executables: ${out}',
-        command: "EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${pre_js} -licuuc -licui18n #{conf_html_flags}"
+        command: "EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -s MAIN_MODULE=1 -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${data_js} --pre-js ${shared_library_js} -licuuc -licui18n #{conf_html_flags}"
       }
 
       builds << {
         outputs: outputs,
         rule_name: 'html',
-        inputs: [data_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + dep_paths,
+        inputs: [data_js_path(target, a2o_target), shared_library_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + dep_paths,
         build_variables: {
-          'pre_js' => data_js_path(target, a2o_target),
+          'data_js' => data_js_path(target, a2o_target),
+          'shared_library_js' => shared_library_js_path(target, a2o_target),
           'linked_objects' => bitcode_path(target, a2o_target),
-          'framework_options' => A2OCONF[:xcodebuild][:link_frameworks].map { |f| "-framework #{f}" }.join(' '),
+          'framework_options' => A2OCONF[:xcodebuild][:static_link_frameworks].map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'separate_asm_options' => separate_asm_options
         }
