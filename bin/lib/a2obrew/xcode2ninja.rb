@@ -448,6 +448,7 @@ module A2OBrew
           rule_name: 'cc',
           inputs: [source_path, prefix_pch],
           build_variables: {
+            'file_cflags' => '-fobjc-arc',
             'source' => source_path
           }
         }
