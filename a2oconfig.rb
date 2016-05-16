@@ -195,10 +195,13 @@ BUILD
         separate_asm: true
       }
     },
-    link_frameworks: %w(
+    static_link_frameworks: %w(
       UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
       CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
-      Social AVFoundation StoreKit TomboKit
+      Social AVFoundation StoreKit CoreFoundation MapKit GameKit MultipeerConnectivity
+    ),
+    dynamic_link_frameworks: %w(
+      Foundation
     )
   }
 }.freeze
