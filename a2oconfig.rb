@@ -10,13 +10,16 @@ A2OCONF = {
   targets: {
     debug: {
       # :cppflags => '-g -O0 -DDEBUG',
-      cppflags: '-O0 -DDEBUG'
+      cppflags: '-O0 -DDEBUG',
+      lflags: '-O0'
     },
     release: {
-      cppflags: '-O2'
+      cppflags: '-O2',
+      lflags: '-O2'
     },
     profile: {
-      cppflags: '-O0 -DDEBUG --tracing'
+      cppflags: '-O0 -DDEBUG --tracing',
+      lflags: '-O0'
     }
   },
   depends: {
@@ -122,8 +125,8 @@ BUILD
         branch: 'feature/emscripten',
         autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
         build_path: '%{project_path}',
-        build: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
-        install: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
+        build: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make -j8',
+        install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
         frameworks: %w(
           System/Accounts
@@ -156,8 +159,8 @@ BUILD
         branch: 'feature/emscripten',
         autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
         build_path: '%{project_path}',
-        build: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
-        install: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
+        build: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make -j8',
+        install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
         frameworks: %w(
           AppKit
@@ -176,8 +179,8 @@ BUILD
         branch: 'feature/with_cocotron',
         autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
         build_path: '%{project_path}',
-        build: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make -j8',
-        install: 'STYLE_CPPFLAGS="%{cppflags}" BUILD_DIR=%{build_target_path} make install',
+        build: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make -j8',
+        install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
         frameworks: %w(
           UIKit

@@ -111,7 +111,8 @@ module A2OBrew
               project_path: proj_path,
               build_target_path: build_target_path,
               emscripten_system_local_path: emscripten_system_local_path,
-              cppflags: target ? A2OCONF[:targets][target.intern][:cppflags] : nil
+              cppflags: target ? A2OCONF[:targets][target.intern][:cppflags] : nil,
+              lflags: target ? A2OCONF[:targets][target.intern][:lflags] : nil
             }
 
             Util.cmd_exec "cd #{work_path} && #{cmd}", "Build Error: stop a2obrew libraries #{command} #{proj[:name]}"
