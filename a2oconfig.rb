@@ -15,7 +15,7 @@ A2OCONF = {
     },
     release: {
       cppflags: '-O2',
-      lflags: '-O2'
+      lflags: '-Oz'
     },
     profile: {
       cppflags: '-O0 -DDEBUG --tracing',
