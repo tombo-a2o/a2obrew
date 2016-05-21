@@ -219,6 +219,10 @@ module A2OBrew
       "#{emscripten_work_dir(a2o_target)}/shared.js"
     end
 
+    def extports_js_path(_target, a2o_target)
+      "#{emscripten_work_dir(a2o_target)}/exports.js"
+    end
+
     def a2o_project_flags(active_project_config, rule)
       # {
       #   flags: {
@@ -374,7 +378,7 @@ module A2OBrew
     end
 
     # rubocop:disable Metrics/LineLength
-    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity
+    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
       rules = []
@@ -470,6 +474,8 @@ module A2OBrew
       }
 
       # dynamic link libraries
+      shared_libraries = A2OCONF[:xcodebuild][:dynamic_link_frameworks]
+
       rules << {
         rule_name: 'shared_library_js',
         description: 'List of shared libraries to be linked',
@@ -479,13 +485,13 @@ module A2OBrew
       builds << {
         outputs: [shared_library_js_path(target, a2o_target)],
         rule_name: 'shared_library_js',
-        inputs: objects,
+        inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.so.js" },
         build_variables: {
-          'shared_libraries' => A2OCONF[:xcodebuild][:dynamic_link_frameworks].map { |f| "'#{f}.so.js'" }.join(',')
+          'shared_libraries' => shared_libraries.map { |f| "'#{f}.so.js'" }.join(',')
         }
       }
 
-      A2OCONF[:xcodebuild][:dynamic_link_frameworks].each do |f|
+      shared_libraries.each do |f|
         source = "#{frameworks_dir}/#{f}.framework/#{f}.so.js"
         dest = "#{products_dir(a2o_target)}/#{f}.so.js"
         builds << {
@@ -494,6 +500,18 @@ module A2OBrew
           inputs: [source]
         }
       end
+
+      rules << {
+        rule_name: 'exports_js',
+        description: 'Functions to be exported in main module, which are referenced from shared libraries',
+        command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -e "puts (ARGF.map{|l| '_'+l.split[1]}+['_main']).to_s" > ${out}!
+      }
+
+      builds << {
+        outputs: [extports_js_path(target, a2o_target)],
+        rule_name: 'exports_js',
+        inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
+      }
 
       # executable
 
@@ -516,16 +534,16 @@ module A2OBrew
       rules << {
         rule_name: 'html',
         description: 'generate executables: ${out}',
-        command: "EMCC_DEBUG=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -s MAIN_MODULE=1 -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${data_js} --pre-js ${shared_library_js} -licuuc -licui18n #{conf_html_flags}"
+        command: "EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n #{conf_html_flags}"
       }
 
       builds << {
         outputs: outputs,
         rule_name: 'html',
-        inputs: [data_js_path(target, a2o_target), shared_library_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + dep_paths,
+        inputs: [data_js_path(target, a2o_target), shared_library_js_path(target, a2o_target), extports_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + dep_paths,
         build_variables: {
           'data_js' => data_js_path(target, a2o_target),
-          'shared_library_js' => shared_library_js_path(target, a2o_target),
+          'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{extports_js_path(target, a2o_target)} --pre-js #{shared_library_js_path(target, a2o_target)}",
           'linked_objects' => bitcode_path(target, a2o_target),
           'framework_options' => A2OCONF[:xcodebuild][:static_link_frameworks].map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
