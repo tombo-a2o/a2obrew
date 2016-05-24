@@ -129,27 +129,40 @@ BUILD
         install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
         frameworks: %w(
-          System/Accounts
-          System/AdSupport
-          System/AudioToolbox
-          System/AVFoundation
           System/CFNetwork
-          System/CoreAudio
           System/CoreFoundation
-          System/CoreLocation
           System/Foundation
-          System/GameKit
-          System/ImageIO
-          System/OpenGLES
-          System/MapKit
-          System/MobileCoreServices
-          System/MultipeerConnectivity
           System/Security
-          System/Social
-          System/SystemConfiguration
-          System/TomboAFNetworking
-          System/TomboKit
-          System/StoreKit
+        )
+      },
+      {
+        name: 'A2OFrameworks',
+        path: 'A2OFrameworks',
+        repository_uri: 'git@github.com:tomboinc/A2OFrameworks.git',
+        branch: 'master',
+        autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
+        build_path: '%{project_path}',
+        build: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make -j8',
+        install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
+        clean: 'BUILD_DIR=%{build_target_path} make clean',
+        frameworks: %w(
+          Accounts
+          AdSupport
+          AudioToolbox
+          AVFoundation
+          CoreAudio
+          CoreLocation
+          GameKit
+          ImageIO
+          OpenGLES
+          MapKit
+          MobileCoreServices
+          MultipeerConnectivity
+          Social
+          SystemConfiguration
+          TomboAFNetworking
+          TomboKit
+          StoreKit
         )
       },
       {
