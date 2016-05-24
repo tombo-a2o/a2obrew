@@ -76,6 +76,10 @@ bin/a2obrew libraries install freetype
 bin/a2obrew libraries configure Foundation
 bin/a2obrew libraries build Foundation
 bin/a2obrew libraries install Foundation
+# A2OFrameworks
+bin/a2obrew libraries configure A2OFrameworks
+bin/a2obrew libraries build A2OFrameworks
+bin/a2obrew libraries install A2OFrameworks
 # cocotron
 bin/a2obrew libraries configure cocotron
 bin/a2obrew libraries build cocotron
