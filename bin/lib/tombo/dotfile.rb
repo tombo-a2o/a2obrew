@@ -49,7 +49,7 @@ module Tombo
       puts "Generate #{config_path} to save platform informations"
       hl = HighLine.new
       dev_portal_uri = hl.ask('Developer portal URI:') do |q|
-        q.default = 'https://developer.tom.bo'
+        q.default = 'https://developer.tombo.io'
       end
       dev_credential_id = hl.ask('Developer credential id:')
       dev_credential_secret = hl.ask('Developer credential secret:')
