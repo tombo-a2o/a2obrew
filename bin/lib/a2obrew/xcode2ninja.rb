@@ -238,7 +238,7 @@ module A2OBrew
 
     # phases
 
-    def resources_build_phase(_xcodeproj, target, build_config, phase, _active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength
+    def resources_build_phase(_xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
       rules = []
@@ -249,6 +249,8 @@ module A2OBrew
         description: 'ibtool ${in}',
         command: "ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${temp_dir}" # rubocop:disable LineLength
       }
+
+      resource_filter = a2o_project_flags(active_project_config, :resource_filter)
 
       phase.files_references.each do |files_ref|
         case files_ref
@@ -262,6 +264,8 @@ module A2OBrew
 
         files.each do |file|
           local_path = File.join(file.parents.map(&:path).select { |path| path }, file.path)
+
+          next if resource_filter && !resource_filter.call(local_path)
 
           if File.extname(file.path) == '.storyboard'
             remote_path = File.join(resources_dir(a2o_target), file.path)
