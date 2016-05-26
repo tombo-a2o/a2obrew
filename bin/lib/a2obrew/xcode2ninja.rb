@@ -224,13 +224,6 @@ module A2OBrew
     end
 
     def a2o_project_flags(active_project_config, rule)
-      # {
-      #   flags: {
-      #     cc: '-O0',
-      #     link: '-l ababa',
-      #     html: '-s WEIRD=1'
-      #   }
-      # }
       # TODO: Use Ruby 2.3 and Hash#dig
       flags = active_project_config[:flags]
       flags[rule] if flags
@@ -250,7 +243,7 @@ module A2OBrew
         command: "ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${temp_dir}" # rubocop:disable LineLength
       }
 
-      resource_filter = a2o_project_flags(active_project_config, :resource_filter)
+      resource_filter = active_project_config[:resource_filter]
 
       phase.files_references.each do |files_ref|
         case files_ref
