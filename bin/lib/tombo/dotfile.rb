@@ -7,9 +7,13 @@ module Tombo
       @base_path = checked_base_path(base_path)
 
       section = profile_name.nil? ? 'default' : "profile #{profile_name}"
-      @config_path = checked_config_path(File.join(@base_path, 'config'), section)
+      @config_path = checked_config_path(File.join(@base_path, 'config'))
 
-      @config = IniFile.load(@config_path)[section]
+      ini_file = IniFile.load(@config_path)
+
+      raise "Invalid profile #{profile_name}" unless ini_file.has_section?(section)
+
+      @config = ini_file[section]
     end
 
     def developer_portal_uri(path)
@@ -40,12 +44,12 @@ module Tombo
       base_path
     end
 
-    def checked_config_path(config_path, section)
-      generate_config(config_path, section) unless File.exist?(config_path)
+    def checked_config_path(config_path)
+      generate_config(config_path) unless File.exist?(config_path)
       config_path
     end
 
-    def generate_config(config_path, section) # rubocop:disable Metrics/MethodLength
+    def generate_config(config_path) # rubocop:disable Metrics/MethodLength
       puts "Generate #{config_path} to save platform informations"
       hl = HighLine.new
       dev_portal_uri = hl.ask('Developer portal URI:') do |q|
@@ -56,7 +60,7 @@ module Tombo
 
       File.open(config_path, 'w') do |f|
         f.puts <<EOF
-[#{section}]
+[default]
 developer_portal_uri = #{dev_portal_uri}
 developer_credential_id = #{dev_credential_id}
 developer_credential_secret = #{dev_credential_secret}
