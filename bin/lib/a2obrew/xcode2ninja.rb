@@ -559,7 +559,21 @@ module A2OBrew
         }
       }
 
-      # copy pre_preducts to products
+      # copy pre_products to products
+
+      # TODO: All files except application.html are cached by reverse-proxy or browser.
+      #       It may results a problem when releasing a new version.
+      #       So we'll change file paths like this.
+      #       ```
+      #       require 'securerandom'
+      #       cp pre_products/application.* products/#{SecureRandom.hex(16)}.* unless application.html
+      #       ```
+      #       But currently, just copy them as the original.
+
+      products_inputs = pre_products_outputs + shared_libraries_outputs + [data_path(a2o_target)]
+      products_outputs = products_inputs.map do |path|
+        path.sub('pre_products', 'products')
+      end
 
       rules << {
         rule_name: 'generate_products',
@@ -568,9 +582,9 @@ module A2OBrew
       }
 
       builds << {
-        outputs: (pre_products_outputs + shared_libraries_outputs + [data_path(a2o_target)]).map { |f| f.sub('pre_products', 'products') },
+        outputs: products_outputs,
         rule_name: 'generate_products',
-        inputs: pre_products_outputs
+        inputs: products_inputs
       }
 
       [builds, rules]
