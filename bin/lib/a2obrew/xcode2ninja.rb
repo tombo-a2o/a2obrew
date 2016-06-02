@@ -256,7 +256,7 @@ module A2OBrew
         end
 
         files.each do |file|
-          local_path = File.join(file.parents.map(&:path).select { |path| path }, file.path)
+          local_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
 
           next if resource_filter && !resource_filter.call(local_path)
 
@@ -382,7 +382,7 @@ module A2OBrew
       objects = []
 
       header_dirs = xcodeproj.main_group.recursive_children.select { |g| g.path && File.extname(g.path) == '.h' }.map do |g|
-        full_path = File.join((g.parents + [g]).map(&:path).select { |path| path })
+        full_path = g.real_path.relative_path_from(Pathname(xcodeproj_dir)).to_s
         File.dirname(full_path)
       end.to_a.uniq
 
@@ -415,8 +415,8 @@ module A2OBrew
       }
 
       phase.files_references.each do |file|
-        source_path = File.join(file.parents.map(&:path).select { |path| path }, file.path)
-        object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
+        source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
+        object = File.join(objects_dir(a2o_target), source_path.sub_ext('.o'))
 
         objects << object
 
@@ -591,6 +591,8 @@ module A2OBrew
             value.gsub(/\$\([A-Za-z0-9_]+\)/) do |m|
               case m
               when '$(PROJECT_DIR)'
+                xcodeproj_dir
+              when '$(SRCROOT)'
                 xcodeproj_dir
               when '$(SDKROOT)'
                 # FIXME: currently ignores
