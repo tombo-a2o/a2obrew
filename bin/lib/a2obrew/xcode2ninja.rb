@@ -157,34 +157,40 @@ module A2OBrew
       "#{build_dir(a2o_target)}/objects"
     end
 
-    # products' paths to be packaged
+    # pre_products' paths to be coped to products
+
+    def pre_products_dir(a2o_target)
+      "#{build_dir(a2o_target)}/pre_products"
+    end
+
+    def pre_products_path_prefix(a2o_target)
+      "#{pre_products_dir(a2o_target)}/application"
+    end
+
+    def data_path(a2o_target)
+      "#{pre_products_path_prefix(a2o_target)}.dat"
+    end
+
+    def js_path(a2o_target)
+      "#{pre_products_path_prefix(a2o_target)}.js"
+    end
+
+    def asm_js_path(a2o_target)
+      "#{pre_products_path_prefix(a2o_target)}.asm.js"
+    end
+
+    def html_path(a2o_target)
+      "#{pre_products_path_prefix(a2o_target)}.html"
+    end
+
+    def html_mem_path(a2o_target)
+      "#{html_path(a2o_target)}.mem"
+    end
+
+    # products dir is packaged
 
     def products_dir(a2o_target)
       "#{build_dir(a2o_target)}/products"
-    end
-
-    def products_path_prefix(a2o_target)
-      "#{products_dir(a2o_target)}/application"
-    end
-
-    def data_path(_target, a2o_target)
-      "#{products_path_prefix(a2o_target)}.dat"
-    end
-
-    def js_path(_target, a2o_target)
-      "#{products_path_prefix(a2o_target)}.js"
-    end
-
-    def asm_js_path(_target, a2o_target)
-      "#{products_path_prefix(a2o_target)}.asm.js"
-    end
-
-    def html_path(_target, a2o_target)
-      "#{products_path_prefix(a2o_target)}.html"
-    end
-
-    def html_mem_path(target, a2o_target)
-      "#{html_path(target, a2o_target)}.mem"
     end
 
     # emscripten paths
@@ -203,23 +209,23 @@ module A2OBrew
       "#{build_dir(a2o_target)}/emscripten"
     end
 
-    def bitcode_path(_target, a2o_target)
+    def bitcode_path(a2o_target)
       "#{emscripten_work_dir(a2o_target)}/application.bc"
     end
 
-    def data_js_path(_target, a2o_target)
+    def data_js_path(a2o_target)
       "#{emscripten_work_dir(a2o_target)}/data.js"
     end
 
-    def data_js_metadata_path(target, a2o_target)
-      "#{data_js_path(target, a2o_target)}.metadata"
+    def data_js_metadata_path(a2o_target)
+      "#{data_js_path(a2o_target)}.metadata"
     end
 
-    def shared_library_js_path(_target, a2o_target)
+    def shared_library_js_path(a2o_target)
       "#{emscripten_work_dir(a2o_target)}/shared.js"
     end
 
-    def extports_js_path(_target, a2o_target)
+    def exports_js_path(a2o_target)
       "#{emscripten_work_dir(a2o_target)}/exports.js"
     end
 
@@ -325,16 +331,18 @@ module A2OBrew
         command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options}" # rubocop:disable LineLength
       }
 
-      t = data_path(target, a2o_target)
-      j = data_js_path(target, a2o_target)
-      outputs = [t, j]
+      t = data_path(a2o_target)
+      j = data_js_path(a2o_target)
+      data_outputs = [t, j]
       options = ''
+      # FIXME: --separate-metadata is not tested and supported
       if A2OCONF[:xcodebuild][:emscripten][:file_packager][:separate_metadata]
-        outputs << data_js_metadata_path(target, a2o_target)
+        data_outputs << data_js_metadata_path(a2o_target)
         options += ' --separate-metadata'
       end
+
       builds << {
-        outputs: outputs,
+        outputs: data_outputs,
         rule_name: 'file_packager',
         inputs: resources,
         build_variables: {
@@ -375,7 +383,7 @@ module A2OBrew
     end
 
     # rubocop:disable Metrics/LineLength
-    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    def sources_build_phase(xcodeproj, _target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
       rules = []
@@ -465,12 +473,13 @@ module A2OBrew
       }
 
       builds << {
-        outputs: [bitcode_path(target, a2o_target)],
+        outputs: [bitcode_path(a2o_target)],
         rule_name: 'link',
         inputs: objects
       }
 
       # dynamic link libraries
+
       shared_libraries = A2OCONF[:xcodebuild][:dynamic_link_frameworks]
 
       rules << {
@@ -480,7 +489,7 @@ module A2OBrew
       }
 
       builds << {
-        outputs: [shared_library_js_path(target, a2o_target)],
+        outputs: [shared_library_js_path(a2o_target)],
         rule_name: 'shared_library_js',
         inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.so.js" },
         build_variables: {
@@ -488,14 +497,16 @@ module A2OBrew
         }
       }
 
+      shared_libraries_outputs = []
       shared_libraries.each do |f|
         source = "#{frameworks_dir}/#{f}.framework/#{f}.so.js"
-        dest = "#{products_dir(a2o_target)}/#{f}.so.js"
+        dest = "#{pre_products_dir(a2o_target)}/#{f}.so.js"
         builds << {
           outputs: [dest],
           rule_name: 'cp_r',
           inputs: [source]
         }
+        shared_libraries_outputs << dest
       end
 
       rules << {
@@ -505,7 +516,7 @@ module A2OBrew
       }
 
       builds << {
-        outputs: [extports_js_path(target, a2o_target)],
+        outputs: [exports_js_path(a2o_target)],
         rule_name: 'exports_js',
         inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
       }
@@ -521,31 +532,59 @@ module A2OBrew
       # generate html
       conf_html_flags = a2o_project_flags(active_project_config, :html)
 
-      outputs = [html_path(target, a2o_target), html_mem_path(target, a2o_target), js_path(target, a2o_target)]
+      pre_products_outputs = [html_path(a2o_target), html_mem_path(a2o_target), js_path(a2o_target)]
 
       if A2OCONF[:xcodebuild][:emscripten][:emcc][:separate_asm]
-        outputs << asm_js_path(target, a2o_target)
+        pre_products_outputs << asm_js_path(a2o_target)
         separate_asm_options = '--separate-asm'
       end
 
       rules << {
         rule_name: 'html',
         description: 'generate executables: ${out}',
-        command: "EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o #{html_path(target, a2o_target)} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n #{conf_html_flags}"
+        command: "EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o #{html_path(a2o_target)} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n --memory-init-file 1 #{conf_html_flags}"
       }
 
       builds << {
-        outputs: outputs,
+        outputs: pre_products_outputs,
         rule_name: 'html',
-        inputs: [data_js_path(target, a2o_target), shared_library_js_path(target, a2o_target), extports_js_path(target, a2o_target), bitcode_path(target, a2o_target)] + dep_paths,
+        inputs: [data_js_path(a2o_target), shared_library_js_path(a2o_target), exports_js_path(a2o_target), bitcode_path(a2o_target)] + dep_paths,
         build_variables: {
-          'data_js' => data_js_path(target, a2o_target),
-          'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{extports_js_path(target, a2o_target)} --pre-js #{shared_library_js_path(target, a2o_target)}",
-          'linked_objects' => bitcode_path(target, a2o_target),
+          'data_js' => data_js_path(a2o_target),
+          'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)} --pre-js #{shared_library_js_path(a2o_target)}",
+          'linked_objects' => bitcode_path(a2o_target),
           'framework_options' => A2OCONF[:xcodebuild][:static_link_frameworks].map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'separate_asm_options' => separate_asm_options
         }
+      }
+
+      # copy pre_products to products
+
+      # TODO: All files except application.html are cached by reverse-proxy or browser.
+      #       It may results a problem when releasing a new version.
+      #       So we'll change file paths like this.
+      #       ```
+      #       require 'securerandom'
+      #       cp pre_products/application.* products/#{SecureRandom.hex(16)}.* unless application.html
+      #       ```
+      #       But currently, just copy them as the original.
+
+      products_inputs = pre_products_outputs + shared_libraries_outputs + [data_path(a2o_target)]
+      products_outputs = products_inputs.map do |path|
+        path.sub('pre_products', 'products')
+      end
+
+      rules << {
+        rule_name: 'generate_products',
+        description: 'generate products',
+        command: "cp -a #{pre_products_dir(a2o_target)}/ #{products_dir(a2o_target)}"
+      }
+
+      builds << {
+        outputs: products_outputs,
+        rule_name: 'generate_products',
+        inputs: products_inputs
       }
 
       [builds, rules]
