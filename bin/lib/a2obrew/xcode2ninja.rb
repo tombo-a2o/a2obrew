@@ -264,7 +264,7 @@ module A2OBrew
         files.each do |file|
           local_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
 
-          next if resource_filter && !resource_filter.call(local_path)
+          next if resource_filter && !resource_filter.call(local_path.to_s)
 
           if File.extname(file.path) == '.storyboard'
             remote_path = File.join(resources_dir(a2o_target), file.path)
