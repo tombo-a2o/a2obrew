@@ -35,7 +35,9 @@ module Tombo
 
       d = json['data']
 
-      raise 'Cannot create application version' unless d['type'] == 'application_versions' && d['id']
+      if d.nil? || d['type'] != 'application_verions' || d['id'].nil?
+        raise 'Cannot create application version'
+      end
 
       d['id']
     end
