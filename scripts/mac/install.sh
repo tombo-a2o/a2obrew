@@ -75,3 +75,10 @@ if brew list pkg-config > /dev/null; then
 else
   brew install pkg-config
 fi
+
+# Install zopfli
+if brew list zopfli > /dev/null; then
+  echo "* zopfli is installed"
+else
+  brew install zopfli
+fi

@@ -1,4 +1,5 @@
 require 'zip'
+require 'find'
 require 'httpclient'
 
 module Tombo
@@ -11,7 +12,7 @@ module Tombo
       end
     end
 
-    def self.recursive_zip_add(zip, input_dir_path, output_dir_path)
+    def self.recursive_zip_add(zip, input_dir_path, output_dir_path) # rubocop:disable Metrics/MethodLength
       raise "#{input_dir_path} is not directory" unless File.directory?(input_dir_path)
       Dir.foreach(input_dir_path) do |file_name|
         next if file_name == '.' || file_name == '..'
@@ -23,7 +24,24 @@ module Tombo
           recursive_zip_add(zip, input_path, output_path)
         else
           zip.get_output_stream(output_path) do |f|
+            puts "Add #{output_path}"
             f.write(File.read(input_path))
+          end
+
+          add_gzip_compressed(zip, input_path, output_path)
+        end
+      end
+    end
+
+    def self.add_gzip_compressed(zip, input_path, output_path)
+      case File.extname(input_path).intern
+      when :'.html', :'.js', :'.css'
+        unless File.exist?("#{input_path}.gz")
+          zip.get_output_stream("#{output_path}.gz") do |f|
+            puts "Compress #{output_path}.gz"
+            gzipped = `zopfli -c "#{input_path}"`
+            puts "#{File.size(input_path)} => #{gzipped.size}"
+            f.write(gzipped)
           end
         end
       end

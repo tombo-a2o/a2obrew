@@ -6,4 +6,5 @@ sudo aptitude install -y build-essential git-core cmake default-jre autoconf lib
   libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
   coreutils \
   cmake ninja-build \
-  pkg-config
+  pkg-config \
+  zopfli
