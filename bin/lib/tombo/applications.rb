@@ -15,7 +15,7 @@ module Tombo
 
       raise 'Cannot get application list' if d.nil? || !d.is_a?(Array)
 
-      output(d)
+      output(json)
     end
   end
 end

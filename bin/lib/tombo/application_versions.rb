@@ -38,7 +38,7 @@ module Tombo
         raise 'Cannot create application version'
       end
 
-      output(d)
+      output(json)
     end
   end
 end
