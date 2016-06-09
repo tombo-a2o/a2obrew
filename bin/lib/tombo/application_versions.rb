@@ -18,8 +18,7 @@ module Tombo
         ZipCreator.create_zip(zip_path, input_dir)
         uploaded_file_id = create_uploaded_file(zip_path)
 
-        application_version_id = create_application_version(application_id, version, uploaded_file_id)
-        puts "Create application_version: #{application_version_id} for application: #{application_id}"
+        create_application_version(application_id, version, uploaded_file_id)
       end
     end
 
@@ -39,7 +38,7 @@ module Tombo
         raise 'Cannot create application version'
       end
 
-      d['id']
+      output(d)
     end
   end
 end

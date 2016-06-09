@@ -1,10 +1,12 @@
 require 'thor'
+require 'json'
 require 'logger'
 require_relative '../a2obrew/util'
 
 module Tombo
   module Logger
     def self.logger
+      # rubocop:disable Style/ClassVars
       @@logger ||= ::Logger.new(STDERR)
     end
   end
@@ -83,6 +85,15 @@ module Tombo
       raise 'Uploaded file may be broken' if d['attributes']['size'] != File.size(payload_path)
 
       d['id']
+    end
+
+    def output(data, color = true)
+      if STDOUT.tty? && color
+        require 'json_color'
+        puts JsonColor.colorize(JSON.pretty_generate(data))
+      else
+        puts JSON.pretty_generate(data)
+      end
     end
   end
 end
