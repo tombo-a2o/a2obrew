@@ -28,7 +28,8 @@ module Tombo
     private
 
     def error_exit(message, exit_status = 1)
-      A2OBrew::Util.error_exit(message, @current_command, exit_status)
+      Logger.logger.error message
+      exit exit_status
     end
 
     def request(method, path, query = nil, body = nil, extheader = {})

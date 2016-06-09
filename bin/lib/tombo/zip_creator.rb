@@ -24,7 +24,7 @@ module Tombo
           recursive_zip_add(zip, input_path, output_path)
         else
           zip.get_output_stream(output_path) do |f|
-            puts "Add #{output_path}"
+            Logger.logger.info "Add #{output_path}"
             f.write(File.read(input_path))
           end
 
@@ -38,9 +38,9 @@ module Tombo
       when :'.html', :'.js', :'.css', :'.mem'
         unless File.exist?("#{input_path}.gz")
           zip.get_output_stream("#{output_path}.gz") do |f|
-            puts "Compress #{output_path}.gz"
+            Logger.logger.info "Compress #{output_path}.gz"
             gzipped = `zopfli -c "#{input_path}"`
-            puts "#{File.size(input_path)} => #{gzipped.size}"
+            Logger.logger.info "#{File.size(input_path)} => #{gzipped.size}"
             f.write(gzipped)
           end
         end
