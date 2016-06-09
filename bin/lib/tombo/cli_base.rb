@@ -1,7 +1,14 @@
 require 'thor'
+require 'logger'
 require_relative '../a2obrew/util'
 
 module Tombo
+  module Logger
+    def self.logger
+      @@logger ||= ::Logger.new(STDERR)
+    end
+  end
+
   class CLIBase < Thor
     def initialize(*args)
       super
