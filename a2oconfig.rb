@@ -176,7 +176,6 @@ BUILD
         install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
         frameworks: %w(
-          AppKit
           CommonCrypto
           CoreData
           CoreGraphics
@@ -212,7 +211,7 @@ BUILD
     },
     static_link_frameworks: %w(
       UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
-      CoreGraphics QuartzCore AppKit CFNetwork OpenGLES Onyx2D CoreText
+      CoreGraphics QuartzCore CFNetwork OpenGLES Onyx2D CoreText
       Social AVFoundation StoreKit CoreFoundation MapKit GameKit MultipeerConnectivity
     ),
     dynamic_link_frameworks: %w(
