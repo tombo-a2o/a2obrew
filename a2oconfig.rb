@@ -153,6 +153,7 @@ BUILD
           CoreAudio
           CoreLocation
           GameKit
+          iAd
           ImageIO
           OpenGLES
           MapKit
