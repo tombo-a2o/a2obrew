@@ -84,6 +84,10 @@ module A2OBrew
         rules += e[1]
       end
 
+      e = after_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+      builds += e[0]
+      rules += e[1]
+
       [builds, rules]
     end
 
@@ -355,25 +359,39 @@ module A2OBrew
       [builds, rules]
     end
 
-    def file_recursive_copy(in_dir, out_dir, in_prefix_dir = '.') # rubocop:disable Metrics/MethodLength
+    def file_copy(in_path, out_dir, in_prefix_path)
+      in_path = Pathname(in_path) unless in_path.instance_of?(Pathname)
+      in_prefix_path = Pathname(in_prefix_path) unless in_prefix_path.instance_of?(Pathname)
+      rel_path = in_path.relative_path_from(in_prefix_path)
+
+      output_path = File.join(out_dir, rel_path.to_s)
+
+      {
+        build: {
+          outputs: [output_path],
+          rule_name: 'cp_r',
+          inputs: [in_path.to_s]
+        },
+        output: output_path
+      }
+    end
+
+    def file_recursive_copy(in_path, out_dir, in_prefix_dir = '.') # rubocop:disable Metrics/MethodLength
       builds = []
       outputs = []
 
-      in_path = Pathname(in_dir)
       in_prefix_path = Pathname(in_prefix_dir)
-
-      in_path.find do |path|
-        next unless path.file?
-
-        rel_path = path.relative_path_from(in_prefix_path)
-        output_path = File.join(out_dir, rel_path.to_s)
-
-        builds << {
-          outputs: [output_path],
-          rule_name: 'cp_r',
-          inputs: [path.to_s]
-        }
-        outputs << output_path
+      if File.directory?(in_path)
+        Pathname(in_path).find do |path|
+          next unless path.file?
+          e = file_copy(path, out_dir, in_prefix_path)
+          builds << e[:build]
+          outputs << e[:output]
+        end
+      else
+        e = file_copy(in_path, out_dir, in_prefix_path)
+        builds << e[:build]
+        outputs << e[:output]
       end
 
       {
@@ -539,10 +557,18 @@ module A2OBrew
         separate_asm_options = '--separate-asm'
       end
 
+      emscripten_shell_path = active_project_config[:emscripten_shell_path]
+      if emscripten_shell_path
+        shell_file_options = "--shell-file #{emscripten_shell_path}"
+        dep_paths << emscripten_shell_path
+      else
+        shell_file_options = ''
+      end
+
       rules << {
         rule_name: 'html',
         description: 'generate executables: ${out}',
-        command: "EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o #{html_path(a2o_target)} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n --memory-init-file 1 #{conf_html_flags}"
+        command: "EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} ${shell_file_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o #{html_path(a2o_target)} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n --memory-init-file 1 #{conf_html_flags}"
       }
 
       builds << {
@@ -555,7 +581,8 @@ module A2OBrew
           'linked_objects' => bitcode_path(a2o_target),
           'framework_options' => A2OCONF[:xcodebuild][:static_link_frameworks].map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
-          'separate_asm_options' => separate_asm_options
+          'separate_asm_options' => separate_asm_options,
+          'shell_file_options' => shell_file_options
         }
       }
 
@@ -599,6 +626,23 @@ module A2OBrew
     def shell_script_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
       [[], []]
+    end
+
+    def after_build_phase(_xcodeproj, _target, _build_config, _phase, active_project_config, a2o_target)
+      builds = []
+      rules = []
+
+      # Copying files to distribute_path
+      distribute_paths = active_project_config[:distribute_paths]
+      out_dir = pre_products_dir(a2o_target)
+
+      distribute_paths.each do |distribute_path|
+        f = file_recursive_copy(distribute_path, out_dir, distribute_path)
+        builds += f[:builds]
+        # no need for outputs
+      end
+
+      [builds, rules]
     end
 
     # utils
