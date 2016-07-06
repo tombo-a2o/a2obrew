@@ -69,6 +69,36 @@ a2obrew xcodebuild -t debug
 a2obrew xcodebuild -c
 ```
 
+You can place `a2o_project_config.rb` on the current directory to set variables.
+
+```ruby
+cc_flags = '-s FULL_ES2=1 -DGL_GLEXT_PROTOTYPES=1 -DCC_TEXTURE_ATLAS_USE_VAO=0'
+html_flags = '-s FULL_ES2=1 -s TOTAL_MEMORY=134217728'
+# html_flags += ' --pre-js mem_check.js'
+exclude_audio_filter =
+distribute_paths = ['./template']
+
+config = {
+  version: 1,
+  xcodeproj_path: 'Application.xcodeproj',
+  xcodeproj_target: 'Application',
+  a2o_targets: {
+    debug: {
+      xcodeproj_build_config: 'Debug',
+      flags: {
+        cc: "-O0 -DDEBUG=1 -DCD_DEBUG=1 -DCOCOS2D_DEBUG=1", # nilable
+        html: "-O0 -s OBJC_DEBUG=1 --emrun" # nilable
+      },
+      emscripten_shell_path: 'shell.html', # nilable
+      distribute_paths: ['./a2o_files'], # nilable
+      resource_filter: lambda { |path| path !~ /\.mp3$/ } # nilable
+    }
+  }
+}
+
+config
+```
+
 ## Upload an application
 
 Use `tombocli application_versions create`.
