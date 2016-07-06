@@ -634,12 +634,14 @@ module A2OBrew
 
       # Copying files to distribute_path
       distribute_paths = active_project_config[:distribute_paths]
-      out_dir = pre_products_dir(a2o_target)
+      if distribute_paths
+        out_dir = pre_products_dir(a2o_target)
 
-      distribute_paths.each do |distribute_path|
-        f = file_recursive_copy(distribute_path, out_dir, distribute_path)
-        builds += f[:builds]
-        # no need for outputs
+        distribute_paths.each do |distribute_path|
+          f = file_recursive_copy(distribute_path, out_dir, distribute_path)
+          builds += f[:builds]
+          # no need for outputs
+        end
       end
 
       [builds, rules]
