@@ -15,7 +15,11 @@ module Tombo
     def initialize(*args)
       super
 
-      @dotfile = Dotfile.new(options[:profile])
+      begin
+        @dotfile = Dotfile.new(options[:profile])
+      rescue => e
+        error_exit(e.message)
+      end
     end
 
     def self.puts_commands
