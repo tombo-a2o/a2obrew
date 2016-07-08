@@ -104,6 +104,9 @@ config
 Use `tombocli application_versions create`.
 
 ```sh
+# check application id
+tombocli applications index
+# upload
 tombocli application_versions create 67454963-23ad-4868-88bf-3c97fad31685 1.0.1-beta build/release/products
 ```
 
