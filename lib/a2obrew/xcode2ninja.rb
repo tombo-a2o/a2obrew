@@ -157,6 +157,10 @@ module A2OBrew
       "#{bundle_dir(a2o_target)}/Resources"
     end
 
+    def tombo_appicon_dir(a2o_target)
+      "#{pre_products_dir(a2o_target)}/TomboIcon.appiconset"
+    end
+
     def objects_dir(a2o_target)
       "#{build_dir(a2o_target)}/objects"
     end
@@ -289,6 +293,22 @@ module A2OBrew
             }
             resources += nib_paths
           else
+            # Asset Catalog
+            if file.path == 'Images.xcassets'
+              appicon_name = build_config.build_settings['ASSETCATALOG_COMPILER_APPICON_NAME'] + '.appiconset'
+              launchimage_name = build_config.build_settings['ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME'] + '.launchimage'
+
+              Dir.new(local_path).each do |asset_local_path|
+                if asset_local_path == appicon_name
+                  # copy #{appicon_name} dir to fixed appicon_dir for our platform
+                  p = File.join(local_path, asset_local_path)
+                  f = file_recursive_copy(p, tombo_appicon_dir(a2o_target), p)
+                  builds += f[:builds]
+                  resources += f[:outputs]
+                end
+              end
+            end
+
             # All resource files are stored in the same directory
             f = file_recursive_copy(local_path, resources_dir(a2o_target), File.dirname(local_path))
             builds += f[:builds]
