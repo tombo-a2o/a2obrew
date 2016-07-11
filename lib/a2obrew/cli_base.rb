@@ -32,7 +32,7 @@ EOF
     end
 
     def a2obrew_path
-      File.expand_path('../../../..', __FILE__)
+      File.expand_path('../../..', __FILE__)
     end
 
     def emsdk_path
