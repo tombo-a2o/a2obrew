@@ -15,7 +15,7 @@ end
 
 script_path = File.dirname(__FILE__)
 
-$LOAD_PATH << "#{script_path}/lib"
+$LOAD_PATH << "#{script_path}/../lib"
 config = File.expand_path("#{script_path}/../a2oconfig.rb")
 
 require 'a2obrew/cli'

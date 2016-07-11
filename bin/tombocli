@@ -3,7 +3,7 @@
 
 script_path = File.dirname(__FILE__)
 
-$LOAD_PATH << "#{script_path}/lib"
+$LOAD_PATH << "#{script_path}/../lib"
 
 require 'tombo/cli'
 
