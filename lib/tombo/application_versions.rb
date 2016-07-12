@@ -10,7 +10,7 @@ module Tombo
     desc 'create [application_id] [version] [input_dir]', 'deploy application stored in a directory'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     def create(application_id, version, input_dir)
-      index_html = 'application.html'
+      index_html = 'application/application.html'
       error_exit("#{input_dir} must contain #{index_html}") unless File.file?(File.join(input_dir, index_html))
 
       Dir.mktmpdir do |tmp_dir|

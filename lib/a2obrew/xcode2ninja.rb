@@ -9,6 +9,18 @@ require_relative 'util'
 
 module A2OBrew
   class Xcode2Ninja # rubocop:disable Metrics/ClassLength
+
+    APPLE_APPICONS = [
+      [180, 60], # 180x180 60x60@3x (main icon for iPhone retina iOS 8-)
+      [152, 76], # 152x152 76x76@2x (main icon for iPad   retina iOS 7-)
+      [144, 72], # 144x144 72x72@2x (main icon for iPad   retina iOS 6)
+      [120, 60], # 120x120 60x60@2x (main icon for iPhone retina iOS 7)
+      [114, 57], # 114x114 57x57@2x (main icon for iPhone retina iOS 6)
+      [ 76, 76], # 76x76            (main icon for iPad          iOS 7-)
+      [ 72, 72], # 72x72            (main icon for iPad          iOS 6)
+      [ 57, 57], # 57x57            (main icon for iPhone        iOS 6)
+    ]
+
     def initialize(xcodeproj_path)
       self.xcodeproj_path = xcodeproj_path
     end
@@ -158,7 +170,7 @@ module A2OBrew
     end
 
     def tombo_appicon_dir(a2o_target)
-      "#{pre_products_dir(a2o_target)}/TomboIcon.appiconset"
+      "#{pre_products_tombo_dir(a2o_target)}/TomboIcon.appiconset"
     end
 
     def objects_dir(a2o_target)
@@ -171,8 +183,16 @@ module A2OBrew
       "#{build_dir(a2o_target)}/pre_products"
     end
 
-    def pre_products_path_prefix(a2o_target)
+    def pre_products_application_dir(a2o_target)
       "#{pre_products_dir(a2o_target)}/application"
+    end
+
+    def pre_products_tombo_dir(a2o_target)
+      "#{pre_products_dir(a2o_target)}/tombo"
+    end
+
+    def pre_products_path_prefix(a2o_target)
+      "#{pre_products_application_dir(a2o_target)}/application"
     end
 
     def data_path(a2o_target)
@@ -538,7 +558,7 @@ module A2OBrew
       shared_libraries_outputs = []
       shared_libraries.each do |f|
         source = "#{frameworks_dir}/#{f}.framework/#{f}.so.js"
-        dest = "#{pre_products_dir(a2o_target)}/#{f}.so.js"
+        dest = "#{pre_products_application_dir(a2o_target)}/#{f}.so.js"
         builds << {
           outputs: [dest],
           rule_name: 'cp_r',
@@ -655,7 +675,7 @@ module A2OBrew
       # Copying files to distribute_path
       distribute_paths = active_project_config[:distribute_paths]
       if distribute_paths
-        out_dir = pre_products_dir(a2o_target)
+        out_dir = pre_products_application_dir(a2o_target)
 
         distribute_paths.each do |distribute_path|
           f = file_recursive_copy(distribute_path, out_dir, distribute_path)
