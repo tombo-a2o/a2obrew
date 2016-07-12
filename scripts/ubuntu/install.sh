@@ -7,4 +7,5 @@ sudo aptitude install -y build-essential git-core cmake default-jre autoconf lib
   coreutils \
   cmake ninja-build \
   pkg-config \
-  zopfli
+  zopfli \
+  imagemagick libmagickwand-dev

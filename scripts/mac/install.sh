@@ -82,3 +82,10 @@ if brew list zopfli > /dev/null; then
 else
   brew install zopfli
 fi
+
+# Install imagemagick
+if brew list > /dev/null; then
+  echo "* imagemagick is installed"
+else
+  brew install imagemagick
+fi
