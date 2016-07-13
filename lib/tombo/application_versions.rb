@@ -10,8 +10,8 @@ module Tombo
     desc 'create [application_id] [version] [input_dir]', 'deploy application stored in a directory'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     def create(application_id, version, input_dir)
-      index_html = 'application/application.html'
-      error_exit("#{input_dir} must contain #{index_html}") unless File.file?(File.join(input_dir, index_html))
+      file_exists?(input_dir, 'application/application.html')
+      file_exists?(input_dir, 'tombo/icon-60.png')
 
       Dir.mktmpdir do |tmp_dir|
         zip_path = File.join(tmp_dir, 'deploy.zip')
@@ -23,6 +23,11 @@ module Tombo
     end
 
     private
+
+    def file_exists?(input_dir, path)
+      error_exit("#{input_dir} must contain #{path}") unless File.file?(File.join(input_dir, path))
+      true
+    end
 
     def create_application_version(application_id, version, uploaded_file_id)
       body = {
