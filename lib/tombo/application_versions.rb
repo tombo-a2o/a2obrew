@@ -24,7 +24,7 @@ module Tombo
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     def create(application_id, version, input_dir)
       file_exists?(input_dir, 'application/application.html')
-      file_exists?(input_dir, 'tombo/icon-60.png')
+      file_exists?(input_dir, 'tombo/icon/icon-60.png')
 
       Dir.mktmpdir do |tmp_dir|
         zip_path = File.join(tmp_dir, 'deploy.zip')
