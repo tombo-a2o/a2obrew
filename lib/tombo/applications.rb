@@ -6,14 +6,14 @@ require_relative 'cli_base'
 
 module Tombo
   class Applications < CLIBase
-    desc 'index', 'application list index'
+    desc 'index', 'applications index'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     def index
       json = request('GET', '/applications.json')
 
       d = json['data']
 
-      raise 'Cannot get application index' if d.nil? || !d.is_a?(Array)
+      raise 'Cannot get applications index' if d.nil? || !d.is_a?(Array)
 
       output(json)
     end

@@ -7,6 +7,19 @@ require_relative 'zip_creator'
 
 module Tombo
   class ApplicationVersions < CLIBase
+
+    desc 'index', 'application versions index'
+    method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
+    def index
+      json = request('GET', '/application_versions.json')
+
+      d = json['data']
+
+      raise 'Cannot get application versions index' if d.nil? || !d.is_a?(Array)
+
+      output(json)
+    end
+
     desc 'create [application_id] [version] [input_dir]', 'deploy application stored in a directory'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     def create(application_id, version, input_dir)
