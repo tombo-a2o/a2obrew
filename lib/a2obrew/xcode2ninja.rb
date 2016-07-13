@@ -286,6 +286,7 @@ module A2OBrew
 
       resource_filter = active_project_config[:resource_filter]
 
+      icon_asset_catalog, icon_2x, icon = nil, nil, nil
       phase.files_references.each do |files_ref|
         case files_ref
         when Xcodeproj::Project::Object::PBXFileReference
@@ -320,9 +321,15 @@ module A2OBrew
             }
             resources += nib_paths
           else
-            # Asset Catalog
             if file.path == 'Images.xcassets'
-              builds += asset_catalog(local_path, build_config.build_settings, a2o_target)
+              # Asset Catalog for icon
+              icon_asset_catalog = asset_catalog(local_path, build_config.build_settings)
+            elsif file.path == 'Icon@2x.png'
+              # old
+              icon_2x = [local_path, 2]
+            elsif file.path == 'Icon.png'
+              # ancient
+              icon = [local_path, 1]
             end
 
             # All resource files are stored in the same directory
@@ -343,6 +350,22 @@ module A2OBrew
           outputs: [infoplist],
           rule_name: 'cp_r',
           inputs: [infoplist_path]
+        }
+      end
+
+      # Application Icon
+      app_icon = icon_asset_catalog || icon_2x || icon
+      if app_icon
+        icon_output_path = "#{tombo_icon_dir(a2o_target)}/icon-60.png"
+
+        builds << {
+          outputs: [icon_output_path],
+          rule_name: 'image-convert',
+          inputs: [app_icon[0]],
+          build_variables: {
+            'width' => 60 * app_icon[1],
+            'height' => 60 * app_icon[1]
+          }
         }
       end
 
@@ -395,7 +418,7 @@ module A2OBrew
       [builds, rules]
     end
 
-    def find_icon(base_path)
+    def find_icon_from_asset_catalog(base_path)
       contents_images = JSON.parse(File.read(File.join(base_path, 'Contents.json')))['images']
 
       APPLE_APPICONS.each do |width, scale|
@@ -408,37 +431,21 @@ module A2OBrew
         end
       end
 
-      [nil, nil]
+      nil
     end
 
-    def asset_catalog(local_path, build_settings, a2o_target)
-      builds = []
-
+    def asset_catalog(local_path, build_settings)
       appicon_name = build_settings['ASSETCATALOG_COMPILER_APPICON_NAME'] + '.appiconset'
       launchimage_name = build_settings['ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME'] + '.launchimage'
 
       Dir.new(local_path).each do |asset_local_path|
         if asset_local_path == appicon_name
           base_path = File.join(local_path, asset_local_path)
-          icon_path, scale = find_icon(base_path)
-
-          next if icon_path.nil?
-
-          output_path = "#{tombo_icon_dir(a2o_target)}/icon-60.png"
-
-          builds << {
-            outputs: [output_path],
-            rule_name: 'image-convert',
-            inputs: [icon_path],
-            build_variables: {
-              'width' => 60 * scale,
-              'height' => 60 * scale
-            }
-          }
+          return find_icon_from_asset_catalog(base_path)
         end
       end
 
-      builds
+      nil
     end
 
     def file_copy(in_path, out_dir, in_prefix_path)
