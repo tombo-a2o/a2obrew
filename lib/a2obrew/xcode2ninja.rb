@@ -391,7 +391,7 @@ module A2OBrew
       rules << {
         rule_name: 'file_packager',
         description: 'execute file packager to ${target}',
-        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options}" # rubocop:disable LineLength
+        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options} --use-preload-plugins" # rubocop:disable LineLength
       }
 
       t = data_path(a2o_target)
