@@ -284,6 +284,12 @@ module A2OBrew
         command: 'convert -resize ${width}x${height} ${in} ${out}'
       }
 
+      rules << {
+        rule_name: 'audio-convert',
+        description: 'audio convert ${in}',
+        command: 'afconvert -f mp4f -d aac ${in} -o ${out}'
+      }
+
       resource_filter = active_project_config[:resource_filter]
 
       icon_asset_catalog, icon_2x, icon = nil, nil, nil
@@ -320,6 +326,16 @@ module A2OBrew
               }
             }
             resources += nib_paths
+          elsif %w(.caf .aiff).include? File.extname(file.path)
+            # convert caf file to mp4, but leave file name as is
+            remote_path = File.join(resources_dir(a2o_target), local_path.basename)
+
+            builds << {
+              outputs: [remote_path],
+              rule_name: 'audio-convert',
+              inputs: [local_path],
+            }
+            resources << remote_path
           else
             if file.path == 'Images.xcassets'
               # Asset Catalog for icon
