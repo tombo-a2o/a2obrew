@@ -20,9 +20,16 @@ module Tombo
       output(json)
     end
 
-    desc 'create [application_id] [version] [input_dir]', 'deploy application stored in a directory'
+    desc 'create', 'deploy application stored in a directory'
+    method_option :application_id, desc: 'Target application ID', required: true
+    method_option :version, desc: 'Version string', required: true
+    method_option :source_directory, desc: 'Source directory', required: true
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
-    def create(application_id, version, input_dir)
+    def create
+      application_id = options[:application_id]
+      version = options[:version]
+      input_dir = options[:source_directory]
+
       file_exists?(input_dir, 'application/application.html')
       file_exists?(input_dir, 'tombo/icon/icon-60.png')
 
