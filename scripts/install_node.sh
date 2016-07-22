@@ -1,18 +1,19 @@
 #!/bin/bash
-# Install Node.js with nvm
+# Install Node.js with nodenv
 
-if [ -z "$NVM_DIR" ]; then
-  NVM_DIR="${HOME}/.nvm"
+if [ -z "$NODENV_ROOT" ]; then
+  NODENV_ROOT="${HOME}/.nodenv"
 fi
 
-if [ ! -e "$NVM_DIR" ]; then
-  curl https://raw.githubusercontent.com/creationix/nvm/v0.29.0/install.sh | bash
+if [ ! -e "$NODENV_ROOT" ]; then
+  git clone -b v0.3.4 https://github.com/wfarr/nodenv.git $NODENV_ROOT > /dev/null
 fi
 
-source ${NVM_DIR}/nvm.sh
+export PATH="$NODENV_ROOT/bin:$PATH"
+eval "$(nodenv init -)"
 
-if ! nvm ls 0.12.2 > /dev/null; then
-  echo "* node.js 0.12.2 with nvm has already been installed"
+if nodenv versions | grep "^v6\\.3\\.0\$" > /dev/null; then
+  echo "* node.js 6.3.0 with nvm has already been installed"
 else
-  nvm install 0.12.2
+  nodenv install v6.3.0
 fi
