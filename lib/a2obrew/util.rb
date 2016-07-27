@@ -18,6 +18,8 @@ module A2OBrew
     end
   end
 
+  class Informative < Exception; end
+
   class Util
     def self.mkdir_p(path)
       FileUtils.mkdir_p(path) unless File.directory?(path)
