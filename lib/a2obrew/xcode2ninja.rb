@@ -89,6 +89,9 @@ module A2OBrew
               frameworks_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
             when Xcodeproj::Project::Object::PBXShellScriptBuildPhase
               shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+            when Xcodeproj::Project::Object::PBXHeadersBuildPhase
+              # do nothing
+              header_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
             else
               raise Informative, "Don't support the phase #{phase.class.name}."
             end
@@ -726,6 +729,11 @@ module A2OBrew
     # rubocop:enable Metrics/LineLength
 
     def frameworks_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
+      # FIXME: Implement
+      [[], []]
+    end
+
+    def header_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
       [[], []]
     end
