@@ -107,7 +107,7 @@ Use these commands.
 # check application id
 tombocli applications index
 # upload
-tombocli application_versions create --application-id=67454963-23ad-4868-88bf-3c97fad31685 --version=1.0.1-beta --source-directory=build/release/products
+tombocli application_versions create --application-id=67454963-23ad-4868-88bf-3c97fad31685 --version=1.0.1-beta --source-directory=a2o/build/release/products
 # change latest version
 tombocli applications update --application-id=67454963-23ad-4868-88bf-3c97fad31685 --active-version-id=9987d841-4edb-4fe7-994e-55ff745e9a8a
 ```
