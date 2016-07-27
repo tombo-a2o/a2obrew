@@ -547,7 +547,9 @@ module A2OBrew
 
       phase.files_references.each do |file|
         source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
-        object = File.join(objects_dir(a2o_target), source_path.sub_ext('.o'))
+        basename = source_path.basename(".*").to_s
+        uid = Digest::SHA1.new.update(source_path.to_s).to_s[0, 7]
+        object = File.join(objects_dir(a2o_target), basename+"-"+uid+".o")
 
         objects << object
 
