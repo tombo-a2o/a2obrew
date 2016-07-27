@@ -78,7 +78,6 @@ module A2OBrew
     def generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/LineLength
       builds = []
       rules = basic_rules
-
       target.build_phases.each do |phase|
         e = case phase
             when Xcodeproj::Project::Object::PBXResourcesBuildPhase
@@ -353,7 +352,7 @@ module A2OBrew
           else
             if file.path == 'Images.xcassets'
               # Asset Catalog for icon
-              icon_asset_catalog = asset_catalog(local_path, build_config.build_settings)
+              icon_asset_catalog = asset_catalog(local_path, build_config)
             elsif file.path == 'Icon@2x.png'
               # old
               icon_2x = [local_path, 2]
@@ -370,7 +369,7 @@ module A2OBrew
         end
       end
 
-      infoplist_path = build_config.build_settings['INFOPLIST_FILE']
+      infoplist_path = build_setting(build_config, 'INFOPLIST_FILE')
       if infoplist_path
         infoplist = File.join(bundle_dir(a2o_target), 'Info.plist')
         resources << infoplist
@@ -464,9 +463,9 @@ module A2OBrew
       nil
     end
 
-    def asset_catalog(local_path, build_settings)
-      appicon_name = build_settings['ASSETCATALOG_COMPILER_APPICON_NAME'] + '.appiconset'
-      launchimage_name = build_settings['ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME'] + '.launchimage'
+    def asset_catalog(local_path, build_config)
+      appicon_name = build_setting(build_config, 'ASSETCATALOG_COMPILER_APPICON_NAME') + '.appiconset'
+      launchimage_name = build_setting(build_config, 'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME') + '.launchimage'
 
       Dir.new(local_path).each do |asset_local_path|
         if asset_local_path == appicon_name
@@ -532,17 +531,17 @@ module A2OBrew
       end.to_a.uniq
 
       # build settings
-      bs = build_config.build_settings
-      lib_dirs = expand(bs['LIBRARY_SEARCH_PATHS'], :array)
-      framework_search_paths = expand(bs['FRAMEWORK_SEARCH_PATHS'], :array)
-      header_search_paths = expand(bs['HEADER_SEARCH_PATHS'], :array)
+      lib_dirs = build_setting(build_config, 'LIBRARY_SEARCH_PATHS', :array)
+      framework_search_paths = build_setting(build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
+      header_search_paths = build_setting(build_config, 'HEADER_SEARCH_PATHS', :array)
+      user_header_search_paths = build_setting(build_config, 'USER_HEADER_SEARCH_PATHS', :string)
 
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
       header_options = (header_dirs + header_search_paths).map { |dir| "-I./#{dir}" }.join(' ')
 
-      if expand(bs['GCC_PRECOMPILE_PREFIX_HEADER'], :bool)
-        prefix_pch = bs['GCC_PREFIX_HEADER']
+      if build_setting(build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
+        prefix_pch = build_setting(build_config, 'GCC_PREFIX_HEADER')
         prefix_pch_options = "-include #{prefix_pch}"
       end
 
@@ -787,13 +786,33 @@ module A2OBrew
     end
 
     # utils
+    
+    def build_setting(build_config, prop, type = nil)
+      # TODO check xcconfig file
+      project_setting = xcodeproj.build_settings(build_config.name)[prop]
+      project_setting = project_setting.clone if project_setting
+      target_setting = build_config.build_settings[prop]
+      target_setting = target_setting.clone if target_setting
+      
+      if target_setting
+        # replace '$(inherited)'
+        if target_setting.is_a?(Array)
+          if idx = target_setting.index('$(inherited)')
+            target_setting[idx, 1] = project_setting || []
+          end
+        else
+          # assume string
+          target_setting.gsub!('$(inherited)', project_setting || '')
+        end
+        
+        expand(target_setting, type)
+      else
+        expand(project_setting, type)
+      end
+    end
 
     def expand(value, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/LineLength
       if value.is_a?(Array)
-        value = value.reject do |v|
-          v == '$(inherited)'
-        end
-
         value.map do |v|
           expand(v)
         end
@@ -818,10 +837,15 @@ module A2OBrew
                 xcodeproj_dir
               when '$(SRCROOT)'
                 xcodeproj_dir
+              when '$(PLATFORM_NAME)'
+                "emscripten"
               when '$(SDKROOT)'
                 # FIXME: currently ignores
                 ''
               when '$(DEVELOPER_FRAMEWORKS_DIR)'
+                # FIXME: currently ignores
+                ''
+              when '$(MYPROJ_HOME)'
                 # FIXME: currently ignores
                 ''
               else
