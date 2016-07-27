@@ -166,7 +166,7 @@ EOF
           target: target
         }
       else
-        "#{project_path}/a2o_build/#{target}"
+        "#{project_path}/a2o/build/#{target}"
       end
     end
 
@@ -177,7 +177,7 @@ EOF
           target: target
         }
       else
-        "#{project_path}/a2o_build/#{target}"
+        "#{project_path}/a2o/build/#{target}"
       end
     end
   end

@@ -149,7 +149,7 @@ module A2OBrew
     # paths
 
     def build_dir(a2o_target)
-      "a2o_build/#{a2o_target}"
+      "a2o/build/#{a2o_target}"
     end
 
     # paths for file packager

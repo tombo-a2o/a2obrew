@@ -93,7 +93,7 @@ module A2OBrew
       xcodeproj_target = proj_config[:xcodeproj_target] || File.basename(xcodeproj_path, '.xcodeproj')
       active_project_config = fetch_active_project_config(proj_config, a2o_target)
       xcodeproj_build_config = find_xcodeproj_build_config(active_project_config, a2o_target)
-      ninja_path = "ninja/#{a2o_target}.ninja.build"
+      ninja_path = "a2o/ninja/#{a2o_target}.ninja.build"
 
       Util.puts_delimiter("# Generate #{ninja_path}")
       puts <<EOF
@@ -106,7 +106,7 @@ xcodeproj:
   xocdeproj_build_config: #{xcodeproj_build_config}
 EOF
       xn = Xcode2Ninja.new(xcodeproj_path)
-      gen_paths = xn.xcode2ninja('ninja', xcodeproj_target, xcodeproj_build_config, active_project_config, a2o_target)
+      gen_paths = xn.xcode2ninja('a2o/ninja', xcodeproj_target, xcodeproj_build_config, active_project_config, a2o_target)
       gen_paths.each do |path|
         puts "Generate #{path}"
       end
