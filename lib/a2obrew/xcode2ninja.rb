@@ -100,6 +100,10 @@ module A2OBrew
         rules += e[1]
       end
 
+      e = application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+      builds += e[0]
+      rules += e[1]
+
       e = after_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
       builds += e[0]
       rules += e[1]
@@ -605,6 +609,13 @@ module A2OBrew
         rule_name: 'link',
         inputs: objects
       }
+
+      [builds, rules]
+    end
+    
+    def application_build_phase(xcodeproj, _target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+      builds = []
+      rules = []
 
       # dynamic link libraries
 
