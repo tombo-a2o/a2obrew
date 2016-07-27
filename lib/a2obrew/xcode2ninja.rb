@@ -100,7 +100,14 @@ module A2OBrew
         rules += e[1]
       end
 
-      e = application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+      e = case target.product_type
+      when "com.apple.product-type.library.static"
+        static_library_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+      when "com.apple.product-type.application"
+        application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+      else
+        raise Informative, "Don't support productType #{target.product_type}."
+      end
       builds += e[0]
       rules += e[1]
 
@@ -738,6 +745,12 @@ module A2OBrew
       [builds, rules]
     end
     # rubocop:enable Metrics/LineLength
+
+    def static_library_build_phase(xcodeproj, _target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+      builds = []
+      rules = []
+      [builds, rules]
+    end
 
     def frameworks_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
