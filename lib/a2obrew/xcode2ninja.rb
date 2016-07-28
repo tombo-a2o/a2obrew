@@ -762,6 +762,15 @@ module A2OBrew
     def static_library_build_phase(xcodeproj, _target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       builds = []
       rules = []
+
+      library_path = "#{pre_products_dir(a2o_target)}/#{_target.product_reference.path}"
+
+      builds << {
+        outputs: [library_path],
+        rule_name: 'cp_r',
+        inputs: [bitcode_path(a2o_target)]
+      }
+
       [builds, rules]
     end
 
