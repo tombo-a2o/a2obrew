@@ -534,11 +534,14 @@ module A2OBrew
       lib_dirs = build_setting(build_config, 'LIBRARY_SEARCH_PATHS', :array)
       framework_search_paths = build_setting(build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
       header_search_paths = build_setting(build_config, 'HEADER_SEARCH_PATHS', :array)
-      user_header_search_paths = build_setting(build_config, 'USER_HEADER_SEARCH_PATHS', :string)
+      user_header_search_paths = build_setting(build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ""
+      other_cflags = (build_setting(build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
+      cxx_std = build_setting(build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
+      c_std = build_setting(build_config, 'GCC_C_LANGUAGE_STANDARD', :string)
 
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
-      header_options = (header_dirs + header_search_paths).map { |dir| "-I./#{dir}" }.join(' ')
+      header_options = (header_dirs + header_search_paths + user_header_search_paths.split).map { |dir| "-I./#{dir}" }.join(' ')
 
       if build_setting(build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
         prefix_pch = build_setting(build_config, 'GCC_PREFIX_HEADER')
@@ -547,7 +550,7 @@ module A2OBrew
 
       # build sources
 
-      cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options].join(' ')
+      cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags].join(' ')
       conf_cc_flags = a2o_project_flags(active_project_config, :cc)
 
       rules << {
@@ -557,6 +560,8 @@ module A2OBrew
         depfile: '${out}.d',
         command: "a2o -MMD -MF ${out}.d -Wno-absolute-value #{cc_flags} ${file_cflags} -c ${source} -o ${out} #{conf_cc_flags}"
       }
+
+      enable_objc_arc = build_setting(build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
       phase.files_references.each do |file|
         source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
@@ -571,7 +576,16 @@ module A2OBrew
         if settings && settings.key?('COMPILER_FLAGS')
           file_cflags += expand(settings['COMPILER_FLAGS'], :array)
         end
-        file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
+        if enable_objc_arc
+          file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
+        end
+
+        case source_path.extname
+        when '.mm', '.cpp', '.cxx'
+          file_cflags << "-std=#{cxx_std}" if cxx_std
+        when '.c', '.m'
+          file_cflags << "-std=#{c_std}" if c_std
+        end
 
         builds << {
           outputs: [object],
