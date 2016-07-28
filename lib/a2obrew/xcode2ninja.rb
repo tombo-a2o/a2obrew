@@ -99,16 +99,18 @@ module A2OBrew
         rules += e[1]
       end
 
-      e = case target.product_type
-      when "com.apple.product-type.library.static"
-        static_library_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
-      when "com.apple.product-type.application"
-        application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
-      else
-        raise Informative, "Don't support productType #{target.product_type}."
+      if target.isa == "PBXNativeTarget"
+        e = case target.product_type
+        when "com.apple.product-type.library.static"
+          static_library_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+        when "com.apple.product-type.application"
+          application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+        else
+          raise Informative, "Don't support productType #{target.product_type}."
+        end
+        builds += e[0]
+        rules += e[1]
       end
-      builds += e[0]
-      rules += e[1]
 
       e = after_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
       builds += e[0]
