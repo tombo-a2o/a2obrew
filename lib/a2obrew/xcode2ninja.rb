@@ -122,7 +122,11 @@ module A2OBrew
         proxy = dependency.target_proxy
         if proxy.remote?
           remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
-          # TODO run xcodebuild for remote_object_file
+          builds << {
+            outputs: ["dummy"],
+            rule_name: 'xcodebuild',
+            inputs: [File.dirname(remote_object_file.path)]
+          }
         else
           e = generate_build_rules(xcodeproj, dependency.target, build_config, active_project_config, a2o_target)
           builds += e[0]
@@ -171,6 +175,11 @@ module A2OBrew
           rule_name: 'rm',
           description: 'remove ${out}',
           command: 'rm ${out}'
+        },
+        {
+          rule_name: 'xcodebuild',
+          description: 'a2obrew xcodebuild at ${in}',
+          command: 'cd ${in} && a2obrew xcodebuild'
         }
       ]
     end
