@@ -78,7 +78,6 @@ module A2OBrew
     def generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/LineLength,Metrics/AbcSize,Metrics/CyclomaticComplexity
       builds = []
       rules = []
-      subninjas = []
       target.build_phases.each do |phase|
         e = case phase
             when Xcodeproj::Project::Object::PBXResourcesBuildPhase
@@ -117,12 +116,12 @@ module A2OBrew
       builds += e[0]
       rules += e[1]
 
-      target.dependencies.each{ |dependency|
+      target.dependencies.each do |dependency|
         proxy = dependency.target_proxy
         if proxy.remote?
           remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
           builds << {
-            outputs: ["dummy"],
+            outputs: ['dummy'],
             rule_name: 'xcodebuild',
             inputs: [File.dirname(remote_object_file.path)]
           }
@@ -131,8 +130,8 @@ module A2OBrew
           builds += e[0]
           rules += e[1]
         end
-      }
-      
+      end
+
       [builds, rules]
     end
 
@@ -163,7 +162,7 @@ module A2OBrew
       path
     end
 
-    def basic_rules
+    def basic_rules # rubocop:disable Metrics/MethodLength
       [
         {
           rule_name: 'cp_r',
@@ -836,7 +835,7 @@ module A2OBrew
 
     # utils
 
-    def build_setting(build_config, prop, type = nil) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity,Method/LineLength
+    def build_setting(build_config, prop, type = nil) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/LineLength
       # TODO: check xcconfig file
       project_setting = xcodeproj.build_settings(build_config.name)[prop]
       project_setting = project_setting.clone if project_setting
