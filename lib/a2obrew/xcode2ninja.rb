@@ -10,7 +10,6 @@ require_relative 'util'
 
 module A2OBrew
   class Xcode2Ninja # rubocop:disable Metrics/ClassLength
-
     APPLE_APPICONS = [
       [60, 3], # 60x60@3x 180x180 (main icon for iPhone retina iOS 8-)
       [76, 2], # 76x76@2x 152x152 (main icon for iPad   retina iOS 7-)
@@ -20,7 +19,7 @@ module A2OBrew
       [76, 1], # 76x76            (main icon for iPad          iOS 7-)
       [72, 1], # 72x72            (main icon for iPad          iOS 6)
       [57, 1], # 57x57            (main icon for iPhone        iOS 6)
-    ]
+    ].freeze
 
     def initialize(xcodeproj_path)
       self.xcodeproj_path = xcodeproj_path
@@ -75,7 +74,7 @@ module A2OBrew
       write_ninja_build(output_dir, target, build_config, a2o_target, builds, rules)
     end
 
-    def generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/LineLength
+    def generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/LineLength,Metrics/AbcSize,Metrics/CyclomaticComplexity
       builds = []
       rules = basic_rules
       target.build_phases.each do |phase|
@@ -99,15 +98,15 @@ module A2OBrew
         rules += e[1]
       end
 
-      if target.isa == "PBXNativeTarget"
+      if target.isa == 'PBXNativeTarget'
         e = case target.product_type
-        when "com.apple.product-type.library.static"
-          static_library_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
-        when "com.apple.product-type.application"
-          application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
-        else
-          raise Informative, "Don't support productType #{target.product_type}."
-        end
+            when 'com.apple.product-type.library.static'
+              static_library_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+            when 'com.apple.product-type.application'
+              application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+            else
+              raise Informative, "Don't support productType #{target.product_type}."
+            end
         builds += e[0]
         rules += e[1]
       end
@@ -307,7 +306,9 @@ module A2OBrew
 
       resource_filter = active_project_config[:resource_filter]
 
-      icon_asset_catalog, icon_2x, icon = nil, nil, nil
+      icon_asset_catalog = nil
+      icon_2x = nil
+      icon = nil
       phase.files_references.each do |files_ref|
         case files_ref
         when Xcodeproj::Project::Object::PBXFileReference
@@ -348,7 +349,7 @@ module A2OBrew
             builds << {
               outputs: [remote_path],
               rule_name: 'audio-convert',
-              inputs: [local_path],
+              inputs: [local_path]
             }
             resources << remote_path
           else
@@ -456,7 +457,7 @@ module A2OBrew
         scale_str = "#{scale}x"
         size_str = "#{width}x#{width}"
         contents_images.each do |ci|
-          if ci['scale'] == scale_str && ci['size'] == size_str && ci.has_key?('filename')
+          if ci['scale'] == scale_str && ci['size'] == size_str && ci.key?('filename')
             return File.join(base_path, ci['filename']), scale
           end
         end
@@ -467,7 +468,7 @@ module A2OBrew
 
     def asset_catalog(local_path, build_config)
       appicon_name = build_setting(build_config, 'ASSETCATALOG_COMPILER_APPICON_NAME') + '.appiconset'
-      launchimage_name = build_setting(build_config, 'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME') + '.launchimage'
+      _launchimage_name = build_setting(build_config, 'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME') + '.launchimage'
 
       Dir.new(local_path).each do |asset_local_path|
         if asset_local_path == appicon_name
@@ -536,7 +537,7 @@ module A2OBrew
       lib_dirs = build_setting(build_config, 'LIBRARY_SEARCH_PATHS', :array)
       framework_search_paths = build_setting(build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
       header_search_paths = build_setting(build_config, 'HEADER_SEARCH_PATHS', :array)
-      user_header_search_paths = build_setting(build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ""
+      user_header_search_paths = build_setting(build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ''
       other_cflags = (build_setting(build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
       cxx_std = build_setting(build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
       c_std = build_setting(build_config, 'GCC_C_LANGUAGE_STANDARD', :string)
@@ -567,9 +568,9 @@ module A2OBrew
 
       phase.files_references.each do |file|
         source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
-        basename = source_path.basename(".*").to_s
+        basename = source_path.basename('.*').to_s
         uid = Digest::SHA1.new.update(source_path.to_s).to_s[0, 7]
-        object = File.join(objects_dir(a2o_target), basename+"-"+uid+".o")
+        object = File.join(objects_dir(a2o_target), basename + '-' + uid + '.o')
 
         objects << object
 
@@ -634,8 +635,8 @@ module A2OBrew
 
       [builds, rules]
     end
-    
-    def application_build_phase(xcodeproj, _target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+
+    def application_build_phase(_xcodeproj, _target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
       builds = []
       rules = []
 
@@ -761,11 +762,11 @@ module A2OBrew
     end
     # rubocop:enable Metrics/LineLength
 
-    def static_library_build_phase(xcodeproj, _target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    def static_library_build_phase(_xcodeproj, target, _build_config, _phase, _active_project_config, a2o_target)
       builds = []
       rules = []
 
-      library_path = "#{pre_products_dir(a2o_target)}/#{_target.product_reference.path}"
+      library_path = "#{pre_products_dir(a2o_target)}/#{target.product_reference.path}"
 
       builds << {
         outputs: [library_path],
@@ -811,25 +812,24 @@ module A2OBrew
     end
 
     # utils
-    
-    def build_setting(build_config, prop, type = nil)
-      # TODO check xcconfig file
+
+    def build_setting(build_config, prop, type = nil) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity,Method/LineLength
+      # TODO: check xcconfig file
       project_setting = xcodeproj.build_settings(build_config.name)[prop]
       project_setting = project_setting.clone if project_setting
       target_setting = build_config.build_settings[prop]
       target_setting = target_setting.clone if target_setting
-      
+
       if target_setting
         # replace '$(inherited)'
         if target_setting.is_a?(Array)
-          if idx = target_setting.index('$(inherited)')
-            target_setting[idx, 1] = project_setting || []
-          end
+          idx = target_setting.index('$(inherited)')
+          target_setting[idx, 1] = project_setting || [] if idx
         else
           # assume string
           target_setting.gsub!('$(inherited)', project_setting || '')
         end
-        
+
         expand(target_setting, type)
       else
         expand(project_setting, type)
@@ -863,7 +863,7 @@ module A2OBrew
               when '$(SRCROOT)'
                 xcodeproj_dir
               when '$(PLATFORM_NAME)'
-                "emscripten"
+                'emscripten'
               when '$(SDKROOT)'
                 # FIXME: currently ignores
                 ''

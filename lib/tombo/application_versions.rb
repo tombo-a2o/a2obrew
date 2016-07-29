@@ -7,7 +7,6 @@ require_relative 'zip_creator'
 
 module Tombo
   class ApplicationVersions < CLIBase
-
     desc 'index', 'application versions index'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     def index

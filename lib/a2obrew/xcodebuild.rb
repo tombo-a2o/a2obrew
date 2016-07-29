@@ -106,7 +106,8 @@ xcodeproj:
   xocdeproj_build_config: #{xcodeproj_build_config}
 EOF
       xn = Xcode2Ninja.new(xcodeproj_path)
-      gen_paths = xn.xcode2ninja('a2o/ninja', xcodeproj_target, xcodeproj_build_config, active_project_config, a2o_target)
+      gen_paths = xn.xcode2ninja('a2o/ninja', xcodeproj_target,
+                                 xcodeproj_build_config, active_project_config, a2o_target)
       gen_paths.each do |path|
         puts "Generate #{path}"
       end
