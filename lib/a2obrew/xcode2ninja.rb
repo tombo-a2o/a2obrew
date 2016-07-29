@@ -71,12 +71,14 @@ module A2OBrew
 
     def generate_ninja_build(output_dir, xcodeproj, target, build_config, active_project_config, a2o_target)
       builds, rules = generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target)
+      rules += basic_rules
       write_ninja_build(output_dir, target, build_config, a2o_target, builds, rules)
     end
 
     def generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/LineLength,Metrics/AbcSize,Metrics/CyclomaticComplexity
       builds = []
-      rules = basic_rules
+      rules = []
+      subninjas = []
       target.build_phases.each do |phase|
         e = case phase
             when Xcodeproj::Project::Object::PBXResourcesBuildPhase
@@ -115,6 +117,22 @@ module A2OBrew
       builds += e[0]
       rules += e[1]
 
+      target.dependencies.each{ |dependency|
+        proxy = dependency.target_proxy
+        if proxy.remote?
+          remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
+          builds << {
+            outputs: ["dummy"],
+            rule_name: 'xcodebuild',
+            inputs: [File.dirname(remote_object_file.path)]
+          }
+        else
+          e = generate_build_rules(xcodeproj, dependency.target, build_config, active_project_config, a2o_target)
+          builds += e[0]
+          rules += e[1]
+        end
+      }
+      
       [builds, rules]
     end
 
@@ -156,6 +174,11 @@ module A2OBrew
           rule_name: 'rm',
           description: 'remove ${out}',
           command: 'rm ${out}'
+        },
+        {
+          rule_name: 'xcodebuild',
+          description: 'a2obrew xcodebuild at ${in}',
+          command: 'cd ${in} && a2obrew xcodebuild'
         }
       ]
     end
