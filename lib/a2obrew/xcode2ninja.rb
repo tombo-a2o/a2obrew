@@ -657,7 +657,7 @@ module A2OBrew
       [builds, rules]
     end
 
-    def application_build_phase(_xcodeproj, _target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+    def application_build_phase(xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
       builds = []
       rules = []
 
@@ -736,14 +736,17 @@ module A2OBrew
         command: "EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} ${shell_file_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o #{html_path(a2o_target)} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n -licudata --memory-init-file 1 #{conf_html_flags}"
       }
 
+      linked_libraries = dependent_libraries(xcodeproj, target)
+      linked_objects = linked_libraries[:static_libraries] + [bitcode_path(a2o_target)]
+
       builds << {
         outputs: pre_products_outputs,
         rule_name: 'html',
-        inputs: [data_js_path(a2o_target), shared_library_js_path(a2o_target), exports_js_path(a2o_target), bitcode_path(a2o_target)] + dep_paths,
+        inputs: [data_js_path(a2o_target), shared_library_js_path(a2o_target), exports_js_path(a2o_target)] + linked_objects + dep_paths,
         build_variables: {
           'data_js' => data_js_path(a2o_target),
           'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)} --pre-js #{shared_library_js_path(a2o_target)}",
-          'linked_objects' => bitcode_path(a2o_target),
+          'linked_objects' => linked_objects.join(' '),
           'framework_options' => A2OCONF[:xcodebuild][:static_link_frameworks].map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'separate_asm_options' => separate_asm_options,
@@ -892,8 +895,7 @@ module A2OBrew
               when '$(PLATFORM_NAME)'
                 'emscripten'
               when '$(SDKROOT)'
-                # FIXME: currently ignores
-                ''
+                emscripten_dir
               when '$(DEVELOPER_FRAMEWORKS_DIR)'
                 # FIXME: currently ignores
                 ''
@@ -950,6 +952,30 @@ module A2OBrew
         files << path
       end
       files
+    end
+
+    def dependent_libraries(xcodeproj, target) # rubocop:disable Metrics/MethodLength
+      framework_phase = target.build_phases.find { |phase| phase.isa == 'PBXFrameworksBuildPhase' }
+
+      static_libraries = []
+      framework_phase.files.each do |file|
+        file_ref = file.file_ref
+        case file_ref
+        when Xcodeproj::Project::Object::PBXFileReference
+          # FIXME: use this to link frameworks instead of A2OCONF
+        when Xcodeproj::Project::Object::PBXReferenceProxy
+          proxy = file_ref.remote_ref
+          remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
+          # FIXME: determine remote target more appropriately
+          remote_target = 'release'
+          library_path = File.join(File.dirname(remote_object_file.path), pre_products_dir(remote_target), file_ref.path) # rubocop:disable LineLength
+          static_libraries << library_path
+        end
+      end
+
+      {
+        static_libraries: static_libraries
+      }
     end
   end
 end
