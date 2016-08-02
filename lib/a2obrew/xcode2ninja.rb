@@ -89,7 +89,6 @@ module A2OBrew
             when Xcodeproj::Project::Object::PBXShellScriptBuildPhase
               shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
             when Xcodeproj::Project::Object::PBXHeadersBuildPhase
-              # do nothing
               header_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
             else
               raise Informative, "Don't support the phase #{phase.class.name}."
@@ -790,9 +789,15 @@ module A2OBrew
 
       library_path = "#{pre_products_dir(a2o_target)}/#{target.product_reference.path}"
 
+      rules << {
+        rule_name: 'archive',
+        description: 'make static link library',
+        command: 'rm -f ${out}; llvm-ar rcs ${out} ${in}'
+      }
+
       builds << {
         outputs: [library_path],
-        rule_name: 'cp_r',
+        rule_name: 'archive',
         inputs: [bitcode_path(a2o_target)]
       }
 
