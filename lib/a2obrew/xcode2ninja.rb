@@ -90,6 +90,8 @@ module A2OBrew
               shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
             when Xcodeproj::Project::Object::PBXHeadersBuildPhase
               header_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+            when Xcodeproj::Project::Object::PBXCopyFilesBuildPhase
+              copy_files_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
             else
               raise Informative, "Don't support the phase #{phase.class.name}."
             end
@@ -818,6 +820,11 @@ module A2OBrew
     end
 
     def shell_script_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
+      # FIXME: Implement
+      [[], []]
+    end
+
+    def copy_files_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
       [[], []]
     end
