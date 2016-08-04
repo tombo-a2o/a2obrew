@@ -132,7 +132,6 @@ BUILD
           System/CFNetwork
           System/CoreFoundation
           System/Foundation
-          System/Security
         )
       },
       {
@@ -163,6 +162,7 @@ BUILD
           SystemConfiguration
           TomboAFNetworking
           TomboKit
+          Security
           StoreKit
         )
       },
