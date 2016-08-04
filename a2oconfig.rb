@@ -145,25 +145,28 @@ BUILD
         install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
         frameworks: %w(
+          AVFoundation
           Accounts
           AdSupport
+          AssetsLibrary
           AudioToolbox
-          AVFoundation
           CoreAudio
           CoreLocation
+          CoreTelephony
           GameKit
-          iAd
           ImageIO
-          OpenGLES
           MapKit
+          MessageUI
           MobileCoreServices
           MultipeerConnectivity
+          OpenGLES
+          Security
           Social
+          StoreKit
           SystemConfiguration
           TomboAFNetworking
           TomboKit
-          Security
-          StoreKit
+          iAd
         )
       },
       {
