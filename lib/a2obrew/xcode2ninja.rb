@@ -1,3 +1,4 @@
+require 'set'
 require 'json'
 require 'xcodeproj'
 require 'fileutils'
@@ -740,7 +741,7 @@ module A2OBrew
 
       linked_libraries = dependent_libraries(xcodeproj, target)
       linked_objects = linked_libraries[:static_libraries] + [bitcode_path(a2o_target)]
-      static_link_frameworks = (linked_libraries[:frameworks] + A2OCONF[:xcodebuild][:static_link_frameworks]).uniq - shared_libraries
+      static_link_frameworks = Set.new(linked_libraries[:frameworks]) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries
 
       builds << {
         outputs: pre_products_outputs,
