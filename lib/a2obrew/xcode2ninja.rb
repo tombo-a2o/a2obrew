@@ -740,6 +740,7 @@ module A2OBrew
 
       linked_libraries = dependent_libraries(xcodeproj, target)
       linked_objects = linked_libraries[:static_libraries] + [bitcode_path(a2o_target)]
+      static_link_frameworks = (linked_libraries[:frameworks] + A2OCONF[:xcodebuild][:static_link_frameworks]).uniq - shared_libraries
 
       builds << {
         outputs: pre_products_outputs,
@@ -749,7 +750,7 @@ module A2OBrew
           'data_js' => data_js_path(a2o_target),
           'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)} --pre-js #{shared_library_js_path(a2o_target)}",
           'linked_objects' => linked_objects.join(' '),
-          'framework_options' => A2OCONF[:xcodebuild][:static_link_frameworks].map { |f| "-framework #{f}" }.join(' '),
+          'framework_options' => static_link_frameworks.map { |f| "-framework #{f}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'separate_asm_options' => separate_asm_options,
           'shell_file_options' => shell_file_options
@@ -961,26 +962,32 @@ module A2OBrew
       files
     end
 
-    def dependent_libraries(xcodeproj, target) # rubocop:disable Metrics/MethodLength
+    def dependent_libraries(xcodeproj, target) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
       framework_phase = target.build_phases.find { |phase| phase.isa == 'PBXFrameworksBuildPhase' }
 
+      frameworks = []
       static_libraries = []
       framework_phase.files.each do |file|
         file_ref = file.file_ref
         case file_ref
         when Xcodeproj::Project::Object::PBXFileReference
-          # FIXME: use this to link frameworks instead of A2OCONF
+          # TODO: handle .a and .dylib
+          name = file_ref.name
+          if name && name.end_with?('.framework')
+            frameworks << File.basename(name, '.framework')
+          end
         when Xcodeproj::Project::Object::PBXReferenceProxy
           proxy = file_ref.remote_ref
           remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
           # FIXME: determine remote target more appropriately
-          remote_target = 'release'
+          remote_target = 'debug'
           library_path = File.join(File.dirname(remote_object_file.path), pre_products_dir(remote_target), file_ref.path) # rubocop:disable LineLength
           static_libraries << library_path
         end
       end
 
       {
+        frameworks: frameworks,
         static_libraries: static_libraries
       }
     end
