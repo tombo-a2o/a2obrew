@@ -49,7 +49,7 @@ A2OCONF = {
       {
         name: 'vorbis',
         path: 'vorbis',
-        repository_uri: 'git@github.com:xiph/vorbis.git',
+        repository_uri: 'git@github.com:tomboinc/vorbis.git',
         branch: 'master',
         autogen: './autogen.sh || ./autogen.sh',
         configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags} -v" --disable-oggtest',
