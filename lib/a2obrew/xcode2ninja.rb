@@ -622,8 +622,6 @@ module A2OBrew
         uid = Digest::SHA1.new.update(source_path.to_s).to_s[0, 7]
         object = File.join(objects_dir(a2o_target), basename + '-' + uid + '.o')
 
-        objects << object
-
         settings = file.build_files[0].settings
         file_cflags = []
         if settings && settings.key?('COMPILER_FLAGS')
@@ -633,12 +631,19 @@ module A2OBrew
           file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
         end
 
-        case source_path.extname
-        when '.mm', '.cpp', '.cxx'
+        case file.last_known_file_type
+        when 'sourcecode.cpp.cpp', 'sourcecode.cpp.objcpp'
           file_cflags << "-std=#{cxx_std}" if cxx_std
-        when '.c', '.m'
+        when 'sourcecode.c.c', 'sourcecode.c.objc'
           file_cflags << "-std=#{c_std}" if c_std
+        when 'sourcecode.c.h'
+          # ignore header file
+          next
+        else
+          raise Informative, "Unsupported file type #{file} #{file.last_known_file_type}"
         end
+
+        objects << object
 
         builds << {
           outputs: [object],
