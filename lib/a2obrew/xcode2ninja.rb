@@ -586,6 +586,7 @@ module A2OBrew
       other_cflags = (build_setting(build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
       cxx_std = build_setting(build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
       c_std = build_setting(build_config, 'GCC_C_LANGUAGE_STANDARD', :string)
+      preprocessor_definitions = (build_setting(build_config, 'GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
 
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
@@ -598,7 +599,7 @@ module A2OBrew
 
       # build sources
 
-      cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags].join(' ')
+      cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags, preprocessor_definitions].join(' ')
       conf_cc_flags = a2o_project_flags(active_project_config, :cc)
 
       rules << {
