@@ -130,10 +130,18 @@ module A2OBrew
         proxy = dependency.target_proxy
         if proxy.remote?
           remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
+          remote_project_path = File.dirname(remote_object_file.path)
+          remote_target = proxy.proxied_object
+          remote_product = remote_target.product_reference
+          remote_lib_path = File.join(remote_project_path, pre_products_dir(a2o_target), remote_product.path)
           builds << {
-            outputs: ['dummy'],
+            outputs: [remote_lib_path],
             rule_name: 'xcodebuild',
-            inputs: [File.dirname(remote_object_file.path)]
+            inputs: [remote_project_path],
+            build_variables: {
+              a2o_target: a2o_target,
+              xcodeproj_target: remote_target.name.ninja_escape
+            }
           }
         else
           e = generate_build_rules(xcodeproj, dependency.target, build_config, active_project_config, a2o_target)
@@ -192,7 +200,7 @@ module A2OBrew
         {
           rule_name: 'xcodebuild',
           description: 'a2obrew xcodebuild at ${in}',
-          command: 'cd ${in} && a2obrew xcodebuild'
+          command: 'cd ${in} && a2obrew xcodebuild -t ${a2o_target} --xcodeproj-target ${xcodeproj_target}'
         }
       ]
     end
