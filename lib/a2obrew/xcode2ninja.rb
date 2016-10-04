@@ -614,7 +614,7 @@ module A2OBrew
 
       phase.files_references.each do |file|
         if file.parent.isa != 'PBXGroup'
-          puts 'Orphan file: ' + file.name
+          puts '[WARN] Orphan file: ' + file.name
           next
         end
         source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
