@@ -9,6 +9,12 @@ require_relative 'util'
 
 # rubocop:disable Metrics/ParameterLists
 
+class Object
+  def ninja_escape
+    to_s.gsub(/ /, '$ ')
+  end
+end
+
 module A2OBrew
   class Xcode2Ninja # rubocop:disable Metrics/ClassLength
     APPLE_APPICONS = [
@@ -152,7 +158,12 @@ module A2OBrew
         end
 
         builds.each do |b|
-          f.puts "build #{b[:outputs].join(' ')}: #{b[:rule_name]} #{b[:inputs].join(' ')}"
+          # escape inputs and outpus here
+          inputs = b[:inputs].map(&:ninja_escape).join(' ')
+          outputs = b[:outputs].map(&:ninja_escape).join(' ')
+          f.puts "build #{outputs}: #{b[:rule_name]} #{inputs}"
+
+          # build_variables should be escaped at caller
           build_variables = b[:build_variables] || []
           build_variables.each do |k, v|
             f.puts "  #{k} = #{v}"
@@ -750,8 +761,8 @@ module A2OBrew
         build_variables: {
           'data_js' => data_js_path(a2o_target),
           'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)} --pre-js #{shared_library_js_path(a2o_target)}",
-          'linked_objects' => linked_objects.join(' '),
-          'framework_options' => static_link_frameworks.map { |f| "-framework #{f}" }.join(' '),
+          'linked_objects' => linked_objects.map(&:ninja_escape).join(' '),
+          'framework_options' => static_link_frameworks.map { |f| "-framework #{f.ninja_escape}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'separate_asm_options' => separate_asm_options,
           'shell_file_options' => shell_file_options
