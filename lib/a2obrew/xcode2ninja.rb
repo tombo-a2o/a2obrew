@@ -200,7 +200,7 @@ module A2OBrew
         {
           rule_name: 'xcodebuild',
           description: 'a2obrew xcodebuild at ${in}',
-          command: 'cd ${in} && a2obrew xcodebuild -t ${a2o_target} --xcodeproj-target ${xcodeproj_target}'
+          command: 'cd ${in} && a2obrew xcodebuild -t ${a2o_target} --xcodeproj-target "${xcodeproj_target}"'
         }
       ]
     end
