@@ -14,6 +14,7 @@ module A2OBrew
     method_option :project_config, aliases: '-p', desc: 'Project config ruby path'
     method_option :target, aliases: '-t', default: 'release', desc: 'Build target for a2o(ex. release)'
     method_option :jobs, type: :numeric, aliases: '-j', desc: 'the number of jobs to run simultaneously'
+    method_option :xcodeproj_target, desc: 'Build target for xcodeproj'
     def build
       check_emsdk_env
 
@@ -86,11 +87,11 @@ module A2OBrew
       xcodeproj_build_config
     end
 
-    def generate_ninja_build(options) # rubocop:disable Metrics/MethodLength
+    def generate_ninja_build(options) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
       a2o_target = options[:target].intern
       proj_config_path, proj_config = load_project_config(options[:project_config])
       xcodeproj_path = search_xcodeproj_path(options[:xcodeproj_path])
-      xcodeproj_target = proj_config[:xcodeproj_target] || File.basename(xcodeproj_path, '.xcodeproj')
+      xcodeproj_target = options[:xcodeproj_target] || proj_config[:xcodeproj_target] || File.basename(xcodeproj_path, '.xcodeproj') # rubocop:disable LineLength
       active_project_config = fetch_active_project_config(proj_config, a2o_target)
       xcodeproj_build_config = find_xcodeproj_build_config(active_project_config, a2o_target)
       ninja_path = "a2o/ninja/#{a2o_target}.ninja.build"
