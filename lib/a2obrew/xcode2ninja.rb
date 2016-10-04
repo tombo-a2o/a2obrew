@@ -602,6 +602,10 @@ module A2OBrew
       enable_objc_arc = build_setting(build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
       phase.files_references.each do |file|
+        if file.parent.isa != 'PBXGroup'
+          puts 'Orphan file: ' + file.name
+          next
+        end
         source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
         basename = source_path.basename('.*').to_s
         uid = Digest::SHA1.new.update(source_path.to_s).to_s[0, 7]
