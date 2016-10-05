@@ -79,52 +79,44 @@ module A2OBrew
     end
 
     def generate_ninja_build(output_dir, xcodeproj, target, build_config, active_project_config, a2o_target)
-      builds, rules = generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target)
-      rules += basic_rules
+      builds = generate_build_statements(xcodeproj, target, build_config, active_project_config, a2o_target)
+      rules = generate_rules
       write_ninja_build(output_dir, target, build_config, a2o_target, builds, rules)
     end
 
-    def generate_build_rules(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/LineLength,Metrics/AbcSize,Metrics/CyclomaticComplexity
+    def generate_build_statements(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/LineLength,Metrics/AbcSize,Metrics/CyclomaticComplexity
       builds = []
-      rules = []
       target.build_phases.each do |phase|
-        e = case phase
-            when Xcodeproj::Project::Object::PBXResourcesBuildPhase
-              resources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-            when Xcodeproj::Project::Object::PBXSourcesBuildPhase
-              sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-            when Xcodeproj::Project::Object::PBXFrameworksBuildPhase
-              frameworks_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-            when Xcodeproj::Project::Object::PBXShellScriptBuildPhase
-              shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-            when Xcodeproj::Project::Object::PBXHeadersBuildPhase
-              header_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-            when Xcodeproj::Project::Object::PBXCopyFilesBuildPhase
-              copy_files_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
-            else
-              raise Informative, "Don't support the phase #{phase.class.name}."
-            end
-
-        builds += e[0]
-        rules += e[1]
+        builds += case phase
+                  when Xcodeproj::Project::Object::PBXResourcesBuildPhase
+                    resources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                  when Xcodeproj::Project::Object::PBXSourcesBuildPhase
+                    sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                  when Xcodeproj::Project::Object::PBXFrameworksBuildPhase
+                    frameworks_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                  when Xcodeproj::Project::Object::PBXShellScriptBuildPhase
+                    shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                  when Xcodeproj::Project::Object::PBXHeadersBuildPhase
+                    header_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                  when Xcodeproj::Project::Object::PBXCopyFilesBuildPhase
+                    copy_files_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                  else
+                    raise Informative, "Don't support the phase #{phase.class.name}."
+                  end
       end
 
       if target.isa == 'PBXNativeTarget'
-        e = case target.product_type
-            when 'com.apple.product-type.library.static'
-              static_library_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
-            when 'com.apple.product-type.application'
-              application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
-            else
-              raise Informative, "Don't support productType #{target.product_type}."
-            end
-        builds += e[0]
-        rules += e[1]
+        builds += case target.product_type
+                  when 'com.apple.product-type.library.static'
+                    static_library_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+                  when 'com.apple.product-type.application'
+                    application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+                  else
+                    raise Informative, "Don't support productType #{target.product_type}."
+                  end
       end
 
-      e = after_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
-      builds += e[0]
-      rules += e[1]
+      builds += after_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
 
       target.dependencies.each do |dependency|
         proxy = dependency.target_proxy
@@ -144,13 +136,12 @@ module A2OBrew
             }
           }
         else
-          e = generate_build_rules(xcodeproj, dependency.target, build_config, active_project_config, a2o_target)
-          builds += e[0]
-          rules += e[1]
+          builds += generate_build_statements(xcodeproj, dependency.target,
+                                              build_config, active_project_config, a2o_target)
         end
       end
 
-      [builds, rules]
+      builds
     end
 
     def write_ninja_build(output_dir, _target, _build_config, a2o_target, builds, rules) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength
@@ -185,7 +176,7 @@ module A2OBrew
       path
     end
 
-    def basic_rules # rubocop:disable Metrics/MethodLength
+    def generate_rules # rubocop:disable Metrics/MethodLength
       [
         {
           rule_name: 'cp_r',
@@ -201,6 +192,63 @@ module A2OBrew
           rule_name: 'xcodebuild',
           description: 'a2obrew xcodebuild at ${in}',
           command: 'cd ${in} && a2obrew xcodebuild -t ${a2o_target} --xcodeproj-target "${xcodeproj_target}"'
+        },
+        {
+          rule_name: 'ibtool',
+          description: 'ibtool ${in}',
+          command: 'ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link ${resources_dir} ${temp_dir}' # rubocop:disable LineLength
+        },
+        {
+          rule_name: 'image-convert',
+          description: 'image convert ${in}',
+          command: 'convert -resize ${width}x${height} ${in} ${out}'
+        },
+        {
+          rule_name: 'audio-convert',
+          description: 'audio convert ${in}',
+          command: 'afconvert -f mp4f -d aac ${in} -o ${out}'
+        },
+        {
+          rule_name: 'file_packager',
+          description: 'execute file packager to ${target}',
+          command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload ${packager_target_dir}@/ --js-output=${js_output} --no-heap-copy ${options} --use-preload-plugins" # rubocop:disable LineLength
+        },
+        {
+          rule_name: 'cc',
+          description: 'compile ${source} to ${out}',
+          deps: 'gcc',
+          depfile: '${out}.d',
+          command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} -c ${source} -o ${out}'
+        },
+        {
+          rule_name: 'link',
+          description: 'link to ${out}',
+          command: 'llvm-link -o ${out} ${in} ${link_flags}'
+        },
+        {
+          rule_name: 'shared_library_js',
+          description: 'List of shared libraries to be linked',
+          command: 'echo "Module.dynamicLibraries = [${shared_libraries}];" > ${out}'
+        },
+        {
+          rule_name: 'exports_js',
+          description: 'Functions to be exported in main module, which are referenced from shared libraries',
+          command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -e "puts (ARGF.map{|l| '_'+l.split[1]}+['_main']).to_s" > ${out}! # rubocop:disable LineLength
+        },
+        {
+          rule_name: 'html',
+          description: 'generate executables: ${out}',
+          command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} ${shell_file_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o ${html_path} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n -licudata --memory-init-file 1 ${html_flags}' # rubocop:disable LineLength
+        },
+        {
+          rule_name: 'generate_products',
+          description: 'generate products',
+          command: 'cp -a ${pre_products_dir}/ ${products_dir}'
+        },
+        {
+          rule_name: 'archive',
+          description: 'make static link library',
+          command: 'rm -f ${out}; llvm-ar rcs ${out} ${in}'
         }
       ]
     end
@@ -328,26 +376,7 @@ module A2OBrew
     def resources_build_phase(_xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
-      rules = []
       resources = []
-
-      rules << {
-        rule_name: 'ibtool',
-        description: 'ibtool ${in}',
-        command: 'ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link ${resources_dir} ${temp_dir}' # rubocop:disable LineLength
-      }
-
-      rules << {
-        rule_name: 'image-convert',
-        description: 'image convert ${in}',
-        command: 'convert -resize ${width}x${height} ${in} ${out}'
-      }
-
-      rules << {
-        rule_name: 'audio-convert',
-        description: 'audio convert ${in}',
-        command: 'afconvert -f mp4f -d aac ${in} -o ${out}'
-      }
 
       resource_filter = active_project_config[:resource_filter]
 
@@ -467,12 +496,6 @@ module A2OBrew
       #
       # NOTE: Could we use --use-preload-cache ?
 
-      rules << {
-        rule_name: 'file_packager',
-        description: 'execute file packager to ${target}',
-        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload ${packager_target_dir}@/ --js-output=${js_output} --no-heap-copy ${options} --use-preload-plugins" # rubocop:disable LineLength
-      }
-
       t = data_path(a2o_target)
       j = data_js_path(a2o_target)
       data_outputs = [t, j]
@@ -495,7 +518,7 @@ module A2OBrew
         }
       }
 
-      [builds, rules]
+      builds
     end
 
     def find_icon_from_asset_catalog(base_path)
@@ -573,7 +596,6 @@ module A2OBrew
     def sources_build_phase(xcodeproj, _target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
-      rules = []
       objects = []
 
       header_dirs = xcodeproj.main_group.recursive_children.select { |g| g.path && File.extname(g.path) == '.h' }.map do |g|
@@ -603,14 +625,6 @@ module A2OBrew
       # build sources
 
       cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags, preprocessor_definitions, a2o_project_flags(active_project_config, :cc)].join(' ')
-
-      rules << {
-        rule_name: 'cc',
-        description: 'compile ${source} to ${out}',
-        deps: 'gcc',
-        depfile: '${out}.d',
-        command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} -c ${source} -o ${out}'
-      }
 
       enable_objc_arc = build_setting(build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
@@ -680,12 +694,6 @@ module A2OBrew
       # link
       conf_link_flags = a2o_project_flags(active_project_config, :link)
 
-      rules << {
-        rule_name: 'link',
-        description: 'link to ${out}',
-        command: 'llvm-link -o ${out} ${in} ${link_flags}'
-      }
-
       builds << {
         outputs: [bitcode_path(a2o_target)],
         rule_name: 'link',
@@ -695,22 +703,15 @@ module A2OBrew
         }
       }
 
-      [builds, rules]
+      builds
     end
 
     def application_build_phase(_xcodeproj, _target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
       builds = []
-      rules = []
 
       # dynamic link libraries
 
       shared_libraries = A2OCONF[:xcodebuild][:dynamic_link_frameworks]
-
-      rules << {
-        rule_name: 'shared_library_js',
-        description: 'List of shared libraries to be linked',
-        command: 'echo "Module.dynamicLibraries = [${shared_libraries}];" > ${out}'
-      }
 
       builds << {
         outputs: [shared_library_js_path(a2o_target)],
@@ -732,12 +733,6 @@ module A2OBrew
         }
         shared_libraries_outputs << dest
       end
-
-      rules << {
-        rule_name: 'exports_js',
-        description: 'Functions to be exported in main module, which are referenced from shared libraries',
-        command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -e "puts (ARGF.map{|l| '_'+l.split[1]}+['_main']).to_s" > ${out}!
-      }
 
       builds << {
         outputs: [exports_js_path(a2o_target)],
@@ -770,12 +765,6 @@ module A2OBrew
       else
         shell_file_options = ''
       end
-
-      rules << {
-        rule_name: 'html',
-        description: 'generate executables: ${out}',
-        command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} ${shell_file_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o ${html_path} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n -licudata --memory-init-file 1 ${html_flags}'
-      }
 
       linked_objects = @static_libraries + [bitcode_path(a2o_target)]
       static_link_frameworks = Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries
@@ -813,12 +802,6 @@ module A2OBrew
         path.sub('pre_products', 'products')
       end
 
-      rules << {
-        rule_name: 'generate_products',
-        description: 'generate products',
-        command: 'cp -a ${pre_products_dir}/ ${products_dir}'
-      }
-
       builds << {
         outputs: products_outputs,
         rule_name: 'generate_products',
@@ -829,21 +812,14 @@ module A2OBrew
         }
       }
 
-      [builds, rules]
+      builds
     end
     # rubocop:enable Metrics/LineLength
 
     def static_library_build_phase(_xcodeproj, target, _build_config, _phase, _active_project_config, a2o_target)
       builds = []
-      rules = []
 
       library_path = "#{pre_products_dir(a2o_target)}/#{target.product_reference.path}"
-
-      rules << {
-        rule_name: 'archive',
-        description: 'make static link library',
-        command: 'rm -f ${out}; llvm-ar rcs ${out} ${in}'
-      }
 
       builds << {
         outputs: [library_path],
@@ -851,12 +827,11 @@ module A2OBrew
         inputs: [bitcode_path(a2o_target)]
       }
 
-      [builds, rules]
+      builds
     end
 
     def frameworks_build_phase(_xcodeproj, _target, _build_config, phase, _active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,LineLength
       builds = []
-      rules = []
 
       @frameworks = []
       @static_libraries = []
@@ -880,27 +855,26 @@ module A2OBrew
         end
       end
 
-      [builds, rules]
+      builds
     end
 
     def header_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
-      [[], []]
+      []
     end
 
     def shell_script_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
-      [[], []]
+      []
     end
 
     def copy_files_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
       # FIXME: Implement
-      [[], []]
+      []
     end
 
     def after_build_phase(_xcodeproj, _target, _build_config, _phase, active_project_config, a2o_target)
       builds = []
-      rules = []
 
       # Copying files to distribute_path
       distribute_paths = active_project_config[:distribute_paths]
@@ -914,7 +888,7 @@ module A2OBrew
         end
       end
 
-      [builds, rules]
+      builds
     end
 
     # utils
