@@ -334,7 +334,7 @@ module A2OBrew
       rules << {
         rule_name: 'ibtool',
         description: 'ibtool ${in}',
-        command: "ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module #{target.product_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link #{resources_dir(a2o_target)} ${temp_dir}" # rubocop:disable LineLength
+        command: 'ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link ${resources_dir} ${temp_dir}' # rubocop:disable LineLength
       }
 
       rules << {
@@ -383,7 +383,9 @@ module A2OBrew
               rule_name: 'ibtool',
               inputs: [local_path],
               build_variables: {
-                'temp_dir' => tmp_path
+                'temp_dir' => tmp_path,
+                'module_name' => target.product_name,
+                'resources_dir' => resources_dir(a2o_target)
               }
             }
             resources += nib_paths
@@ -468,7 +470,7 @@ module A2OBrew
       rules << {
         rule_name: 'file_packager',
         description: 'execute file packager to ${target}',
-        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload #{packager_target_dir(a2o_target)}@/ --js-output=${js_output} --no-heap-copy ${options} --use-preload-plugins" # rubocop:disable LineLength
+        command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload ${packager_target_dir}@/ --js-output=${js_output} --no-heap-copy ${options} --use-preload-plugins" # rubocop:disable LineLength
       }
 
       t = data_path(a2o_target)
@@ -488,7 +490,8 @@ module A2OBrew
         build_variables: {
           'target' => t,
           'js_output' => j,
-          'options' => options
+          'options' => options,
+          'packager_target_dir' => packager_target_dir(a2o_target)
         }
       }
 
@@ -599,15 +602,14 @@ module A2OBrew
 
       # build sources
 
-      cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags, preprocessor_definitions].join(' ')
-      conf_cc_flags = a2o_project_flags(active_project_config, :cc)
+      cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags, preprocessor_definitions, a2o_project_flags(active_project_config, :cc)].join(' ')
 
       rules << {
         rule_name: 'cc',
         description: 'compile ${source} to ${out}',
         deps: 'gcc',
         depfile: '${out}.d',
-        command: "a2o -MMD -MF ${out}.d -Wno-absolute-value #{cc_flags} ${file_cflags} -c ${source} -o ${out} #{conf_cc_flags}"
+        command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} -c ${source} -o ${out}'
       }
 
       enable_objc_arc = build_setting(build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
@@ -651,7 +653,8 @@ module A2OBrew
           inputs: [source_path],
           build_variables: {
             'file_cflags' => file_cflags.join(' '),
-            'source' => source_path
+            'source' => source_path,
+            'cc_flags' => cc_flags
           }
         }
       end
@@ -668,7 +671,8 @@ module A2OBrew
           inputs: [source_path, prefix_pch],
           build_variables: {
             'file_cflags' => '-fobjc-arc',
-            'source' => source_path
+            'source' => source_path,
+            'cc_flags' => cc_flags
           }
         }
       end
@@ -679,13 +683,16 @@ module A2OBrew
       rules << {
         rule_name: 'link',
         description: 'link to ${out}',
-        command: "llvm-link -o ${out} ${in} #{conf_link_flags}"
+        command: 'llvm-link -o ${out} ${in} ${link_flags}'
       }
 
       builds << {
         outputs: [bitcode_path(a2o_target)],
         rule_name: 'link',
-        inputs: objects
+        inputs: objects,
+        build_variables: {
+          'link_flags' => conf_link_flags
+        }
       }
 
       [builds, rules]
@@ -767,7 +774,7 @@ module A2OBrew
       rules << {
         rule_name: 'html',
         description: 'generate executables: ${out}',
-        command: "EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} ${shell_file_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o #{html_path(a2o_target)} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n -licudata --memory-init-file 1 #{conf_html_flags}"
+        command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} ${shell_file_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o ${html_path} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n -licudata --memory-init-file 1 ${html_flags}'
       }
 
       linked_objects = @static_libraries + [bitcode_path(a2o_target)]
@@ -784,7 +791,9 @@ module A2OBrew
           'framework_options' => static_link_frameworks.map { |f| "-framework #{f.ninja_escape}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'separate_asm_options' => separate_asm_options,
-          'shell_file_options' => shell_file_options
+          'shell_file_options' => shell_file_options,
+          'html_path' => html_path(a2o_target),
+          'html_flags' => conf_html_flags
         }
       }
 
@@ -807,13 +816,17 @@ module A2OBrew
       rules << {
         rule_name: 'generate_products',
         description: 'generate products',
-        command: "cp -a #{pre_products_dir(a2o_target)}/ #{products_dir(a2o_target)}"
+        command: 'cp -a ${pre_products_dir}/ ${products_dir}'
       }
 
       builds << {
         outputs: products_outputs,
         rule_name: 'generate_products',
-        inputs: products_inputs
+        inputs: products_inputs,
+        build_variables: {
+          'pre_products_dir' => pre_products_dir(a2o_target),
+          'products_dir' => products_dir(a2o_target)
+        }
       }
 
       [builds, rules]
