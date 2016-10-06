@@ -25,6 +25,16 @@
     // iTunes backup: OK
     // Persistent   : OK
 
+    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+
+    // write
+    NSString *contents1 = @"";
+    NSData *data = [contents1 dataUsingEncoding:NSUTF8StringEncoding];
+    NSString *path = [documentsPath stringByAppendingPathComponent:@"ababa.txt"];
+
+    [self writeFile:path contents:data];
+    NSAssert([[self readFile:path] isEqualToData:data], @"ababa.txt should be empty");
+
     // TODO: implement
 
     // TODO: "Do Not Backup" attribute
@@ -90,8 +100,12 @@
 
 + (void)writeFile:(NSString *)path contents:(NSData *)data {
     NSFileHandle *file = [NSFileHandle fileHandleForWritingAtPath:path];
-    [file writeData:data];
-    [file closeFile];
+    if (file == nil) {
+        [[NSFileManager defaultManager] createFileAtPath:path contents:data attributes:nil];
+    } else {
+        [file writeData:data];
+        [file closeFile];
+    }
 }
 
 @end
