@@ -606,7 +606,7 @@ module A2OBrew
       # build settings
       lib_dirs = build_setting(build_config, 'LIBRARY_SEARCH_PATHS', :array)
       framework_search_paths = build_setting(build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
-      header_search_paths = build_setting(build_config, 'HEADER_SEARCH_PATHS', :array)
+      header_search_paths = build_setting(build_config, 'HEADER_SEARCH_PATHS', :string) || ''
       user_header_search_paths = build_setting(build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ''
       other_cflags = (build_setting(build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
       cxx_std = build_setting(build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
@@ -615,7 +615,7 @@ module A2OBrew
 
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
-      header_options = (header_dirs + header_search_paths + user_header_search_paths.split).map { |dir| "-I#{dir}" }.join(' ')
+      header_options = (header_search_paths.split + user_header_search_paths.split + header_dirs).map { |dir| "-I#{dir}" }.join(' ')
 
       if build_setting(build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
         prefix_pch = build_setting(build_config, 'GCC_PREFIX_HEADER')
