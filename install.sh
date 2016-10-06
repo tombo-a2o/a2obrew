@@ -93,3 +93,6 @@ bin/a2obrew libraries install Chameleon
 
 # Install commit hooks
 ./scripts/install_commit_hooks.sh
+
+# Build sample projects (mainly for testing)
+./scripts/build_sample_projects.sh
