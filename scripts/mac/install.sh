@@ -84,7 +84,7 @@ else
 fi
 
 # Install imagemagick
-if brew list > /dev/null; then
+if brew list imagemagick > /dev/null; then
   echo "* imagemagick is installed"
 else
   brew install imagemagick
