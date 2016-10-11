@@ -2,7 +2,8 @@
 parent_path=$( cd "$(dirname "${BASH_SOURCE}")" ; pwd -P )
 cd "$parent_path"
 cd ..
-eval "$(bin/a2obrew init -)"
+PATH="$PATH:$(pwd)/bin"
+eval "$(a2obrew init -)"
 
 for d in sample_projects/*/; do
   pushd .
