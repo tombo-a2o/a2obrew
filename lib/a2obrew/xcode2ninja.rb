@@ -912,13 +912,13 @@ module A2OBrew
 
     def replace_inherited(lower, upper)
       # replace '$(inherited)'
-      if lower.respond_to?(:index)
+      if lower.is_a?(Array)
         # Array
         idx = lower.index('$(inherited)')
         lower[idx, 1] = upper || [] if idx
       elsif lower.respond_to?(:gsub!)
         # String
-        lower.gsub!('$(inherited)', upper || '')
+        lower.gsub!(/\$\(inherited\)/, upper || '')
       end
 
       lower
