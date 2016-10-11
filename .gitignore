@@ -11,8 +11,5 @@ Thumbs.db
 # Emscripten
 emsdk/
 
-# Ruby
-Gemfile.lock
-
 # Depends
 depends/
