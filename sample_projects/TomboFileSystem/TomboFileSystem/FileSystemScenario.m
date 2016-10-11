@@ -25,7 +25,19 @@
     // iTunes backup: OK
     // Persistent   : OK
 
-    // TODO: implement
+    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+
+    // write
+    NSString *path = [documentsPath stringByAppendingPathComponent:@"ababa.txt"];
+
+    NSData *data = [self dataFromString:@""];
+    [self writeAndAssertFile:path contents:data];
+
+    data = [self dataFromString:@"test text"];
+    [self writeAndAssertFile:path contents:data];
+
+    data = [self dataFromLength:1024 * 1024];
+    [self writeAndAssertFile:path contents:data];
 
     // TODO: "Do Not Backup" attribute
 }
@@ -90,8 +102,39 @@
 
 + (void)writeFile:(NSString *)path contents:(NSData *)data {
     NSFileHandle *file = [NSFileHandle fileHandleForWritingAtPath:path];
-    [file writeData:data];
-    [file closeFile];
+    if (file == nil) {
+        [[NSFileManager defaultManager] createFileAtPath:path contents:data attributes:nil];
+    } else {
+        [file writeData:data];
+        [file truncateFileAtOffset:[data length]];
+        [file closeFile];
+    }
+}
+
++ (void)assertFile:(NSString *)path contents:(NSData *)data {
+    NSString *errorMessage = [NSString stringWithFormat:@"%@ is different", path];
+    NSAssert([[self readFile:path] isEqualToData:data], errorMessage);
+
+}
+
++ (void)writeAndAssertFile:(NSString *)path contents:(NSData *)data {
+    [self writeFile:path contents:data];
+    [self assertFile:path contents:data];
+}
+
++ (NSData *)dataFromString:(NSString *)str {
+    return [str dataUsingEncoding:NSUTF8StringEncoding];
+}
+
++ (NSData *)dataFromLength:(NSUInteger)length {
+    NSString *seed = @"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXZY0123456789";
+    NSMutableString *result = [NSMutableString stringWithCapacity:length];
+
+    for (NSUInteger i = 0; i < length; i++) {
+        unichar r = [seed characterAtIndex:(arc4random() % [seed length])];
+        [result appendFormat:@"%C", r];
+    }
+    return [result dataUsingEncoding:NSUTF8StringEncoding];
 }
 
 @end

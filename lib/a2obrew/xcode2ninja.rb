@@ -213,12 +213,13 @@ module A2OBrew
           description: 'execute file packager to ${target}',
           command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload ${packager_target_dir}@/ --js-output=${js_output} --no-heap-copy ${options} --use-preload-plugins" # rubocop:disable LineLength
         },
+        # NOTE: A2O_LIBBSD_HEADERS indicates <stdlib.h> loads <bsd/stdlib.h> too.
         {
           rule_name: 'cc',
           description: 'compile ${source} to ${out}',
           deps: 'gcc',
           depfile: '${out}.d',
-          command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} -c ${source} -o ${out}'
+          command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} -DA2O_LIBBSD_HEADERS -c ${source} -o ${out}'
         },
         {
           rule_name: 'link',
