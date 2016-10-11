@@ -30,7 +30,7 @@ module A2OBrew
       pid = fork
       exec(cmd) if pid.nil?
       _, stat = Process.waitpid2(pid)
-      if stat.exitstatus != 0
+      if stat.exitstatus.nonzero?
         error_msg ||= "Error: #{cmd}"
         raise CmdExecException.new(error_msg, stat.exitstatus)
       end

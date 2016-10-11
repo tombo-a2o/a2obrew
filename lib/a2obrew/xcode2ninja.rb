@@ -382,7 +382,7 @@ module A2OBrew
       resource_filter = active_project_config[:resource_filter]
 
       icon_asset_catalog = nil
-      icon_2x = nil
+      icon2x = nil
       icon = nil
       phase.files_references.each do |files_ref|
         case files_ref
@@ -435,7 +435,7 @@ module A2OBrew
               icon_asset_catalog = asset_catalog(local_path, build_config)
             elsif file.path == 'Icon@2x.png'
               # old
-              icon_2x = [local_path, 2]
+              icon2x = [local_path, 2]
             elsif file.path == 'Icon.png'
               # ancient
               icon = [local_path, 1]
