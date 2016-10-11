@@ -580,12 +580,13 @@ module A2OBrew
       cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags].join(' ')
       conf_cc_flags = a2o_project_flags(active_project_config, :cc)
 
+      # NOTE: A2O_LIBBSD_HEADERS indicates <stdlib.h> loads <bsd/stdlib.h> too.
       rules << {
         rule_name: 'cc',
         description: 'compile ${source} to ${out}',
         deps: 'gcc',
         depfile: '${out}.d',
-        command: "a2o -MMD -MF ${out}.d -Wno-absolute-value #{cc_flags} ${file_cflags} -c ${source} -o ${out} #{conf_cc_flags}"
+        command: "a2o -MMD -MF ${out}.d -Wno-absolute-value #{cc_flags} ${file_cflags} -DA2O_LIBBSD_HEADERS -c ${source} -o ${out} #{conf_cc_flags}"
       }
 
       enable_objc_arc = build_setting(build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
