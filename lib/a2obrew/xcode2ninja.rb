@@ -463,7 +463,7 @@ module A2OBrew
       end
 
       # Application Icon
-      app_icon = icon_asset_catalog || icon_2x || icon
+      app_icon = icon_asset_catalog || icon2x || icon
       if app_icon
         icon_output_path = "#{tombo_icon_dir(a2o_target)}/icon-60.png"
 
