@@ -219,7 +219,7 @@ module A2OBrew
           description: 'compile ${source} to ${out}',
           deps: 'gcc',
           depfile: '${out}.d',
-          command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} -DA2O_LIBBSD_HEADERS -c ${source} -o ${out}'
+          command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} -DA2O_LIBBSD_HEADERS -c ${source} -o ${out}' # rubocop:disable LineLength
         },
         {
           rule_name: 'link',
@@ -893,28 +893,35 @@ module A2OBrew
     end
 
     # utils
-
-    def build_setting(build_config, prop, type = nil) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/LineLength
+    def build_setting(build_config, prop, type = nil)
       # TODO: check xcconfig file
+      default_setting = nil # TODO set iOS default
       project_setting = xcodeproj.build_settings(build_config.name)[prop]
       project_setting = project_setting.clone if project_setting
       target_setting = build_config.build_settings[prop]
       target_setting = target_setting.clone if target_setting
 
       if target_setting
-        # replace '$(inherited)'
-        if target_setting.is_a?(Array)
-          idx = target_setting.index('$(inherited)')
-          target_setting[idx, 1] = project_setting || [] if idx
-        else
-          # assume string
-          target_setting.gsub!('$(inherited)', project_setting || '')
-        end
-
-        expand(target_setting, type)
+        expand(replace_inherited(replace_inherited(target_setting, project_setting), default_setting), type)
+      elsif project_setting
+        expand(replace_inherited(project_setting, default_setting), type)
       else
-        expand(project_setting, type)
+        expand(default_setting, type)
       end
+    end
+
+    def replace_inherited(lower, upper)
+      # replace '$(inherited)'
+      if lower.respond_to?(:index)
+        # Array
+        idx = lower.index('$(inherited)')
+        lower[idx, 1] = upper || [] if idx
+      elsif lower.respond_to?(:gsub!)
+        # String
+        lower.gsub!('$(inherited)', upper || '')
+      end
+
+      lower
     end
 
     def expand(value, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/LineLength
