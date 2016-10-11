@@ -58,6 +58,16 @@ A2OCONF = {
         clean: 'make clean'
       },
       {
+        name: 'sqlite3',
+        path: 'sqlite3',
+        repository_uri: 'git@github.com:tomboinc/sqlite3.git',
+        branch: 'master',
+        build_path: '%{project_path}',
+        build: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make',
+        install: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make install',
+        clean: 'BUILD=%{build_target_path} make clean'
+      },
+      {
         name: 'blocks-runtime',
         path: 'libclosure',
         repository_uri: 'git@github.com:tomboinc/libclosure.git',
