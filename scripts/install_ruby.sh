@@ -1,10 +1,11 @@
 #!/bin/bash -exu
 # Install Ruby with rbenv
 
+A2O_PATH=$( cd "$(dirname "${BASH_SOURCE}")"; cd ..; pwd -P)
+RUBY_VERSION=`cat ${A2O_PATH}/.ruby-version`
 RBENV=${HOME}/.rbenv
-GEM=${RBENV}/shims/gem
-BUNDLE=${RBENV}/shims/bundle
-RUBY_VERSION=2.2.2
+GEM=${RBENV}/versions/${RUBY_VERSION}/bin/gem
+BUNDLE=${RBENV}/versions/${RUBY_VERSION}/gemsets/a2o/bin/bundle
 
 if [ -d ${RBENV} ]; then
   echo "* rbenv has already been installed"
