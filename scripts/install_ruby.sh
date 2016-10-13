@@ -3,9 +3,10 @@
 
 A2O_PATH=$( cd "$(dirname "${BASH_SOURCE}")"; cd ..; pwd -P)
 RUBY_VERSION=`cat ${A2O_PATH}/.ruby-version`
+RBENV_GEMSET=`cat ${A2O_PATH}/.rbenv-gemsets`
 RBENV=${HOME}/.rbenv
 GEM=${RBENV}/versions/${RUBY_VERSION}/bin/gem
-BUNDLE=${RBENV}/versions/${RUBY_VERSION}/gemsets/a2o/bin/bundle
+BUNDLE=${RBENV}/versions/${RUBY_VERSION}/gemsets/${RBENV_GEMSET}/bin/bundle
 
 if [ -d ${RBENV} ]; then
   echo "* rbenv has already been installed"
@@ -53,11 +54,9 @@ else
   rbenv install ${RUBY_VERSION}
 fi
 
-rbenv gemset create ${RUBY_VERSION} a2o
+rbenv gemset create ${RUBY_VERSION} ${RBENV_GEMSET}
 
-if [ ! -f ${BUNDLE} ]; then
-  ${GEM} install bundler
-  rbenv rehash
-fi
+${GEM} install bundler
+rbenv rehash
 
 ${BUNDLE} install
