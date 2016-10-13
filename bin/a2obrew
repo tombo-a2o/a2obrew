@@ -1,8 +1,11 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-TARGET_RUBY_VERSION = '2.2.2'.freeze
-TARGET_GEMSET_NAME = 'a2o'.freeze
+script_path = File.dirname(__FILE__)
+a2obrew_path = File.expand_path("#{script_path}/../")
+
+TARGET_RUBY_VERSION = File.read("#{a2obrew_path}/.ruby-version").chomp
+TARGET_GEMSET_NAME = File.read("#{a2obrew_path}/.rbenv-gemsets").chomp
 
 rbenv_root = ENV['RBENV_ROOT']
 gemset_root = "#{rbenv_root}/versions/#{TARGET_RUBY_VERSION}/gemsets/#{TARGET_GEMSET_NAME}"
@@ -13,12 +16,10 @@ if RUBY_VERSION != TARGET_RUBY_VERSION || ENV['GEM_HOME'] != gemset_root
   exit(1)
 end
 
-script_path = File.dirname(__FILE__)
-
-$LOAD_PATH << "#{script_path}/../lib"
-config = File.expand_path("#{script_path}/../a2oconfig.rb")
-
+$LOAD_PATH << "#{a2obrew_path}/lib"
 require 'a2obrew/cli'
+
+config = "#{a2obrew_path}/a2oconfig.rb"
 require config
 
 A2OBrew::CLI.start(ARGV)
