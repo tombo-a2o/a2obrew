@@ -54,7 +54,7 @@ fi
 
 rbenv gemset create ${RUBY_VERSION} a2o
 
-if ! ${GEM} list --local | grep "bundler " > /dev/null; then
+if [ ! -f ${BUNDLE} ]; then
   ${GEM} install bundler
   rbenv rehash
 fi
