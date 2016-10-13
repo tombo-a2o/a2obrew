@@ -47,7 +47,7 @@ else
 fi
 
 if rbenv versions --bare | grep -F ${RUBY_VERSION} > /dev/null; then
-  echo "* Ruby 2.2.2 with rbenv has already been installed"
+  echo "* Ruby ${RUBY_VERSION} with rbenv has already been installed"
   rbenv local ${RUBY_VERSION}
 else
   rbenv install ${RUBY_VERSION}
