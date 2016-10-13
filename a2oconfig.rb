@@ -191,6 +191,7 @@ BUILD
           MobileCoreServices
           MultipeerConnectivity
           OpenGLES
+          QuickLook
           Security
           Social
           StoreKit
