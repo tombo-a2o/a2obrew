@@ -181,12 +181,16 @@ BUILD
           AdSupport
           AssetsLibrary
           AudioToolbox
+          Cocoa
           CoreAudio
           CoreLocation
+          CoreMotion
           CoreTelephony
+          CoreText
           GameKit
           ImageIO
           MapKit
+          MediaPlayer
           MessageUI
           MobileCoreServices
           MultipeerConnectivity
