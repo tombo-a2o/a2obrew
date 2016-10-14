@@ -777,7 +777,7 @@ module A2OBrew
         build_variables: {
           'data_js' => data_js_path(a2o_target),
           'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)} --pre-js #{shared_library_js_path(a2o_target)}",
-          'linked_objects' => linked_objects.map(&:ninja_escape).join(' '),
+          'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
           'framework_options' => static_link_frameworks.map { |f| "-framework #{f.ninja_escape}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
           'separate_asm_options' => separate_asm_options,
