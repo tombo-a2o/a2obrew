@@ -186,7 +186,6 @@ BUILD
           CoreLocation
           CoreMotion
           CoreTelephony
-          CoreText
           GameKit
           ImageIO
           MapKit
