@@ -16,7 +16,7 @@ module A2OBrew
     end
 
     desc 'init [OPTIONS]', 'show shell script enables shims and autocompletion'
-    def init(*args)
+    def init(*args) # rubocop:disable Metrics/MethodLength
       print = false
 
       args.each do |arg|
@@ -24,8 +24,13 @@ module A2OBrew
       end
 
       if print
+        shell = current_shell
+        if shell == :bash || shell == :zsh
+          puts <<COMPLETIONS
+source "#{a2obrew_path}/bin/completions/a2obrew.#{shell}"
+COMPLETIONS
+        end
         puts <<INIT
-source "#{a2obrew_path}/bin/completions/a2obrew.#{current_shell}"
 source "#{emsdk_path}/emsdk_env.sh"
 INIT
       else
@@ -72,7 +77,7 @@ USAGE
     private
 
     def current_shell
-      File.basename(ENV['SHELL']).intern
+      File.basename(ENV['SHELL']).intern if ENV.key?('SHELL')
     end
 
     def shell_rc_path
