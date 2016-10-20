@@ -234,7 +234,18 @@ module A2OBrew
         {
           rule_name: 'exports_js',
           description: 'Functions to be exported in main module, which are referenced from shared libraries',
-          command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -e "puts (ARGF.map{|l| '_'+l.split[1]}+['_main']).to_s" > ${out}! # rubocop:disable LineLength
+          command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -e "puts (ARGF.map{|l| '_'+l.strip.split(': ',2)[1]}+['_main']).to_s" > ${out}! # rubocop:disable LineLength
+        },
+        {
+          rule_name: 'library_functions_js',
+          description: 'Functions defined in side module',
+          command: %q!llvm-nm -print-file-name -defined-only ${in} | ruby -e "puts (ARGF.map{ |l| l.strip.split(': ',2)[1][9..-1].split(' ',2)}.select{ |t,s| s if 'DTS'.include?(t) }.map{|t,s| '_'+s}).to_s" > ${out}! # rubocop:disable LineLength
+          # input:
+          # build/debug/Foundation.bc: -------- T predicate_set_out
+          # <---    filename      -->  <--??--> ^ <---- symbol ----
+          #                                   type
+          # output:
+          # select '_'+name where type == "T" or "D" or "S"
         },
         {
           rule_name: 'html',
@@ -364,6 +375,10 @@ module A2OBrew
 
     def exports_js_path(a2o_target)
       "#{emscripten_work_dir(a2o_target)}/exports.js"
+    end
+
+    def library_functions_js_path(a2o_target)
+      "#{emscripten_work_dir(a2o_target)}/lib_funcs.js"
     end
 
     def a2o_project_flags(active_project_config, rule)
@@ -741,6 +756,12 @@ module A2OBrew
         inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
       }
 
+      builds << {
+        outputs: [library_functions_js_path(a2o_target)],
+        rule_name: 'library_functions_js',
+        inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
+      }
+
       # executable
 
       # detect emscripten file changes
@@ -773,10 +794,10 @@ module A2OBrew
       builds << {
         outputs: pre_products_outputs,
         rule_name: 'html',
-        inputs: [data_js_path(a2o_target), shared_library_js_path(a2o_target), exports_js_path(a2o_target)] + linked_objects + dep_paths,
+        inputs: [data_js_path(a2o_target), shared_library_js_path(a2o_target), exports_js_path(a2o_target), library_functions_js_path(a2o_target)] + linked_objects + dep_paths,
         build_variables: {
           'data_js' => data_js_path(a2o_target),
-          'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)} --pre-js #{shared_library_js_path(a2o_target)}",
+          'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)} -s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target)} --pre-js #{shared_library_js_path(a2o_target)}",
           'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
           'framework_options' => static_link_frameworks.map { |f| "-framework #{f.ninja_escape}" }.join(' '),
           'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
