@@ -105,7 +105,7 @@ emconfigure \
   --with-data-packaging=archive \
   --prefix=%{emscripten_system_local_path} \
   --with-cross-build=`pwd`/../#{ICU_NATIVE_DIR} \
-  CPPFLAGS="%{cppflags} -DUCONFIG_NO_LEGACY_CONVERSION=1 -DUCONFIG_NO_COLLATION=1 -DUCONFIG_NO_TRANSLITERATION=1"
+  CPPFLAGS="%{cppflags} -DUCONFIG_NO_LEGACY_CONVERSION=1 -DUCONFIG_NO_COLLATION=1"
 CONFIGURE
         build_path: '%{project_path}/buildEmscripten%{target}',
         build_target_path: '%{project_path}/buildEmscripten%{target}',
