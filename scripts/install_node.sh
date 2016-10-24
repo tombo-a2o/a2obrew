@@ -6,14 +6,25 @@ if [ -z "$NODENV_ROOT" ]; then
 fi
 
 if [ ! -e "$NODENV_ROOT" ]; then
-  git clone -b v0.3.4 https://github.com/wfarr/nodenv.git $NODENV_ROOT > /dev/null
+  git clone https://github.com/wfarr/nodenv.git $NODENV_ROOT > /dev/null
+fi
+
+if [ -d ${NODENV_ROOT}/plugins/node-build ]; then
+  echo "* node-build has already been installed"
+  if ${NODENV_ROOT}/plugins/node-build/bin/node-build --definitions | grep "^6\\.3\\.0\$" > /dev/null; then
+    echo "* node-build can build 6.3.0"
+  else
+    (cd ${NODENV_ROOT}/plugins/node-build && git pull)
+  fi
+else
+  git clone git://github.com/nodenv/node-build.git $NODENV_ROOT/plugins/node-build
 fi
 
 export PATH="$NODENV_ROOT/bin:$PATH"
 eval "$(nodenv init -)"
 
-if nodenv versions | grep "^v6\\.3\\.0\$" > /dev/null; then
-  echo "* node.js 6.3.0 with nvm has already been installed"
+if nodenv versions | grep -E "^( |\*)+6\\.3\\.0( |\$)" > /dev/null; then
+  echo "* node.js 6.3.0 with nodenv has already been installed"
 else
-  nodenv install v6.3.0
+  nodenv install 6.3.0
 fi
