@@ -691,7 +691,7 @@ module A2OBrew
 
       # stubs
       # FIXME: remove
-      Dir.glob('*_dummy.m').each do |source_path|
+      Dir.glob('*_dummy.*').each do |source_path|
         object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
@@ -700,7 +700,7 @@ module A2OBrew
           rule_name: 'cc',
           inputs: [source_path, prefix_pch],
           build_variables: {
-            'file_cflags' => '-fobjc-arc',
+            'file_cflags' => "-fobjc-arc -std=#{%w(m c).include?(File.extname(source_path)) ? c_std : cxx_std}",
             'source' => source_path,
             'cc_flags' => cc_flags
           }
