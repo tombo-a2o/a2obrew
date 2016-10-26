@@ -695,7 +695,7 @@ module A2OBrew
         object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
-        file_cflags = '-fobjc-arc'
+        file_cflags = '-fobjc-arc '
 
         case File.extname(source_path)
         when '.mm', '.cpp', '.cxx', '.cc'
