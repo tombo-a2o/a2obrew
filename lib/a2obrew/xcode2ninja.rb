@@ -695,12 +695,23 @@ module A2OBrew
         object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
+        file_cflags = '-fobjc-arc'
+
+        case File.extname(source_path)
+        when '.mm', '.cpp', '.cxx', '.cc'
+          file_cflags << "-std=#{cxx_std}" if cxx_std
+        when '.m', '.c'
+          file_cflags << "-std=#{c_std}" if c_std
+        else
+          raise Informative, "Unsupported file type #{source_path}"
+        end
+
         builds << {
           outputs: [object],
           rule_name: 'cc',
           inputs: [source_path, prefix_pch],
           build_variables: {
-            'file_cflags' => "-fobjc-arc -std=#{%w(m c).include?(File.extname(source_path)) ? c_std : cxx_std}",
+            'file_cflags' => file_cflags,
             'source' => source_path,
             'cc_flags' => cc_flags
           }
