@@ -30,13 +30,24 @@
     // write
     NSString *path = [documentsPath stringByAppendingPathComponent:@"ababa.txt"];
 
-    NSData *data = [self dataFromString:@""];
+    NSData *data;
+
+//    data = [self dataFromString:@"last text synced"];
+//    [self assertFileIfExists:path contents:data];
+
+    data = [self dataFromString:@""];
     [self writeAndAssertFile:path contents:data];
 
     data = [self dataFromString:@"test text"];
     [self writeAndAssertFile:path contents:data];
 
     data = [self dataFromLength:1024 * 1024];
+    [self writeAndAssertFile:path contents:data];
+
+    data = [self dataFromString:@"test text"];
+    [self writeAndAssertFile:path contents:data];
+
+    data = [self dataFromString:@"last text synced"];
     [self writeAndAssertFile:path contents:data];
 
     // TODO: "Do Not Backup" attribute
@@ -114,7 +125,12 @@
 + (void)assertFile:(NSString *)path contents:(NSData *)data {
     NSString *errorMessage = [NSString stringWithFormat:@"%@ is different", path];
     NSAssert([[self readFile:path] isEqualToData:data], errorMessage);
+}
 
++ (void)assertFileIfExists:(NSString *)path contents:(NSData *)data {
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        [self assertFile:path contents:data];
+    }
 }
 
 + (void)writeAndAssertFile:(NSString *)path contents:(NSData *)data {
