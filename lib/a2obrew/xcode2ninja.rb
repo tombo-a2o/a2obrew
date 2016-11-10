@@ -357,8 +357,8 @@ module A2OBrew
       "#{build_dir(a2o_target)}/emscripten"
     end
 
-    def bitcode_path(a2o_target)
-      "#{emscripten_work_dir(a2o_target)}/application.bc"
+    def bitcode_path(a2o_target, target)
+      "#{emscripten_work_dir(a2o_target)}/application.#{target.name.tr(' ', '_')}.bc"
     end
 
     def data_js_path(a2o_target)
@@ -609,7 +609,7 @@ module A2OBrew
     end
 
     # rubocop:disable Metrics/LineLength
-    def sources_build_phase(xcodeproj, _target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
       builds = []
       objects = []
@@ -722,7 +722,7 @@ module A2OBrew
       conf_link_flags = a2o_project_flags(active_project_config, :link)
 
       builds << {
-        outputs: [bitcode_path(a2o_target)],
+        outputs: [bitcode_path(a2o_target, target)],
         rule_name: 'link',
         inputs: objects,
         build_variables: {
@@ -733,7 +733,7 @@ module A2OBrew
       builds
     end
 
-    def application_build_phase(_xcodeproj, _target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
       builds = []
 
       # dynamic link libraries
@@ -799,7 +799,7 @@ module A2OBrew
         shell_file_options = ''
       end
 
-      linked_objects = @static_libraries + [bitcode_path(a2o_target)]
+      linked_objects = @static_libraries + [bitcode_path(a2o_target, target)]
       static_link_frameworks = Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries
 
       builds << {
@@ -857,7 +857,7 @@ module A2OBrew
       builds << {
         outputs: [library_path],
         rule_name: 'archive',
-        inputs: [bitcode_path(a2o_target)]
+        inputs: [bitcode_path(a2o_target, target)]
       }
 
       builds
