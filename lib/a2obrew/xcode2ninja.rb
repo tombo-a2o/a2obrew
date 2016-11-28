@@ -635,7 +635,7 @@ module A2OBrew
 
       if build_setting(build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
         prefix_pch = build_setting(build_config, 'GCC_PREFIX_HEADER')
-        prefix_pch_options = "-include #{prefix_pch}"
+        prefix_pch_options = prefix_pch.empty? ? '' : "-include #{prefix_pch}"
       end
 
       # build sources
