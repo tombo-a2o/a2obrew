@@ -456,8 +456,10 @@ module A2OBrew
               icon = [local_path, 1]
             end
 
+            in_prefix = files_ref.class == Xcodeproj::Project::Object::PBXFileReference ? File.dirname(local_path) : '.'
+
             # All resource files are stored in the same directory
-            f = file_recursive_copy(local_path, resources_dir(a2o_target), File.dirname(local_path))
+            f = file_recursive_copy(local_path, resources_dir(a2o_target), in_prefix)
             builds += f[:builds]
             resources += f[:outputs]
           end
