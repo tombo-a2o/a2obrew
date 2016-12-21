@@ -927,7 +927,7 @@ module A2OBrew
     end
 
     # utils
-    def build_setting(build_config, prop, type = nil)
+    def build_setting(build_config, prop, type = nil) # rubocop:disable Metrics/MethodLength
       # TODO: check xcconfig file
       default_setting = nil # TODO set iOS default
       project_setting = xcodeproj.build_settings(build_config.name)[prop]
@@ -935,12 +935,21 @@ module A2OBrew
       target_setting = build_config.build_settings[prop]
       target_setting = target_setting.clone if target_setting
 
+      env = {
+        'PROJECT_DIR' => xcodeproj_dir,
+        'SRCROOT' => xcodeproj_dir,
+        'PLATFORM_NAME' => 'emscripten',
+        'SDKROOT' => emscripten_dir,
+        'DEVELOPER_FRAMEWORKS_DIR' => '', # FIXME: currently ignores
+        'MYPROJ_HOME' => '' # FIXME: currently ignores
+      }
+
       if target_setting
-        expand(replace_inherited(replace_inherited(target_setting, project_setting), default_setting), type)
+        expand(replace_inherited(replace_inherited(target_setting, project_setting), default_setting), env, type)
       elsif project_setting
-        expand(replace_inherited(project_setting, default_setting), type)
+        expand(replace_inherited(project_setting, default_setting), env, type)
       else
-        expand(default_setting, type)
+        expand(default_setting, env, type)
       end
     end
 
@@ -958,10 +967,10 @@ module A2OBrew
       lower
     end
 
-    def expand(value, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity
+    def expand(value, env, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity
       if value.is_a?(Array)
         value.map do |v|
-          expand(v)
+          expand(v, env)
         end
       else
         case type
@@ -971,38 +980,25 @@ module A2OBrew
           if value.nil?
             []
           else
-            [expand(value)]
+            [expand(value, env)]
           end
         else
           if value.nil?
             nil
           else
-            resolve_macro(value)
+            resolve_macro(value, env)
           end
         end
       end
     end
 
-    def resolve_macro(value) # rubocop:disable Metrics/MethodLength,Metrics/CyclomaticComplexity
-      value.gsub(/\$\([A-Za-z0-9_]+\)/) do |m|
-        case m
-        when '$(PROJECT_DIR)'
-          xcodeproj_dir
-        when '$(SRCROOT)'
-          xcodeproj_dir
-        when '$(PLATFORM_NAME)'
-          'emscripten'
-        when '$(SDKROOT)'
-          emscripten_dir
-        when '$(DEVELOPER_FRAMEWORKS_DIR)'
-          # FIXME: currently ignores
-          ''
-        when '$(MYPROJ_HOME)'
-          # FIXME: currently ignores
-          ''
-        else
-          raise Informative, "Not support for #{m}"
-        end
+    def resolve_macro(value, env)
+      value.gsub(/\$\(([A-Za-z0-9_]+)\)/) do |m|
+        varname = Regexp.last_match(1)
+
+        raise Informative, "Not support for #{m}" unless env.key?(varname)
+
+        env[varname]
       end
     end
 
