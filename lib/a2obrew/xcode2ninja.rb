@@ -447,7 +447,7 @@ module A2OBrew
           else
             if file.path == 'Images.xcassets' || file.path == 'Assets.xcassets'
               # Asset Catalog for icon
-              icon_asset_catalog = asset_catalog(local_path, build_config)
+              icon_asset_catalog = asset_catalog(local_path, target, build_config)
             elsif file.path == 'Icon@2x.png'
               # old
               icon2x = [local_path, 2]
@@ -466,7 +466,7 @@ module A2OBrew
         end
       end
 
-      infoplist_path = build_setting(build_config, 'INFOPLIST_FILE')
+      infoplist_path = build_setting(target, build_config, 'INFOPLIST_FILE')
       if infoplist_path
         infoplist = File.join(bundle_dir(a2o_target), 'Info.plist')
         resources << infoplist
@@ -555,9 +555,10 @@ module A2OBrew
       nil
     end
 
-    def asset_catalog(local_path, build_config)
-      appicon_name = build_setting(build_config, 'ASSETCATALOG_COMPILER_APPICON_NAME') + '.appiconset'
-      # _launchimage_name = build_setting(build_config, 'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME') + '.launchimage'
+    def asset_catalog(local_path, target, build_config)
+      appicon_name = build_setting(target, build_config, 'ASSETCATALOG_COMPILER_APPICON_NAME') + '.appiconset'
+      # _launchimage_name = build_setting(target, build_config,
+      #                                   'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME') + '.launchimage'
 
       Dir.new(local_path).each do |asset_local_path|
         if asset_local_path == appicon_name
@@ -622,21 +623,21 @@ module A2OBrew
       end.to_a.uniq
 
       # build settings
-      lib_dirs = build_setting(build_config, 'LIBRARY_SEARCH_PATHS', :array)
-      framework_search_paths = build_setting(build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
-      header_search_paths = build_setting(build_config, 'HEADER_SEARCH_PATHS', :array).select { |value| value != '' }
-      user_header_search_paths = build_setting(build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ''
-      other_cflags = (build_setting(build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
-      cxx_std = build_setting(build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
-      c_std = build_setting(build_config, 'GCC_C_LANGUAGE_STANDARD', :string)
-      preprocessor_definitions = (build_setting(build_config, 'GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
+      lib_dirs = build_setting(target, build_config, 'LIBRARY_SEARCH_PATHS', :array)
+      framework_search_paths = build_setting(target, build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
+      header_search_paths = build_setting(target, build_config, 'HEADER_SEARCH_PATHS', :array).select { |value| value != '' }
+      user_header_search_paths = build_setting(target, build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ''
+      other_cflags = (build_setting(target, build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
+      cxx_std = build_setting(target, build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
+      c_std = build_setting(target, build_config, 'GCC_C_LANGUAGE_STANDARD', :string)
+      preprocessor_definitions = (build_setting(target, build_config, 'GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
 
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
       header_options = (header_search_paths + user_header_search_paths.split + header_dirs).map { |dir| "-I#{dir}" }.join(' ')
 
-      if build_setting(build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
-        prefix_pch = build_setting(build_config, 'GCC_PREFIX_HEADER')
+      if build_setting(target, build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
+        prefix_pch = build_setting(target, build_config, 'GCC_PREFIX_HEADER')
         prefix_pch_options = prefix_pch.empty? ? '' : "-include #{prefix_pch}"
       end
 
@@ -644,7 +645,7 @@ module A2OBrew
 
       cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags, preprocessor_definitions, a2o_project_flags(active_project_config, :cc)].join(' ')
 
-      enable_objc_arc = build_setting(build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
+      enable_objc_arc = build_setting(target, build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
       phase.files_references.each do |file|
         if file.parent.isa != 'PBXGroup'
@@ -927,7 +928,7 @@ module A2OBrew
     end
 
     # utils
-    def build_setting(build_config, prop, type = nil) # rubocop:disable Metrics/MethodLength
+    def build_setting(target, build_config, prop, type = nil) # rubocop:disable Metrics/MethodLength
       # TODO: check xcconfig file
       default_setting = nil # TODO set iOS default
       project_setting = xcodeproj.build_settings(build_config.name)[prop]
@@ -941,7 +942,8 @@ module A2OBrew
         'PLATFORM_NAME' => 'emscripten',
         'SDKROOT' => emscripten_dir,
         'DEVELOPER_FRAMEWORKS_DIR' => '', # FIXME: currently ignores
-        'MYPROJ_HOME' => '' # FIXME: currently ignores
+        'MYPROJ_HOME' => '', # FIXME: currently ignores
+        'TARGET_NAME' => target.name
       }
 
       if target_setting
