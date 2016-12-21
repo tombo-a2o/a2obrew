@@ -2,5 +2,6 @@
 
 # If bin directory is modified
 git diff --cached --name-only | if grep --quiet \\.rb$; then
-  rubocop -a --fail-level autocorrect bin lib a2oconfig.rb
+  changed_files=`git diff --cached --name-only --diff-filter=ACMR | grep -e "\.rb$" | paste -s -`
+  rubocop -a --fail-level autocorrect $changed_files
 fi
