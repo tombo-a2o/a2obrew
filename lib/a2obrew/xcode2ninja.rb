@@ -659,7 +659,7 @@ module A2OBrew
         settings = file.build_files[0].settings
         file_cflags = []
         if settings && settings.key?('COMPILER_FLAGS')
-          file_cflags += expand(settings['COMPILER_FLAGS'], :array)
+          file_cflags += settings['COMPILER_FLAGS'].split
         end
         if enable_objc_arc
           file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
@@ -958,7 +958,7 @@ module A2OBrew
       lower
     end
 
-    def expand(value, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/LineLength
+    def expand(value, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity
       if value.is_a?(Array)
         value.map do |v|
           expand(v)
@@ -977,28 +977,31 @@ module A2OBrew
           if value.nil?
             nil
           else
-            # rubocop:disable Metrics/BlockNesting
-            value.gsub(/\$\([A-Za-z0-9_]+\)/) do |m|
-              case m
-              when '$(PROJECT_DIR)'
-                xcodeproj_dir
-              when '$(SRCROOT)'
-                xcodeproj_dir
-              when '$(PLATFORM_NAME)'
-                'emscripten'
-              when '$(SDKROOT)'
-                emscripten_dir
-              when '$(DEVELOPER_FRAMEWORKS_DIR)'
-                # FIXME: currently ignores
-                ''
-              when '$(MYPROJ_HOME)'
-                # FIXME: currently ignores
-                ''
-              else
-                raise Informative, "Not support for #{m}"
-              end
-            end
+            resolve_macro(value)
           end
+        end
+      end
+    end
+
+    def resolve_macro(value) # rubocop:disable Metrics/MethodLength,Metrics/CyclomaticComplexity
+      value.gsub(/\$\([A-Za-z0-9_]+\)/) do |m|
+        case m
+        when '$(PROJECT_DIR)'
+          xcodeproj_dir
+        when '$(SRCROOT)'
+          xcodeproj_dir
+        when '$(PLATFORM_NAME)'
+          'emscripten'
+        when '$(SDKROOT)'
+          emscripten_dir
+        when '$(DEVELOPER_FRAMEWORKS_DIR)'
+          # FIXME: currently ignores
+          ''
+        when '$(MYPROJ_HOME)'
+          # FIXME: currently ignores
+          ''
+        else
+          raise Informative, "Not support for #{m}"
         end
       end
     end
