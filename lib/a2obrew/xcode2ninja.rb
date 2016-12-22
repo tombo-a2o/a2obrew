@@ -31,7 +31,7 @@ module A2OBrew
     def initialize(xcodeproj_path)
       self.xcodeproj_path = xcodeproj_path
       @frameworks = []
-      @static_libraries = []
+      @static_libraries_from_other_projects = []
     end
 
     def xcode2ninja(output_dir, # rubocop:disable Metrics/MethodLength
@@ -250,7 +250,7 @@ module A2OBrew
         {
           rule_name: 'html',
           description: 'generate executables: ${out}',
-          command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o -v ${framework_options} ${lib_options} ${separate_asm_options} ${shell_file_options} -s VERBOSE=1 -s LZ4=1 -s NATIVE_LIBDISPATCH=1 -o ${html_path} ${linked_objects} --pre-js ${data_js} ${shared_library_options} -licuuc -licui18n -licudata --memory-init-file 1 ${html_flags}' # rubocop:disable LineLength
+          command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o ${options} -o ${html_path} ${linked_objects}' # rubocop:disable LineLength
         },
         {
           rule_name: 'generate_products',
@@ -762,38 +762,40 @@ module A2OBrew
 
       shared_libraries = A2OCONF[:xcodebuild][:dynamic_link_frameworks]
 
-      builds << {
-        outputs: [shared_library_js_path(a2o_target)],
-        rule_name: 'echo',
-        inputs: [],
-        build_variables: {
-          'contents' => 'Module.dynamicLibraries = [' + shared_libraries.map { |f| "\"#{f}.so.js\"" }.join(',') + '];'
-        }
-      }
-
-      shared_libraries_outputs = []
-      shared_libraries.each do |f|
-        source = "#{frameworks_dir}/#{f}.framework/#{f}.so.js"
-        dest = "#{pre_products_application_dir(a2o_target)}/#{f}.so.js"
+      unless shared_libraries.empty?
         builds << {
-          outputs: [dest],
-          rule_name: 'cp_r',
-          inputs: [source]
+          outputs: [shared_library_js_path(a2o_target)],
+          rule_name: 'echo',
+          inputs: [],
+          build_variables: {
+            'contents' => 'Module.dynamicLibraries = [' + shared_libraries.map { |f| "\"#{f}.so.js\"" }.join(',') + '];'
+          }
         }
-        shared_libraries_outputs << dest
+
+        shared_libraries_outputs = []
+        shared_libraries.each do |f|
+          source = "#{frameworks_dir}/#{f}.framework/#{f}.so.js"
+          dest = "#{pre_products_application_dir(a2o_target)}/#{f}.so.js"
+          builds << {
+            outputs: [dest],
+            rule_name: 'cp_r',
+            inputs: [source]
+          }
+          shared_libraries_outputs << dest
+        end
+
+        builds << {
+          outputs: [exports_js_path(a2o_target)],
+          rule_name: 'exports_js',
+          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
+        }
+
+        builds << {
+          outputs: [library_functions_js_path(a2o_target)],
+          rule_name: 'library_functions_js',
+          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
+        }
       end
-
-      builds << {
-        outputs: [exports_js_path(a2o_target)],
-        rule_name: 'exports_js',
-        inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
-      }
-
-      builds << {
-        outputs: [library_functions_js_path(a2o_target)],
-        rule_name: 'library_functions_js',
-        inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
-      }
 
       # parameter file
       parameters = {
@@ -810,47 +812,67 @@ module A2OBrew
 
       # executable
 
+      # generate html
+      a2o_options = [
+        '-v',
+        '-s VERBOSE=1',
+        '-s LZ4=1',
+        '-s NATIVE_LIBDISPATCH=1',
+        '--memory-init-file 1'
+      ]
+      a2o_options << a2o_project_flags(active_project_config, :html)
+
       # detect emscripten file changes
       dep_paths = file_list("#{emscripten_dir}/src/")
       A2OCONF[:xcodebuild][:static_link_frameworks].each do |f|
         dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
       end
 
-      # generate html
-      conf_html_flags = a2o_project_flags(active_project_config, :html)
-
       pre_products_outputs = [html_path(a2o_target), html_mem_path(a2o_target), js_path(a2o_target)]
 
       if A2OCONF[:xcodebuild][:emscripten][:emcc][:separate_asm]
         pre_products_outputs << asm_js_path(a2o_target)
-        separate_asm_options = '--separate-asm'
+        a2o_options << '--separate-asm'
       end
 
+      # shell html
       emscripten_shell_path = active_project_config[:emscripten_shell_path]
       if emscripten_shell_path
-        shell_file_options = "--shell-file #{emscripten_shell_path}"
+        a2o_options << "--shell-file #{emscripten_shell_path}"
         dep_paths << emscripten_shell_path
-      else
-        shell_file_options = ''
       end
 
-      linked_objects = @static_libraries + [bitcode_path(a2o_target, target)]
-      static_link_frameworks = Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries
+      # data file
+      a2o_options << "--pre-js #{data_js_path(a2o_target)}"
+      dep_paths << data_js_path(a2o_target)
+
+      # static link frameworks
+      a2o_options += (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries).map { |f| "-framework #{f.ninja_escape}" }
+
+      # dynamic link frameworks
+      unless shared_libraries.empty?
+        a2o_options << '-s MAIN_MODULE=2 -s LINKABLE=0'
+        a2o_options << "-s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)}"
+        a2o_options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target)}"
+        a2o_options << "--pre-js #{shared_library_js_path(a2o_target)}"
+        dep_paths += [exports_js_path(a2o_target), library_functions_js_path(a2o_target), shared_library_js_path(a2o_target)]
+      end
+
+      # other static libraries
+      a2o_options += %w(icuuc icui18n icudata crypto).map { |lib| "-l#{lib}" }
+      a2o_options << `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip
+
+      # objects
+      linked_objects = @static_libraries_from_other_projects + [bitcode_path(a2o_target, target)]
 
       builds << {
         outputs: pre_products_outputs,
         rule_name: 'html',
-        inputs: [data_js_path(a2o_target), shared_library_js_path(a2o_target), exports_js_path(a2o_target), library_functions_js_path(a2o_target)] + linked_objects + dep_paths,
+        inputs: linked_objects + dep_paths,
         build_variables: {
-          'data_js' => data_js_path(a2o_target),
-          'shared_library_options' => shared_libraries.empty? ? '' : "-s MAIN_MODULE=2 -s LINKABLE=0 -s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)} -s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target)} --pre-js #{shared_library_js_path(a2o_target)}",
+          'options' => a2o_options.join(' '),
           'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
-          'framework_options' => static_link_frameworks.map { |f| "-framework #{f.ninja_escape}" }.join(' '),
-          'lib_options' => `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip + ' -lcrypto',
-          'separate_asm_options' => separate_asm_options,
-          'shell_file_options' => shell_file_options,
-          'html_path' => html_path(a2o_target),
-          'html_flags' => conf_html_flags
+          'html_path' => html_path(a2o_target)
         }
       }
 
@@ -902,7 +924,7 @@ module A2OBrew
       builds = []
 
       @frameworks = []
-      @static_libraries = []
+      @static_libraries_from_other_projects = []
       phase.files.each do |file|
         file_ref = file.file_ref
         case file_ref
@@ -917,7 +939,7 @@ module A2OBrew
           remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
           # FIXME: determine remote target more appropriately
           library_path = File.join(File.dirname(remote_object_file.path), pre_products_dir(a2o_target), file_ref.path) # rubocop:disable LineLength
-          @static_libraries << library_path
+          @static_libraries_from_other_projects << library_path
         else
           raise Informative, "Unsupported file_ref #{file_ref}"
         end
