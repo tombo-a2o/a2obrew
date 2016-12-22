@@ -266,6 +266,11 @@ module A2OBrew
           rule_name: 'archive',
           description: 'make static link library',
           command: 'rm -f ${out}; llvm-ar rcs ${out} ${in}'
+        },
+        {
+          rule_name: 'echo',
+          description: 'echo text',
+          command: 'echo \'${contents}\' > ${out}'
         }
       ]
     end
@@ -338,6 +343,10 @@ module A2OBrew
 
     def html_mem_path(a2o_target)
       "#{html_path(a2o_target)}.mem"
+    end
+
+    def parameters_json_path(a2o_target)
+      "#{pre_products_tombo_dir(a2o_target)}/parameters.json"
     end
 
     # products dir is packaged
@@ -789,6 +798,19 @@ module A2OBrew
         outputs: [library_functions_js_path(a2o_target)],
         rule_name: 'library_functions_js',
         inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
+      }
+
+      # parameter file
+      parameters = {
+        http_proxy_url_prefixes: active_project_config[:http_proxy_url_prefixes] || []
+      }
+      builds << {
+        outputs: [parameters_json_path(a2o_target)],
+        rule_name: 'echo',
+        inputs: [],
+        build_variables: {
+          contents: parameters.to_json.ninja_escape
+        }
       }
 
       # executable
