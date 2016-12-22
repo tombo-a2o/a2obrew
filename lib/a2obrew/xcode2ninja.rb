@@ -11,7 +11,7 @@ require_relative 'util'
 
 class Object
   def ninja_escape
-    to_s.gsub(/ /, '$ ')
+    to_s.gsub(/\$/, '$$').gsub(/ /, '$ ')
   end
 end
 
@@ -182,6 +182,11 @@ module A2OBrew
           rule_name: 'cp_r',
           description: 'cp -r from ${in} to ${out}',
           command: 'cp -r ${in} ${out}'
+        },
+        {
+          rule_name: 'sed',
+          description: 'sed from ${in} to ${out}',
+          command: 'sed ${options} ${in} > ${out}'
         },
         {
           rule_name: 'rm',
@@ -471,11 +476,21 @@ module A2OBrew
         infoplist = File.join(bundle_dir(a2o_target), 'Info.plist')
         resources << infoplist
 
+        # TODO: replace all variables
+        variables = %w(PRODUCT_NAME PRODUCT_BUNDLE_IDENTIFIER)
+        commands = variables.map do |key|
+          value = build_setting(target, build_config, key)
+          "-e s/\\$\\(#{key}\\)/#{value}/g -e s/\\${#{key}}/#{value}/g "
+        end.join(' ')
+
         # NOTE: Should we use file_recursive_copy here?
         builds << {
           outputs: [infoplist],
-          rule_name: 'cp_r',
-          inputs: [infoplist_path]
+          rule_name: 'sed',
+          inputs: [infoplist_path],
+          build_variables: {
+            'options' => commands.ninja_escape
+          }
         }
       end
 
