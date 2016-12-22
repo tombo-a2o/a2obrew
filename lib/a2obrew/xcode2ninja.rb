@@ -232,11 +232,6 @@ module A2OBrew
           command: 'llvm-link -o ${out} ${in} ${link_flags}'
         },
         {
-          rule_name: 'shared_library_js',
-          description: 'List of shared libraries to be linked',
-          command: 'echo "Module.dynamicLibraries = [${shared_libraries}];" > ${out}'
-        },
-        {
           rule_name: 'exports_js',
           description: 'Functions to be exported in main module, which are referenced from shared libraries',
           command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -e "puts (ARGF.map{|l| '_'+l.strip.split(': ',2)[1]}+['_main']).to_s" > ${out}! # rubocop:disable LineLength
@@ -769,10 +764,10 @@ module A2OBrew
 
       builds << {
         outputs: [shared_library_js_path(a2o_target)],
-        rule_name: 'shared_library_js',
-        inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.so.js" },
+        rule_name: 'echo',
+        inputs: [],
         build_variables: {
-          'shared_libraries' => shared_libraries.map { |f| "'#{f}.so.js'" }.join(',')
+          'contents' => 'Module.dynamicLibraries = [' + shared_libraries.map { |f| "\"#{f}.so.js\"" }.join(',') + '];'
         }
       }
 
