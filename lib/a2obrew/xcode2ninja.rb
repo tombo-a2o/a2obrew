@@ -13,6 +13,12 @@ class Object
   def ninja_escape
     to_s.gsub(/\$/, '$$').gsub(/ /, '$ ')
   end
+
+  def shell_quote_escape
+    # escape single-quote within single-quoted string
+    # cf. http://stackoverflow.com/questions/1250079/how-to-escape-single-quotes-within-single-quoted-strings
+    gsub(/'/, %('"'"'))
+  end
 end
 
 module A2OBrew
@@ -390,6 +396,10 @@ module A2OBrew
       "#{emscripten_work_dir(a2o_target)}/lib_funcs.js"
     end
 
+    def extra_js_path(a2o_target)
+      "#{emscripten_work_dir(a2o_target)}/extra.js"
+    end
+
     def a2o_project_flags(active_project_config, rule)
       # TODO: Use Ruby 2.3 and Hash#dig
       flags = active_project_config[:flags]
@@ -761,6 +771,29 @@ module A2OBrew
       }
     end
 
+    def generate_extra_js_code(active_project_config) # rubocop:disable Metrics/MethodLength,
+      code = []
+      code << %|if (!Module['preRun']) Module['preRun'] = [];|
+      code << %|Module['preRun'].push(function(){ ENV.LANGUAGES = '('+ window.navigator.languages.join(',')+ ')' });|
+
+      proxy_server = active_project_config[:http_proxy_server]
+      if active_project_config[:http_proxy_server]
+        code << %(Module['proxyServer'] = "#{proxy_server}";)
+      end
+
+      proxy_url_prefixes = active_project_config[:http_proxy_url_prefixes]
+      if proxy_url_prefixes
+        code << %(Module['proxyUrlPrefixes'] = #{proxy_url_prefixes.to_json};)
+      end
+
+      screen_modes = active_project_config[:screen_modes]
+      if screen_modes
+        code << %(Module['screenModes'] = "#{screen_modes.to_json}";)
+      end
+
+      code.join('\n')
+    end
+
     def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
       builds = []
 
@@ -809,7 +842,17 @@ module A2OBrew
         rule_name: 'echo',
         inputs: [],
         build_variables: {
-          contents: generate_platform_parameters(active_project_config).to_json.ninja_escape
+          contents: generate_platform_parameters(active_project_config).to_json.shell_quote_escape
+        }
+      }
+
+      # extra js
+      builds << {
+        outputs: [extra_js_path(a2o_target)],
+        rule_name: 'echo',
+        inputs: [],
+        build_variables: {
+          contents: generate_extra_js_code(active_project_config).shell_quote_escape
         }
       }
 
@@ -848,6 +891,10 @@ module A2OBrew
       # data file
       a2o_options << "--pre-js #{data_js_path(a2o_target)}"
       dep_paths << data_js_path(a2o_target)
+
+      # extra js
+      a2o_options << "--pre-js #{extra_js_path(a2o_target)}"
+      dep_paths << extra_js_path(a2o_target)
 
       # static link frameworks
       a2o_options += (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries).map { |f| "-framework #{f.ninja_escape}" }
