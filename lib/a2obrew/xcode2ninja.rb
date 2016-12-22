@@ -340,7 +340,7 @@ module A2OBrew
       "#{html_path(a2o_target)}.mem"
     end
 
-    def parameters_json_path(a2o_target)
+    def platform_parameters_json_path(a2o_target)
       "#{pre_products_tombo_dir(a2o_target)}/parameters.json"
     end
 
@@ -755,6 +755,12 @@ module A2OBrew
       builds
     end
 
+    def generate_platform_parameters(active_project_config)
+      {
+        http_proxy_url_prefixes: active_project_config[:http_proxy_url_prefixes] || []
+      }
+    end
+
     def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
       builds = []
 
@@ -797,16 +803,13 @@ module A2OBrew
         }
       end
 
-      # parameter file
-      parameters = {
-        http_proxy_url_prefixes: active_project_config[:http_proxy_url_prefixes] || []
-      }
+      # platform parameter file
       builds << {
-        outputs: [parameters_json_path(a2o_target)],
+        outputs: [platform_parameters_json_path(a2o_target)],
         rule_name: 'echo',
         inputs: [],
         build_variables: {
-          contents: parameters.to_json.ninja_escape
+          contents: generate_platform_parameters(active_project_config).to_json.ninja_escape
         }
       }
 
