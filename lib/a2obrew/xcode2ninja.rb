@@ -11,7 +11,7 @@ require_relative 'util'
 
 class Object
   def ninja_escape
-    to_s.gsub(/ /, '$ ')
+    to_s.gsub(/\$/, '$$').gsub(/ /, '$ ')
   end
 end
 
@@ -182,6 +182,11 @@ module A2OBrew
           rule_name: 'cp_r',
           description: 'cp -r from ${in} to ${out}',
           command: 'cp -r ${in} ${out}'
+        },
+        {
+          rule_name: 'sed',
+          description: 'sed from ${in} to ${out}',
+          command: 'sed ${options} ${in} > ${out}'
         },
         {
           rule_name: 'rm',
@@ -447,7 +452,7 @@ module A2OBrew
           else
             if file.path == 'Images.xcassets' || file.path == 'Assets.xcassets'
               # Asset Catalog for icon
-              icon_asset_catalog = asset_catalog(local_path, build_config)
+              icon_asset_catalog = asset_catalog(local_path, target, build_config)
             elsif file.path == 'Icon@2x.png'
               # old
               icon2x = [local_path, 2]
@@ -466,16 +471,26 @@ module A2OBrew
         end
       end
 
-      infoplist_path = build_setting(build_config, 'INFOPLIST_FILE')
+      infoplist_path = build_setting(target, build_config, 'INFOPLIST_FILE')
       if infoplist_path
         infoplist = File.join(bundle_dir(a2o_target), 'Info.plist')
         resources << infoplist
 
+        # TODO: replace all variables
+        variables = %w(PRODUCT_NAME PRODUCT_BUNDLE_IDENTIFIER)
+        commands = variables.map do |key|
+          value = build_setting(target, build_config, key)
+          "-e s/\\$\\(#{key}\\)/#{value}/g -e s/\\${#{key}}/#{value}/g "
+        end.join(' ')
+
         # NOTE: Should we use file_recursive_copy here?
         builds << {
           outputs: [infoplist],
-          rule_name: 'cp_r',
-          inputs: [infoplist_path]
+          rule_name: 'sed',
+          inputs: [infoplist_path],
+          build_variables: {
+            'options' => commands.ninja_escape
+          }
         }
       end
 
@@ -555,9 +570,10 @@ module A2OBrew
       nil
     end
 
-    def asset_catalog(local_path, build_config)
-      appicon_name = build_setting(build_config, 'ASSETCATALOG_COMPILER_APPICON_NAME') + '.appiconset'
-      # _launchimage_name = build_setting(build_config, 'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME') + '.launchimage'
+    def asset_catalog(local_path, target, build_config)
+      appicon_name = build_setting(target, build_config, 'ASSETCATALOG_COMPILER_APPICON_NAME') + '.appiconset'
+      # _launchimage_name = build_setting(target, build_config,
+      #                                   'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME') + '.launchimage'
 
       Dir.new(local_path).each do |asset_local_path|
         if asset_local_path == appicon_name
@@ -622,21 +638,21 @@ module A2OBrew
       end.to_a.uniq
 
       # build settings
-      lib_dirs = build_setting(build_config, 'LIBRARY_SEARCH_PATHS', :array)
-      framework_search_paths = build_setting(build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
-      header_search_paths = build_setting(build_config, 'HEADER_SEARCH_PATHS', :array).select { |value| value != '' }
-      user_header_search_paths = build_setting(build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ''
-      other_cflags = (build_setting(build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
-      cxx_std = build_setting(build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
-      c_std = build_setting(build_config, 'GCC_C_LANGUAGE_STANDARD', :string)
-      preprocessor_definitions = (build_setting(build_config, 'GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
+      lib_dirs = build_setting(target, build_config, 'LIBRARY_SEARCH_PATHS', :array)
+      framework_search_paths = build_setting(target, build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
+      header_search_paths = build_setting(target, build_config, 'HEADER_SEARCH_PATHS', :array).select { |value| value != '' }
+      user_header_search_paths = build_setting(target, build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ''
+      other_cflags = (build_setting(target, build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
+      cxx_std = build_setting(target, build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
+      c_std = build_setting(target, build_config, 'GCC_C_LANGUAGE_STANDARD', :string)
+      preprocessor_definitions = (build_setting(target, build_config, 'GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
 
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
       header_options = (header_search_paths + user_header_search_paths.split + header_dirs).map { |dir| "-I#{dir}" }.join(' ')
 
-      if build_setting(build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
-        prefix_pch = build_setting(build_config, 'GCC_PREFIX_HEADER')
+      if build_setting(target, build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
+        prefix_pch = build_setting(target, build_config, 'GCC_PREFIX_HEADER')
         prefix_pch_options = prefix_pch.empty? ? '' : "-include #{prefix_pch}"
       end
 
@@ -644,7 +660,7 @@ module A2OBrew
 
       cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags, preprocessor_definitions, a2o_project_flags(active_project_config, :cc)].join(' ')
 
-      enable_objc_arc = build_setting(build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
+      enable_objc_arc = build_setting(target, build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
       phase.files_references.each do |file|
         if file.parent.isa != 'PBXGroup'
@@ -659,7 +675,7 @@ module A2OBrew
         settings = file.build_files[0].settings
         file_cflags = []
         if settings && settings.key?('COMPILER_FLAGS')
-          file_cflags += expand(settings['COMPILER_FLAGS'], :array)
+          file_cflags += settings['COMPILER_FLAGS'].split
         end
         if enable_objc_arc
           file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
@@ -927,7 +943,7 @@ module A2OBrew
     end
 
     # utils
-    def build_setting(build_config, prop, type = nil)
+    def build_setting(target, build_config, prop, type = nil) # rubocop:disable Metrics/MethodLength
       # TODO: check xcconfig file
       default_setting = nil # TODO set iOS default
       project_setting = xcodeproj.build_settings(build_config.name)[prop]
@@ -935,12 +951,22 @@ module A2OBrew
       target_setting = build_config.build_settings[prop]
       target_setting = target_setting.clone if target_setting
 
+      env = {
+        'PROJECT_DIR' => xcodeproj_dir,
+        'SRCROOT' => xcodeproj_dir,
+        'PLATFORM_NAME' => 'emscripten',
+        'SDKROOT' => emscripten_dir,
+        'DEVELOPER_FRAMEWORKS_DIR' => '', # FIXME: currently ignores
+        'MYPROJ_HOME' => '', # FIXME: currently ignores
+        'TARGET_NAME' => target.name
+      }
+
       if target_setting
-        expand(replace_inherited(replace_inherited(target_setting, project_setting), default_setting), type)
+        expand(replace_inherited(replace_inherited(target_setting, project_setting), default_setting), env, type)
       elsif project_setting
-        expand(replace_inherited(project_setting, default_setting), type)
+        expand(replace_inherited(project_setting, default_setting), env, type)
       else
-        expand(default_setting, type)
+        expand(default_setting, env, type)
       end
     end
 
@@ -958,10 +984,10 @@ module A2OBrew
       lower
     end
 
-    def expand(value, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/LineLength
+    def expand(value, env, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity
       if value.is_a?(Array)
         value.map do |v|
-          expand(v)
+          expand(v, env)
         end
       else
         case type
@@ -971,35 +997,25 @@ module A2OBrew
           if value.nil?
             []
           else
-            [expand(value)]
+            [expand(value, env)]
           end
         else
           if value.nil?
             nil
           else
-            # rubocop:disable Metrics/BlockNesting
-            value.gsub(/\$\([A-Za-z0-9_]+\)/) do |m|
-              case m
-              when '$(PROJECT_DIR)'
-                xcodeproj_dir
-              when '$(SRCROOT)'
-                xcodeproj_dir
-              when '$(PLATFORM_NAME)'
-                'emscripten'
-              when '$(SDKROOT)'
-                emscripten_dir
-              when '$(DEVELOPER_FRAMEWORKS_DIR)'
-                # FIXME: currently ignores
-                ''
-              when '$(MYPROJ_HOME)'
-                # FIXME: currently ignores
-                ''
-              else
-                raise Informative, "Not support for #{m}"
-              end
-            end
+            resolve_macro(value, env)
           end
         end
+      end
+    end
+
+    def resolve_macro(value, env)
+      value.gsub(/\$\(([A-Za-z0-9_]+)\)/) do |m|
+        varname = Regexp.last_match(1)
+
+        raise Informative, "Not support for #{m}" unless env.key?(varname)
+
+        env[varname]
       end
     end
 
