@@ -774,7 +774,7 @@ module A2OBrew
     def generate_extra_js_code(active_project_config) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity
       runtime_parameters = active_project_config[:runtime_parameters] || {}
       network_parameters = runtime_parameters[:network] || {}
-      device_parameters = runtime_parameters[:network] || {}
+      device_parameters = runtime_parameters[:device] || {}
 
       code = []
       code << %|if (!Module['preRun']) Module['preRun'] = [];|
@@ -790,7 +790,7 @@ module A2OBrew
 
       screen_modes = device_parameters[:screen_modes]
       if screen_modes
-        code << %(Module['screenModes'] = "#{screen_modes.to_json}";)
+        code << %(Module['screenModes'] = #{screen_modes.to_json};)
       end
 
       http_logging = network_parameters[:http_logging]
