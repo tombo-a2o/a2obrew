@@ -771,25 +771,30 @@ module A2OBrew
       }
     end
 
-    def generate_extra_js_code(active_project_config) # rubocop:disable Metrics/MethodLength,
+    def generate_extra_js_code(active_project_config) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity
+      runtime_parameters = active_project_config[:runtime_parameters] || {}
+      network_parameters = runtime_parameters[:network] || {}
+      device_parameters = runtime_parameters[:network] || {}
+
       code = []
       code << %|if (!Module['preRun']) Module['preRun'] = [];|
       code << %|Module['preRun'].push(function(){ ENV.LANGUAGES = '('+ window.navigator.languages.join(',')+ ')' });|
 
-      proxy_server = active_project_config[:http_proxy_server]
-      if active_project_config[:http_proxy_server]
-        code << %(Module['proxyServer'] = "#{proxy_server}";)
-      end
+      proxy_server = network_parameters[:http_proxy_server]
+      code << %(Module['proxyServer'] = "#{proxy_server}";) if proxy_server
 
-      proxy_url_prefixes = active_project_config[:http_proxy_url_prefixes]
+      proxy_url_prefixes = network_parameters[:http_proxy_url_prefixes]
       if proxy_url_prefixes
         code << %(Module['proxyUrlPrefixes'] = #{proxy_url_prefixes.to_json};)
       end
 
-      screen_modes = active_project_config[:screen_modes]
+      screen_modes = device_parameters[:screen_modes]
       if screen_modes
         code << %(Module['screenModes'] = "#{screen_modes.to_json}";)
       end
+
+      http_logging = network_parameters[:http_logging]
+      code << %(Module['httpLogging'] = #{http_logging};) if http_logging
 
       code.join('\n')
     end
