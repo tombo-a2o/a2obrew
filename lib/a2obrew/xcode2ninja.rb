@@ -210,6 +210,11 @@ module A2OBrew
           command: 'ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link ${resources_dir} ${temp_dir}' # rubocop:disable LineLength
         },
         {
+          rule_name: 'ibtool2',
+          description: 'ibtool ${in}',
+          command: 'ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compile ${out} ${in}' # rubocop:disable LineLength
+        },
+        {
           rule_name: 'image-convert',
           description: 'image convert ${in}',
           command: 'convert -resize ${width}x${height} ${in} ${out}'
@@ -453,6 +458,19 @@ module A2OBrew
               }
             }
             resources += nib_paths
+          elsif File.extname(file.path) == '.xib'
+            remote_path = File.join(resources_dir(a2o_target), File.basename(file.path, ".xib")+".nib")
+
+            builds << {
+              outputs: [remote_path],
+              rule_name: 'ibtool2',
+              inputs: [local_path],
+              build_variables: {
+                'module_name' => target.product_name
+              }
+            }
+            resources << remote_path
+            p resources
           elsif %w(.caf .aiff).include? File.extname(file.path)
             # convert caf file to mp4, but leave file name as is
             remote_path = File.join(resources_dir(a2o_target), local_path.basename)
@@ -766,8 +784,10 @@ module A2OBrew
     end
 
     def generate_platform_parameters(active_project_config)
+      runtime_parameters = active_project_config[:runtime_parameters] || {}
+      network_parameters = runtime_parameters[:network] || {}
       {
-        http_proxy_url_prefixes: active_project_config[:http_proxy_url_prefixes] || []
+        http_proxy_url_prefixes: network_parameters[:http_proxy_url_prefixes] || []
       }
     end
 
@@ -778,7 +798,7 @@ module A2OBrew
 
       code = []
       code << %|if (!Module['preRun']) Module['preRun'] = [];|
-      code << %|Module['preRun'].push(function(){ ENV.LANGUAGES = '('+ window.navigator.languages.join(',')+ ')' });|
+      code << %|Module['preRun'].push(function(){ ENV.LANGUAGES = '('+ (window.navigator.languages ? window.navigator.languages.join(',') : window.navigator.language) + ')' });|
 
       proxy_server = network_parameters[:http_proxy_server]
       code << %(Module['proxyServer'] = "#{proxy_server}";) if proxy_server
