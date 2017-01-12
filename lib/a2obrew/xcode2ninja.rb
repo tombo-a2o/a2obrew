@@ -459,7 +459,7 @@ module A2OBrew
             }
             resources += nib_paths
           elsif File.extname(file.path) == '.xib'
-            remote_path = File.join(resources_dir(a2o_target), File.basename(file.path, ".xib")+".nib")
+            remote_path = File.join(resources_dir(a2o_target), File.basename(file.path, '.xib') + '.nib')
 
             builds << {
               outputs: [remote_path],
