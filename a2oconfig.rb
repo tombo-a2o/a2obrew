@@ -37,27 +37,6 @@ A2OCONF = {
         clean: 'make clean'
       },
       {
-        name: 'ogg',
-        path: 'ogg',
-        repository_uri: 'git@github.com:tomboinc/emscripten-libogg.git',
-        branch: 'master',
-        configure: 'emcmake cmake %{project_path}/src -DCMAKE_INSTALL_PREFIX=%{emscripten_system_local_path}',
-        build: 'make',
-        install: 'make install',
-        clean: 'make clean'
-      },
-      {
-        name: 'vorbis',
-        path: 'vorbis',
-        repository_uri: 'git@github.com:tomboinc/vorbis.git',
-        branch: 'master',
-        autogen: './autogen.sh || ./autogen.sh',
-        configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags} -v" --disable-oggtest',
-        build: 'make',
-        install: 'make install',
-        clean: 'make clean'
-      },
-      {
         name: 'sqlite3',
         path: 'sqlite3',
         repository_uri: 'git@github.com:tomboinc/sqlite3.git',
