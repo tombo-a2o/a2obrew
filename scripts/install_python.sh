@@ -25,7 +25,7 @@ if [ ! -d ${HOME}/.pyenv ]; then
 else
   echo "* pyenv is installed"
   export PATH="$HOME/.pyenv/bin:$PATH"
-  eval "$(pyenv init -)"
+  eval "$(pyenv init -)" || true
   eval "$(pyenv virtualenv-init -)"
   if pyenv versions | grep " 2\\.7\\.9 " > /dev/null; then
     echo "* python 2.7.9 with pyenv is installed"
