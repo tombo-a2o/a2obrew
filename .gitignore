@@ -13,3 +13,5 @@ emsdk/
 
 # Depends
 depends/
+
+commit-hash.yaml
