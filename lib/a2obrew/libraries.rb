@@ -17,8 +17,10 @@ module A2OBrew
     end
 
     desc 'autogen PROJECT_NAMES', 'autogen dependent repositories'
+    method_option :target, aliases: '-t', default: 'release', desc: 'Build target (ex. release)'
     def autogen(*proj_names)
-      build_main(:autogen, proj_names)
+      target = options[:target]
+      build_main(:autogen, proj_names, target)
     end
 
     desc 'configure PROJECT_NAMES', 'configure dependent repositories'
