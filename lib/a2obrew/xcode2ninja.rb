@@ -439,7 +439,7 @@ module A2OBrew
           next if resource_filter && !resource_filter.call(local_path.to_s)
 
           if File.extname(file.path) == '.storyboard'
-            remote_path = File.join(resources_dir(a2o_target), file.path)
+            remote_path = File.join(resources_dir(a2o_target), File.basename(file.path))
             remote_path += 'c'
             tmp_path = File.join('tmp', remote_path)
 
@@ -470,7 +470,6 @@ module A2OBrew
               }
             }
             resources << remote_path
-            p resources
           elsif %w(.caf .aiff).include? File.extname(file.path)
             # convert caf file to mp4, but leave file name as is
             remote_path = File.join(resources_dir(a2o_target), local_path.basename)
@@ -493,7 +492,11 @@ module A2OBrew
               icon = [local_path, 1]
             end
 
-            in_prefix = files_ref.class == Xcodeproj::Project::Object::PBXFileReference ? File.dirname(local_path) : '.'
+            in_prefix = if files_ref.class == Xcodeproj::Project::Object::PBXFileReference
+                          File.dirname(local_path)
+                        else
+                          File.dirname(File.dirname(local_path)) # don't remove "xxx.lproj"
+                        end
 
             # All resource files are stored in the same directory
             f = file_recursive_copy(local_path, resources_dir(a2o_target), in_prefix)
