@@ -889,7 +889,8 @@ module A2OBrew
         '-s VERBOSE=1',
         '-s LZ4=1',
         '-s NATIVE_LIBDISPATCH=1',
-        '--memory-init-file 1'
+        '--memory-init-file 1',
+        '--emit-symbol-map'
       ]
       a2o_options << a2o_project_flags(active_project_config, :html)
 
