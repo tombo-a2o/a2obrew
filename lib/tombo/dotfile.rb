@@ -20,12 +20,8 @@ module Tombo
       @config['developer_portal_uri'] + path
     end
 
-    def developer_credential_id
-      @config['developer_credential_id']
-    end
-
-    def developer_credential_secret
-      @config['developer_credential_secret']
+    def developer_credential
+      @config['developer_credential']
     end
 
     def ssl_certificate_verify
@@ -49,21 +45,19 @@ module Tombo
       config_path
     end
 
-    def generate_config(config_path) # rubocop:disable Metrics/MethodLength
+    def generate_config(config_path)
       puts "Generate #{config_path} to save platform informations"
       hl = HighLine.new
       dev_portal_uri = hl.ask('Developer portal URI:') do |q|
         q.default = 'https://developer.tombo.io'
       end
-      dev_credential_id = hl.ask('Developer credential id:')
-      dev_credential_secret = hl.ask('Developer credential secret:')
+      dev_credential = hl.ask('Developer credential id:')
 
       File.open(config_path, 'w') do |f|
         f.puts <<EOF
 [default]
 developer_portal_uri = #{dev_portal_uri}
-developer_credential_id = #{dev_credential_id}
-developer_credential_secret = #{dev_credential_secret}
+developer_credential = #{dev_credential}
 ssl_certificate_verify = true
 EOF
       end

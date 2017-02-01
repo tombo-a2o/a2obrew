@@ -56,16 +56,14 @@ module Tombo
       json
     end
 
-    def credential_headers(base_headers, _content_type = 'application/json')
-      now = Time.now.utc.strftime('%Y%m%dT%H%M%SZ')
+    def credential_headers(base_headers)
       headers = base_headers.dup
-      headers.merge('Authorization' => authorization_header,
-                    'X-Tombo-Date' => now)
+      headers.merge('X-Tombo-Authorization' => authorization_header)
     end
 
     def authorization_header
-      cred_id = @dotfile.developer_credential_id
-      "TOMBO1-HMAC-SHA256 Credential=#{cred_id}/date/tombo1, SignedHeaders=#{signed_headers}, Signature=#{signature}"
+      cred = @dotfile.developer_credential
+      "TOMBO1-CREDENTIAL #{cred}"
     end
 
     def signed_headers
