@@ -355,6 +355,10 @@ module A2OBrew
       "#{pre_products_tombo_dir(a2o_target)}/parameters.json"
     end
 
+    def runtime_parameters_path(a2o_target)
+      "#{pre_products_application_dir(a2o_target)}/runtime_parameters.js"
+    end
+
     # products dir is packaged
 
     def products_dir(a2o_target)
@@ -399,10 +403,6 @@ module A2OBrew
 
     def library_functions_js_path(a2o_target)
       "#{emscripten_work_dir(a2o_target)}/lib_funcs.js"
-    end
-
-    def extra_js_path(a2o_target)
-      "#{emscripten_work_dir(a2o_target)}/extra.js"
     end
 
     def a2o_project_flags(active_project_config, rule)
@@ -793,7 +793,7 @@ module A2OBrew
       }
     end
 
-    def generate_extra_js_code(active_project_config) # rubocop:disable Metrics/MethodLength
+    def generate_runtime_parameters(active_project_config) # rubocop:disable Metrics/MethodLength
       runtime_parameters = active_project_config[:runtime_parameters] || {}
 
       code = []
@@ -875,11 +875,11 @@ module A2OBrew
 
       # extra js
       builds << {
-        outputs: [extra_js_path(a2o_target)],
+        outputs: [runtime_parameters_path(a2o_target)],
         rule_name: 'echo',
         inputs: [],
         build_variables: {
-          contents: generate_extra_js_code(active_project_config).shell_quote_escape
+          contents: generate_runtime_parameters(active_project_config).shell_quote_escape
         }
       }
 
@@ -921,8 +921,7 @@ module A2OBrew
       dep_paths << data_js_path(a2o_target)
 
       # extra js
-      a2o_options << "--pre-js #{extra_js_path(a2o_target)}"
-      dep_paths << extra_js_path(a2o_target)
+      dep_paths << runtime_parameters_path(a2o_target)
 
       # static link frameworks
       a2o_options += (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries).map { |f| "-framework #{f.ninja_escape}" }
