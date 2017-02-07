@@ -809,9 +809,11 @@ module A2OBrew
       end
 
       screen_modes = runtime_parameters[:screen_modes]
-      if screen_modes
-        code << %(Module['screenModes'] = #{screen_modes.to_json};)
-      end
+      code << if screen_modes
+                %(Module['screenModes'] = #{screen_modes.to_json};)
+              else
+                %(Module['screenModes'] = [{width:640, height:1136, scale:2.0}];)
+              end
 
       http_logging = runtime_parameters[:http_logging]
       code << %(Module['httpLogging'] = #{http_logging};) if http_logging
