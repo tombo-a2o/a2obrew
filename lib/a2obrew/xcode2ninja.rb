@@ -798,7 +798,18 @@ module A2OBrew
 
       code = []
       code << %|if (!Module['preRun']) Module['preRun'] = [];|
-      code << %|Module['preRun'].push(function(){ ENV.LANGUAGES = '('+ (window.navigator.languages ? window.navigator.languages.join(',') : window.navigator.language) + ')' });|
+
+      code += <<END_OF_JS.split("\n")
+Module['preRun'].push(function(){
+    var languages = window.navigator.languages ? window.navigator.languages : [window.navigator.language];
+    var cookie = document.cookie.split('; ').reduce(function(p,c,i,a){var kv = c.split('=');p[kv[0]]=kv[1];return p;},{});
+    if(cookie.locale) {
+        languages = languages.filter(function(e,i,a){return e != cookie.locale});
+        languages.unshift(cookie.locale);
+    }
+    ENV.LANGUAGES = '('+ languages.join(',') + ')';
+});
+END_OF_JS
 
       proxy_server = runtime_parameters[:http_proxy_server]
       code << %(Module['proxyServer'] = "#{proxy_server}";) if proxy_server
