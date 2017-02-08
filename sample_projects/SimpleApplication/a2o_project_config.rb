@@ -12,24 +12,21 @@ config = {
       flags: {
         cc: "-O0 -DDEBUG=1 #{cc_flags}",
         html: "-O0 -s OBJC_DEBUG=1 #{html_flags} -emrun"
-      },
-      emscripten_shell_path: 'shell.html'
+      }
     },
     release: {
       xcodeproj_build_config: 'Release',
       flags: {
         cc: "-Oz #{cc_flags}",
         html: "-O2 #{html_flags}"
-      },
-      emscripten_shell_path: 'shell.html'
+      }
     },
     profile: {
       xcodeproj_build_config: 'Debug',
       flags: {
         cc: "-O0 -DDEBUG=1 #{cc_flags} --tracing",
         html: "-O0 -s OBJC_DEBUG=1 #{html_flags} --tracing"
-      },
-      emscripten_shell_path: 'shell.html'
+      }
     }
   }
 }
