@@ -34,10 +34,11 @@ module A2OBrew
       [57, 1], # 57x57            (main icon for iPhone        iOS 6)
     ].freeze
 
-    def initialize(xcodeproj_path)
+    def initialize(xcodeproj_path, a2obrew_path)
       self.xcodeproj_path = xcodeproj_path
       @frameworks = []
       @static_libraries_from_other_projects = []
+      @a2obrew_path = a2obrew_path
     end
 
     def xcode2ninja(output_dir, # rubocop:disable Metrics/MethodLength
@@ -190,6 +191,11 @@ module A2OBrew
           command: 'cp -r ${in} ${out}'
         },
         {
+          rule_name: 'ln_sf',
+          description: 'ln -sf ${source} ${out} # ref. ${in}',
+          command: 'ln -sf ${source} ${out}'
+        },
+        {
           rule_name: 'sed',
           description: 'sed from ${in} to ${out}',
           command: 'sed ${options} ${in} > ${out}'
@@ -331,6 +337,10 @@ module A2OBrew
       "#{pre_products_application_dir(a2o_target)}/application"
     end
 
+    def shell_files_link_dir(a2o_target)
+      "#{products_application_dir(a2o_target)}/shell_files"
+    end
+
     def data_path(a2o_target)
       "#{pre_products_path_prefix(a2o_target)}.dat"
     end
@@ -363,6 +373,28 @@ module A2OBrew
 
     def products_dir(a2o_target)
       "#{build_dir(a2o_target)}/products"
+    end
+
+    def products_application_dir(a2o_target)
+      "#{products_dir(a2o_target)}/application"
+    end
+
+    # a2obrew paths
+
+    def a2obrew_dir
+      @a2obrew_path
+    end
+
+    def shell_template_dir
+      "#{a2obrew_dir}/shell"
+    end
+
+    def shell_files_source_dir
+      "#{shell_template_dir}/shell_files"
+    end
+
+    def shell_template_html_path
+      "#{shell_template_dir}/shell.html"
     end
 
     # emscripten paths
@@ -634,6 +666,20 @@ module A2OBrew
           inputs: [in_path.to_s]
         },
         output: output_path
+      }
+    end
+
+    def file_link(in_relative_path_from_out_path, out_path, dep_paths)
+      {
+        builds: [{
+          outputs: [out_path],
+          rule_name: 'ln_sf',
+          inputs: dep_paths,
+          build_variables: {
+            'source' => in_relative_path_from_out_path
+          }
+        }],
+        outputs: [out_path]
       }
     end
 
@@ -920,12 +966,11 @@ END_OF_JS
         a2o_options << '--separate-asm'
       end
 
-      # shell html
-      emscripten_shell_path = active_project_config[:emscripten_shell_path]
-      if emscripten_shell_path
-        a2o_options << "--shell-file #{emscripten_shell_path}"
-        dep_paths << emscripten_shell_path
-      end
+      # common shell html
+      emscripten_shell_path = shell_template_html_path
+
+      a2o_options << "--shell-file #{emscripten_shell_path}"
+      dep_paths << emscripten_shell_path
 
       # data file
       a2o_options << "--pre-js #{data_js_path(a2o_target)}"
@@ -1037,34 +1082,28 @@ END_OF_JS
     end
 
     def header_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
-      # FIXME: Implement
       []
     end
 
     def shell_script_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
-      # FIXME: Implement
       []
     end
 
     def copy_files_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
-      # FIXME: Implement
       []
     end
 
-    def after_build_phase(_xcodeproj, _target, _build_config, _phase, active_project_config, a2o_target)
+    def after_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, a2o_target)
       builds = []
 
-      # Copying files to distribute_path
-      distribute_paths = active_project_config[:distribute_paths]
-      if distribute_paths
-        out_dir = pre_products_application_dir(a2o_target)
+      # copy shell.html resources
+      out_dir = build_dir(a2o_target)
+      f = file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
+      builds += f[:builds]
 
-        distribute_paths.each do |distribute_path|
-          f = file_recursive_copy(distribute_path, out_dir, distribute_path)
-          builds += f[:builds]
-          # no need for outputs
-        end
-      end
+      # add a symbolic link
+      f = file_link('../../shell_files', shell_files_link_dir(a2o_target), [html_path(a2o_target)])
+      builds += f[:builds]
 
       builds
     end
