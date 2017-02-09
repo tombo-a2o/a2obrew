@@ -439,9 +439,7 @@ module A2OBrew
     end
 
     def a2o_project_flags(active_project_config, rule)
-      # TODO: Use Ruby 2.3 and Hash#dig
-      flags = active_project_config[:flags]
-      flags[rule] if flags
+      active_project_config.dig(:flags, rule)
     end
 
     # phases
@@ -834,9 +832,8 @@ module A2OBrew
     end
 
     def generate_platform_parameters(active_project_config)
-      runtime_parameters = active_project_config[:runtime_parameters] || {}
       {
-        http_proxy_url_prefixes: runtime_parameters[:http_proxy_url_prefixes] || []
+        http_proxy_url_prefixes: active_project_config.dig(:runtime_parameters, :http_proxy_url_prefixes) || []
       }
     end
 
