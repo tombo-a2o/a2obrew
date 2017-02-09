@@ -6,7 +6,7 @@ RUBY_VERSION=`cat ${A2O_PATH}/.ruby-version`
 RBENV_GEMSET=`cat ${A2O_PATH}/.rbenv-gemsets`
 RBENV=${HOME}/.rbenv
 GEM=${RBENV}/versions/${RUBY_VERSION}/bin/gem
-BUNDLE=${RBENV}/versions/${RUBY_VERSION}/gemsets/${RBENV_GEMSET}/bin/bundle
+BUNDLE=${RBENV}/versions/${RUBY_VERSION}/bin/bundle
 
 if [ -d ${RBENV} ]; then
   echo "* rbenv has already been installed"
