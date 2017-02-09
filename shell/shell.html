@@ -99,9 +99,15 @@
       font-size: 100px;
       text-align: center;
     }
-    section.playground-keypad {
+    section.playground-keypad-tap {
       text-align: center;
       font-size: 50px;
+      display: none;
+    }
+    section.playground-keypad-3way-down {
+      text-align: center;
+      font-size: 50px;
+      display: none;
     }
     section.header a, section.playground a {
       color: #999;
@@ -200,7 +206,11 @@
         </section>
         <canvas width="320" height="480" id="app-canvas" oncontextmenu="event.preventDefault()"></canvas>
       </section>
-      <section class="playground-keypad">
+      <section class="playground-keypad-tap">
+        <a class="tooltip" href="#" onclick="fireSwipe(0,0);return false;"><i class="fa fa-stop-circle" aria-hidden="true"></i>
+        <span class="tooltip-text tooltip-text-center">Tap</span> </a>&nbsp;
+      </section>
+      <section class="playground-keypad-3way-down">
         <a class="tooltip" href="#" onclick="fireSwipe(-1,0);return false;"><i class="fa fa-arrow-left" aria-hidden="true"></i>
         <span class="tooltip-text tooltip-text-center">Swipe Left</span> </a>&nbsp;
         <a class="tooltip" href="#" onclick="fireSwipe(0, 1);return false;"><i class="fa fa-arrow-down" aria-hidden="true"></i>
@@ -320,6 +330,10 @@
         var y = canvas.height / 2;
         // 4 frames
         var n = 4;
+        if(dx == dy) {
+          // not swipe, just tap
+          n = 1;
+        }
         // moves 15 pixels per frame
         dx *= 15;
         dy *= 15;
@@ -368,20 +382,31 @@
         window.requestAnimationFrame(raf);
     };
     window.start = function() {
-      // add key listener
-      document.addEventListener("keydown", function(e) {
-        switch(e.which) {
-          case 37: fireSwipe(-1, 0); e.preventDefault(); break; // ←
-          case 39: fireSwipe(1, 0); e.preventDefault(); break; // →
-          case 40: fireSwipe(0, 1); e.preventDefault(); break; // ↓
-        }
-      });
+      switch(Module['keypadType']) {
+        case '3way-down':
+          // add key listener
+          document.addEventListener("keydown", function(e) {
+            switch(e.which) {
+              case 37: fireSwipe(-1, 0); e.preventDefault(); break; // ←
+              case 39: fireSwipe(1, 0); e.preventDefault(); break; // →
+              case 40: fireSwipe(0, 1); e.preventDefault(); break; // ↓
+            }
+          });
+          break;
+      }
       document.getElementById('app-canvas').style.display = 'block';
       document.getElementById('preview-image').style.display = 'none';
       Module.setStatus('Downloading...');
       document.body.appendChild(script);
     };
-    window.onload = start;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var keypadElement = document.getElementsByClassName('playground-keypad-' + Module['keypadType'])[0];
+      keypadElement && (keypadElement.style.display = "block");
+      if(Module['autoStart']) {
+        start();
+      }
+    });
     </script>
   </body>
 </html>

@@ -839,7 +839,7 @@ module A2OBrew
       }
     end
 
-    def generate_runtime_parameters(active_project_config) # rubocop:disable Metrics/MethodLength
+    def generate_runtime_parameters(active_project_config) # rubocop:disable all
       runtime_parameters = active_project_config[:runtime_parameters] || {}
 
       code = []
@@ -874,6 +874,12 @@ END_OF_JS
 
       http_logging = runtime_parameters[:http_logging]
       code << %(Module['httpLogging'] = #{http_logging};) if http_logging
+
+      auto_start = runtime_parameters[:auto_start]
+      code << %(Module['autoStart'] = #{auto_start};) if auto_start
+
+      keypad_type = runtime_parameters[:keypad_type]
+      code << %(Module['keypadType'] = '#{keypad_type}';) if keypad_type
 
       code.join('\n')
     end
