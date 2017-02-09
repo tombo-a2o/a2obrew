@@ -432,8 +432,7 @@
       }
 
       // initializing screen size
-      var isLandscape = (Module['deviceOrientation']==='landscape');
-      Module['initialDeviceOrientation'] = isLandscape? 3: 1;
+      var isLandscape = (Module['initialDeviceOrientation'] == 3);
       var width;
       var height;
       var scale = Module['screenModes'][0].scale;

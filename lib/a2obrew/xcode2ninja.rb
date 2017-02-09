@@ -868,8 +868,8 @@ module A2OBrew
       keypad_type = runtime_parameters[:keypad_type]
       code << %(Module['keypadType'] = '#{keypad_type}';) if keypad_type
 
-      orientation = runtime_parameters[:device_orientation]
-      code << %(Module['deviceOrientation'] = '#{orientation}';) if orientation
+      orientation = runtime_parameters[:initial_device_orientation]
+      code << %(Module['initialDeviceOrientation'] = '#{orientation}';) if orientation
 
       code.join('\n')
     end
