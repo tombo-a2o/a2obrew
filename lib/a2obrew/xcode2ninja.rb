@@ -881,6 +881,9 @@ END_OF_JS
       keypad_type = runtime_parameters[:keypad_type]
       code << %(Module['keypadType'] = '#{keypad_type}';) if keypad_type
 
+      orientation = runtime_parameters[:orientation]
+      code << %(Module['orientation'] = '#{orientation}';) if orientation
+
       code.join('\n')
     end
 
