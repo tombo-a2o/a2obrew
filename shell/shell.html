@@ -201,9 +201,12 @@
         <canvas width="320" height="480" id="app-canvas" oncontextmenu="event.preventDefault()"></canvas>
       </section>
       <section class="playground-keypad">
-        <a class="tooltip" href="#" onclick="return false;"><i class="fa fa-arrow-left" aria-hidden="true"></i><span class="tooltip-text tooltip-text-center">Swipe Left</span> </a>&nbsp;
-        <a class="tooltip" href="#" onclick="return false;"><i class="fa fa-arrow-down" aria-hidden="true"></i><span class="tooltip-text tooltip-text-center">Swipe Down</span> </a>&nbsp;
-        <a class="tooltip" href="#" onclick="return false;"><i class="fa fa-arrow-right" aria-hidden="true"></i><span class="tooltip-text tooltip-text-center">Swipe Right</span> </a>&nbsp;
+        <a class="tooltip" href="#" onclick="fireSwipe(-1,0);return false;"><i class="fa fa-arrow-left" aria-hidden="true"></i>
+        <span class="tooltip-text tooltip-text-center">Swipe Left</span> </a>&nbsp;
+        <a class="tooltip" href="#" onclick="fireSwipe(0, 1);return false;"><i class="fa fa-arrow-down" aria-hidden="true"></i>
+        <span class="tooltip-text tooltip-text-center">Swipe Down</span> </a>&nbsp;
+        <a class="tooltip" href="#" onclick="fireSwipe(1, 0);return false;"><i class="fa fa-arrow-right" aria-hidden="true"></i>
+        <span class="tooltip-text tooltip-text-center">Swipe Right</span> </a>&nbsp;
       </section>
       <section class="app-markets">
         <img width="202" height="60" src="./shell_files/images/app_store.png">
@@ -298,7 +301,81 @@
         document.body.appendChild(script);
       }, 1); // delaying even 1ms is enough to allow compilation memory to be reclaimed
     };
+    var fireSwipe = function(dx, dy) {
+        if(fireSwipe.working) {
+            return;
+        }
+        fireSwipe.working = true;
+        var canvas = document.getElementById("app-canvas");
+        var element = canvas;
+        var left = 0;
+        var top = 0;
+        while(element) {
+            left += element.offsetLeft - element.scrollLeft;
+            top += element.offsetTop - element.scrollTop;
+            element = element.parentElement;
+        }
+        // touch starts from center
+        var x = canvas.width / 2;
+        var y = canvas.height / 2;
+        // 4 frames
+        var n = 4;
+        // moves 15 pixels per frame
+        dx *= 15;
+        dy *= 15;
+        if(typeof Event === "undefined") {
+            console.log("Oops! Your browser does not support Event object");
+            return;
+        }
+        var frame = 0;
+        var raf = function() {
+            var event;
+            var end = false;
+            if(frame == 0) {
+                event = new Event("touchstart");
+            } else if (frame >= n) {
+                event = new Event("touchend");
+                end = true;
+            } else {
+                x += dx;
+                y += dy;
+                event = new Event("touchmove");
+            }
+            frame++;
+            event.changedTouches = [{identifier: 1,
+                                    clientX: x + left,
+                                    clientY: y + top,
+                                    screenX: x + left,
+                                    screenY: y + top,
+                                    pageX: x + left,
+                                    pageY: y + top,
+                                    force: 0,
+                                    target: canvas
+            }];
+            if(!end) {
+                event.touches = event.targetTouches = event.changedTouches;
+            } else {
+                event.touches = event.targetTouches = [];
+            }
+            canvas.dispatchEvent(event);
+            if(!end) {
+                window.requestAnimationFrame(raf);
+            } else {
+                fireSwipe.working = false;
+            }
+        };
+        // invoke touch events
+        window.requestAnimationFrame(raf);
+    };
     window.start = function() {
+      // add key listener
+      document.addEventListener("keydown", function(e) {
+        switch(e.which) {
+          case 37: fireSwipe(-1, 0); e.preventDefault(); break; // ←
+          case 39: fireSwipe(1, 0); e.preventDefault(); break; // →
+          case 40: fireSwipe(0, 1); e.preventDefault(); break; // ↓
+        }
+      });
       document.getElementById('app-canvas').style.display = 'block';
       document.getElementById('preview-image').style.display = 'none';
       Module.setStatus('Downloading...');
