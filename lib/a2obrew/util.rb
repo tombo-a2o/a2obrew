@@ -1,6 +1,10 @@
+# frozen_string_literal: true
 require 'mkmf'
-require 'colorize'
+require 'rainbow'
 require 'fileutils'
+
+# Force enable for Rainbow even if the STDOUT/STDERR aren't terminals
+Rainbow.enabled = true
 
 module MakeMakefile
   module Logging
@@ -11,7 +15,7 @@ end
 class String
   def to_camel
     split('_').each_with_index.map do |w, i|
-      w[0] = w[0].upcase if i > 0
+      w[0] = w[0].upcase if i.positive?
       w
     end.join
   end
@@ -47,20 +51,20 @@ module A2OBrew
     end
 
     def self.puts_delimiter(text)
-      delimiter = ('=' * 78).colorize(color: :black, background: :white)
+      delimiter = Rainbow('=' * 78).color(:black).background(:white)
       puts delimiter
-      puts text.colorize(color: :black, background: :white)
+      puts Rainbow(text).color(:black).background(:white)
       puts delimiter
     end
 
     def self.error_exit(message, current_command, exit_status)
-      puts(('*' * 78).colorize(color: :red))
-      puts "a2obrew: #{message}".colorize(color: :red)
-      puts(('*' * 78).colorize(color: :red))
+      puts Rainbow('*' * 78).color(:red)
+      puts Rainbow("a2obrew: #{message}").color(:red)
+      puts Rainbow('*' * 78).color(:red)
 
       if current_command
         puts 'You can re-execute this phase with the command below.'
-        puts current_command.colorize(color: :black, background: :white)
+        puts current_command.color(:black).background(:white)
       end
 
       exit exit_status
