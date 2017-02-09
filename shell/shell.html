@@ -376,6 +376,10 @@
         window.requestAnimationFrame(raf);
     };
     window.start = function() {
+      var canvas = document.getElementById("app-canvas");
+      canvas.addEventListener("wheel", function(e) {
+        e.preventDefault();
+      });
       var ua = navigator.userAgent || navigator.vendor || window.opera;
       if (ua.match(/iPad|iPhone|iPod|Android|(IE| )Mobile[;\/ ]| Tablet;/i)) {
         // TODO: warn for mobile devices
