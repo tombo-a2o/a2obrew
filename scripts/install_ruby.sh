@@ -33,7 +33,7 @@ fi
 
 if [ -d ${RBENV}/plugins/ruby-build ]; then
   echo "* ruby-build has already been installed"
-  if ! rbenv install --list | grep -F ${RUBY_VERSION}" > /dev/null; then
+  if ! rbenv install --list | grep -F ${RUBY_VERSION} > /dev/null; then
     (cd ${RBENV}/plugins/ruby-build && git pull)
   fi
 else
