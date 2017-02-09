@@ -405,7 +405,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       // initializing screen size
-      var isLandscape = (Module['orientation']==='landscape');
+      var isLandscape = (Module['deviceOrientation']==='landscape');
       Module['initialDeviceOrientation'] = isLandscape? 3: 1;
       var width;
       var height;
