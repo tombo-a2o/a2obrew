@@ -1,9 +1,10 @@
+# frozen_string_literal: true
 require_relative 'cli_base'
 require_relative 'xcode2ninja'
 
 module A2OBrew
   class XcodeBuild < CLIBase # rubocop:disable Metrics/ClassLength
-    PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'.freeze
+    PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'
 
     def self.completions(_commands)
       # FIXME: implement
@@ -28,7 +29,7 @@ module A2OBrew
 
     def read_project_config(path)
       if File.exist?(path)
-        config = eval File.read(path) # rubocop:disable Lint/Eval
+        config = eval File.read(path) # rubocop:disable Security/Eval
         unless config[:version] == 1
           raise Informative, '#{BUILD_CONFIG_RB_PATH} version should be 1'
         end

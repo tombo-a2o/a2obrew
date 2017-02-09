@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'git'
 require_relative 'util'
 require_relative 'cli_base'
@@ -51,7 +52,7 @@ module A2OBrew
       build_main(:clean, proj_names, target)
     end
 
-    no_commands do
+    no_commands do # rubocop:disable Metrics/BlockLength
       def upgrade_main(proj_names, target)
         update_main(proj_names)
         build_main(:autogen, proj_names)
@@ -80,7 +81,7 @@ module A2OBrew
         check_emsdk_env
         check_target(target)
         depends = A2OCONF[:depends]
-        depends[:projects].each do |proj|
+        depends[:projects].each do |proj| # rubocop:disable Metrics/BlockLength
           @current_command = "a2obrew libraries #{command} #{proj[:name]}"
 
           next unless proj_names.empty? || proj_names.include?(proj[:name])
@@ -109,13 +110,11 @@ module A2OBrew
               Util.mkdir_p(build_target_path)
             end
 
-            cmd = proj[command] % {
-              project_path: proj_path,
-              build_target_path: build_target_path,
-              emscripten_system_local_path: emscripten_system_local_path,
-              cppflags: target ? A2OCONF[:targets][target.intern][:cppflags] : nil,
-              lflags: target ? A2OCONF[:targets][target.intern][:lflags] : nil
-            }
+            cmd = format(proj[command], project_path: proj_path,
+                                        build_target_path: build_target_path,
+                                        emscripten_system_local_path: emscripten_system_local_path,
+                                        cppflags: target ? A2OCONF[:targets][target.intern][:cppflags] : nil,
+                                        lflags: target ? A2OCONF[:targets][target.intern][:lflags] : nil)
 
             Util.cmd_exec "cd #{work_path} && #{cmd}", "Build Error: stop a2obrew libraries #{command} #{proj[:name]}"
           end
@@ -163,10 +162,8 @@ EOF
 
     def build_path(project_path, target, project_conf)
       if project_conf[:build_path]
-        project_conf[:build_path] % {
-          project_path: project_path,
-          target: target
-        }
+        format(project_conf[:build_path], project_path: project_path,
+                                          target: target)
       else
         "#{project_path}/build/#{target}"
       end
@@ -174,10 +171,8 @@ EOF
 
     def build_target_path(project_path, target, project_conf)
       if project_conf[:build_target_path]
-        project_conf[:build_target_path] % {
-          project_path: project_path,
-          target: target
-        }
+        format(project_conf[:build_target_path], project_path: project_path,
+                                                 target: target)
       else
         "#{project_path}/build/#{target}"
       end

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'set'
 require 'json'
 require 'xcodeproj'
@@ -455,7 +456,7 @@ module A2OBrew
       icon_asset_catalog = nil
       icon2x = nil
       icon = nil
-      phase.files_references.each do |files_ref|
+      phase.files_references.each do |files_ref| # rubocop:disable Metrics/BlockLength
         case files_ref
         when Xcodeproj::Project::Object::PBXFileReference
           files = [files_ref]
@@ -465,7 +466,7 @@ module A2OBrew
           raise Informative, "Don't support the file #{files_ref.class.name}."
         end
 
-        files.each do |file|
+        files.each do |file| # rubocop:disable Metrics/BlockLength
           local_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
 
           next if resource_filter && !resource_filter.call(local_path.to_s)
@@ -743,7 +744,7 @@ module A2OBrew
 
       enable_objc_arc = build_setting(target, build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
-      phase.files_references.each do |file|
+      phase.files_references.each do |file| # rubocop:disable Metrics/BlockLength
         if file.parent.isa != 'PBXGroup'
           puts '[WARN] Orphan file: ' + file.name
           next
@@ -794,7 +795,7 @@ module A2OBrew
         object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
-        file_cflags = '-fobjc-arc '
+        file_cflags = '-fobjc-arc '.dup
 
         case File.extname(source_path)
         when '.mm', '.cpp', '.cxx', '.cc'
