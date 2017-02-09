@@ -839,39 +839,14 @@ module A2OBrew
       }
     end
 
-    def generate_runtime_parameters(active_project_config) # rubocop:disable all
+    def generate_runtime_parameters(active_project_config)
       runtime_parameters = active_project_config[:runtime_parameters] || {}
-
-      code = []
-
-      proxy_server = runtime_parameters[:http_proxy_server]
-      code << %(Module['proxyServer'] = "#{proxy_server}";) if proxy_server
-
-      proxy_url_prefixes = runtime_parameters[:http_proxy_url_prefixes]
-      if proxy_url_prefixes
-        code << %(Module['proxyUrlPrefixes'] = #{proxy_url_prefixes.to_json};)
-      end
-
-      screen_modes = runtime_parameters[:screen_modes]
-      code << if screen_modes
-                %(Module['screenModes'] = #{screen_modes.to_json};)
-              else
-                %(Module['screenModes'] = [{width:640, height:1136, scale:2.0}];)
-              end
-
-      http_logging = runtime_parameters[:http_logging]
-      code << %(Module['httpLogging'] = #{http_logging};) if http_logging
-
-      auto_start = runtime_parameters[:auto_start]
-      code << %(Module['autoStart'] = #{auto_start};) if auto_start
-
-      keypad_type = runtime_parameters[:keypad_type]
-      code << %(Module['keypadType'] = '#{keypad_type}';) if keypad_type
-
-      orientation = runtime_parameters[:initial_device_orientation]
-      code << %(Module['initialDeviceOrientation'] = '#{orientation}';) if orientation
-
-      code.join('\n')
+      runtime_parameters[:screen_modes] ||= [{
+        width: 640, height: 1136, scale: 2.0
+      }]
+      runtime_parameters.map do |name, value|
+        %(Module['#{name.to_s.to_camel}'] = #{value.to_json};)
+      end.join('\n')
     end
 
     def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength

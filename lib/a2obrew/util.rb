@@ -8,6 +8,15 @@ module MakeMakefile
   end
 end
 
+class String
+  def to_camel
+    split('_').each_with_index.map do |w, i|
+      w[0] = w[0].upcase if i > 0
+      w
+    end.join
+  end
+end
+
 module A2OBrew
   class CmdExecException < StandardError
     attr_reader :exit_status
