@@ -279,12 +279,6 @@
           if (text) Module.printErr('[post-exception status] ' + text);
         };
       };
-      Module['postRun'].push(function() {
-        var ua = navigator.userAgent || navigator.vendor || window.opera;
-        if (!ua.match(/iPad|iPhone|iPod|Android|(IE| )Mobile[;\/ ]| Tablet;/i)) {
-          Module['initialDeviceOrientation'] = 1;
-        }
-      });
     </script>
     <script type="text/javascript" src="runtime_parameters.js"></script>
     <script>
@@ -381,6 +375,11 @@
         window.requestAnimationFrame(raf);
     };
     window.start = function() {
+      var ua = navigator.userAgent || navigator.vendor || window.opera;
+      if (ua.match(/iPad|iPhone|iPod|Android|(IE| )Mobile[;\/ ]| Tablet;/i)) {
+        // TODO: warn for mobile devices
+        ;
+      }
       switch(Module['keypadType']) {
         case '3way-down':
           // add key listener
@@ -400,6 +399,33 @@
     };
 
     document.addEventListener('DOMContentLoaded', function() {
+      // initializing screen size
+      var isLandscape = (Module['orientation']==='landscape');
+      Module['initialDeviceOrientation'] = isLandscape? 3: 1;
+      var width;
+      var height;
+      if(isLandscape) {
+        width = Module['screenModes'][0].height;
+        height = Module['screenModes'][0].width;
+      } else {
+        width = Module['screenModes'][0].width;
+        height = Module['screenModes'][0].height;
+      }
+
+      // canvas
+      var canvas = document.getElementById("app-canvas");
+      canvas.width = width;
+      canvas.height = height;
+      // playground
+      var playgroundElement = document.getElementsByClassName("playground-main")[0];
+      playgroundElement.style.width = width + "px";
+      playgroundElement.style.height = height + "px";
+      // background image
+      var backgroundImageElement = playgroundElement.getElementsByTagName("img")[0];
+      backgroundImageElement.width = width;
+      backgroundImageElement.height = height;
+
+      // initializing keypad
       var keypadElement = document.getElementsByClassName('playground-keypad-' + Module['keypadType'])[0];
       keypadElement && (keypadElement.style.display = "block");
       if(Module['autoStart']) {
