@@ -1,0 +1,155 @@
+body {
+  padding: 0;
+  margin: 0;
+
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+section.header {
+  position: relative;
+  left: 0;
+  height: 50px;
+
+  background-color: #212121;
+}
+section.header-container {
+  position: absolute;
+  left: 0;
+  width: 100%
+}
+section.header-center {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50px;
+  top: 6px;
+  margin:0 auto;
+  width: 100px;
+}
+div.header-font-icon {
+  position: relative;
+  width: 50px;
+  height: 50px;
+
+  float: left;
+  color: #999;
+  font-size: 30px;
+  text-align: center;
+}
+div.header-right {
+  position: absolute;
+  right: 7px;
+  top: 6px;
+  height: 50px;
+}
+div.header-left {
+  position: absolute;
+  top: 8px;
+  left: 7px;
+  height: 36px;
+}
+section#status {
+  position: relative;
+  left: 0;
+  height: 15px;
+  padding: 4px;
+
+  color: #aaa;
+  font-size: 13px;
+  background-color: #373737;
+}
+section.playground {
+  position: relative;
+  padding: 5px;
+
+  background-color: #000;
+}
+section.playground-main {
+  position: relative;
+  width: 320px;
+  height: 480px;
+  margin: 0 auto;
+}
+div.playground-image-filter {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+
+  background-color: rgba(0, 0, 0, 0.8);
+}
+section.playground-play-button {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  margin: auto;
+
+  font-size: 100px;
+  text-align: center;
+}
+section.playground-keypad-tap {
+  text-align: center;
+  font-size: 50px;
+  display: none;
+}
+section.playground-keypad-3way-down {
+  text-align: center;
+  font-size: 50px;
+  display: none;
+}
+section.header a, section.playground a {
+  color: #999;
+  text-decoration: none;
+}
+section.header a:hover, section.playground a:hover {
+  color: #fff;
+}
+section.app-markets {
+  margin: 20px;
+
+  text-align: center;
+}
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+.tooltip-text {
+  visibility: hidden;
+  position: absolute;
+  z-index: 1;
+
+  width: 80px;
+  padding: 5px 0;
+  top: 100%;
+  left: 50%;
+
+  color: #ddd;
+  font-size: 13px;
+  text-align: center;
+
+  background-color: #181818;
+  border-radius: 6px;
+}
+.tooltip-text-center {
+  margin-left: -40px;
+}
+.tooltip-text-left {
+  margin-left: -20px;
+}
+.tooltip-text-right {
+  margin-left: -70px;
+}
+.tooltip-text-em {
+  color: #fcc;
+}
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+}
+#app-canvas {
+  cursor: pointer;
+  display: none;
+}
