@@ -82,7 +82,7 @@
     }, 1); // delaying even 1ms is enough to allow compilation memory to be reclaimed
   };
   var locale = 'en';
-  window.start = function() {
+  var launch = function() {
     // show warning if this is mobile
     var ua = navigator.userAgent || navigator.vendor || window.opera;
     if (ua.match(/iPad|iPhone|iPod|Android|(IE| )Mobile[;\/ ]| Tablet;/i)) {
@@ -257,19 +257,37 @@
     var canvas = document.getElementById('app-canvas');
     canvas.width = width;
     canvas.height = height;
+
     // playground
     var playgroundElement = document.getElementsByClassName('playground-main')[0];
     playgroundElement.style.width = width + 'px';
     playgroundElement.style.height = height + 'px';
+
     // background image
     var backgroundImageElement = playgroundElement.getElementsByTagName('img')[0];
     backgroundImageElement.width = width;
     backgroundImageElement.height = height;
+
     // initializing keypad
     var keypadElement = document.getElementsByClassName('playground-keypad-' + A2OShell.keypad)[0];
     keypadElement && (keypadElement.style.display = 'block');
+
+    // adding events on buttons
+    document.getElementById('button-launch').addEventListener('click', function (e) {
+      launch();
+      return false;
+    });
+    document.getElementById('button-tweet').addEventListener('click', function (e) {
+      window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(window.location) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
+      return false;
+    });
+    document.getElementById('button-share-on-facebook').addEventListener('click', function (e) {
+      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location));
+      return false;
+    });
+    // auto launch
     if (A2OShell.autoLaunch) {
-      start();
+      launch();
     }
   });
 }());

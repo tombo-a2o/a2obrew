@@ -13,10 +13,10 @@
       <section class="header-container">
         <section class="header-center">
           <div class="header-font-icon">
-            <a class="tooltip" href="https://twitter.com/"><i class="fa fa-twitter-square"></i><span class="tooltip-text tooltip-text-center">Share on Twitter</span></a>
+            <a class="tooltip" id="button-tweet"><i class="fa fa-twitter-square"></i><span class="tooltip-text tooltip-text-center">Share on Twitter</span></a>
           </div>
           <div class="header-font-icon">
-            <a class="tooltip" href="https://facebook.com/"><i class="fa fa-facebook-square"></i><span class="tooltip-text tooltip-text-center">Share on Facebook</span></a>
+            <a class="tooltip" id="button-share-on-facebook"><i class="fa fa-facebook-square"></i><span class="tooltip-text tooltip-text-center">Share on Facebook</span></a>
           </div>
         </section>
       </section>
@@ -46,7 +46,7 @@
           <img width="320" height="480" src="//:0">
           <div class="playground-image-filter"></div>
           <section class="playground-play-button">
-            <a href="#" onclick="start();return false;"><i class="fa fa-play-circle" aria-hidden="true"></i></a>
+            <a href="#" id="button-launch"><i class="fa fa-play-circle" aria-hidden="true"></i></a>
           </section>
         </section>
         <canvas width="320" height="480" id="app-canvas" oncontextmenu="event.preventDefault()"></canvas>
@@ -70,6 +70,5 @@
     </section>
     <script type="text/javascript" src="runtime_parameters.js"></script>
     <script type="text/javascript" src="./shell_files/javascripts/shell.js"></script>
-    </script>
   </body>
 </html>
