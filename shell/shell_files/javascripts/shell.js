@@ -37,14 +37,16 @@
   Module.setStatus = function(text) {
     if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
     if (text === Module.setStatus.text) return;
+    var statusElement = document.getElementById('status');
+    statusElement.style.display = (text === '' ? 'none' : 'table');
     var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
     var now = Date.now();
     if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
     if (m) {
       text = m[1] + ": " + (parseInt(m[2]) / parseInt(m[4]) * 100).toFixed(2) + "%";
     }
-    var statusElement = document.getElementById('status');
-    statusElement.innerHTML = text;
+    var statusMessageElement = document.getElementById('status-message');
+    statusMessageElement.textContent = text;
   };
   Module.totalDependencies = 0;
   Module.monitorRunDependencies = function(left) {
