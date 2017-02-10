@@ -97,28 +97,23 @@ section.playground-play-button {
   font-size: 100px;
   text-align: center;
 }
-section.playground-keypad-tap {
+section.playground-keypad {
   text-align: center;
   font-size: 50px;
   display: none;
 }
-section.playground-keypad-3way-down {
-  text-align: center;
-  font-size: 50px;
-  display: none;
-}
-section.header a {
+section.header a, section.playground-keypad a {
   color: #333333;
   text-decoration: none;
 }
-section.playground a {
+section.preview-image a {
   color: #ffffff;
   text-decoration: none;
 }
-section.header a:hover {
+section.header a:hover, section.playground-keypad a:hover {
   color: #666666;
 }
-section.playground a:hover {
+section.preview-image a:hover {
   color: #cccccc;
 }
 section.app-markets {

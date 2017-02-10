@@ -271,7 +271,7 @@
     backgroundImageElement.height = height;
 
     // initializing keypad
-    var keypadElement = document.getElementsByClassName('playground-keypad-' + A2OShell.keypad)[0];
+    var keypadElement = document.getElementById('keypad-' + A2OShell.keypad);
     keypadElement && (keypadElement.style.display = 'block');
 
     // adding events on buttons
