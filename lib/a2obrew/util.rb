@@ -64,7 +64,7 @@ module A2OBrew
 
       if current_command
         puts 'You can re-execute this phase with the command below.'
-        puts current_command.color(:black).background(:white)
+        puts Rainbow(current_command).color(:black).background(:white)
       end
 
       exit exit_status
