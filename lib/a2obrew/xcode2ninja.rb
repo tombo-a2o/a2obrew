@@ -854,7 +854,7 @@ module A2OBrew
       }]
       emscripten_parameters = hash_key_to_camel(emscripten_parameters)
 
-      # shell parameters should be set into the variable `a2o_shell`
+      # shell parameters should be set into the variable `A2OShell`
       shell_parameters = active_project_config.dig(:runtime_parameters, :shell) || {}
       shell_parameters = hash_key_to_camel(shell_parameters)
 
