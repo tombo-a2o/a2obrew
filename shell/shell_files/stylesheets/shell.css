@@ -9,7 +9,7 @@ section.header {
   left: 0;
   height: 50px;
 
-  background-color: #212121;
+  background-color: #eeeeee;
 }
 section.header-container {
   position: absolute;
@@ -31,7 +31,7 @@ div.header-font-icon {
   height: 50px;
 
   float: left;
-  color: #999;
+  color: #111111;
   font-size: 30px;
   text-align: center;
 }
@@ -68,8 +68,6 @@ section#status-message {
 section.playground {
   position: relative;
   padding: 5px;
-
-  background-color: #000;
 }
 section.playground-main {
   position: relative;
@@ -109,12 +107,19 @@ section.playground-keypad-3way-down {
   font-size: 50px;
   display: none;
 }
-section.header a, section.playground a {
-  color: #999;
+section.header a {
+  color: #333333;
   text-decoration: none;
 }
-section.header a:hover, section.playground a:hover {
-  color: #fff;
+section.playground a {
+  color: #ffffff;
+  text-decoration: none;
+}
+section.header a:hover {
+  color: #666666;
+}
+section.playground a:hover {
+  color: #cccccc;
 }
 section.app-markets {
   margin: 20px;
