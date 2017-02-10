@@ -266,14 +266,14 @@ module A2OBrew
           # select '_'+name where type == "T" or "D" or "S"
         },
         {
-          rule_name: 'html',
+          rule_name: 'compose',
           description: 'generate executables: ${out}',
           command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o ${options} -o ${html_path} ${linked_objects}' # rubocop:disable LineLength
         },
         {
           rule_name: 'generate_products',
           description: 'generate products',
-          command: 'cp -a ${pre_products_dir}/ ${products_dir}'
+          command: 'cp -a ${pre_products_dir}/ ${products_dir} && cp ${shell_html_path} ${html_path}'
         },
         {
           rule_name: 'archive',
@@ -374,6 +374,10 @@ module A2OBrew
 
     def products_dir(a2o_target)
       "#{build_dir(a2o_target)}/products"
+    end
+
+    def products_html_path(a2o_target)
+      "#{products_dir(a2o_target)}/application.html"
     end
 
     def products_application_dir(a2o_target)
@@ -668,12 +672,12 @@ module A2OBrew
       }
     end
 
-    def file_link(in_relative_path_from_out_path, out_path, dep_paths)
+    def file_link(in_relative_path_from_out_path, out_path)
       {
         builds: [{
           outputs: [out_path],
           rule_name: 'ln_sf',
-          inputs: dep_paths,
+          inputs: [],
           build_variables: {
             'source' => in_relative_path_from_out_path
           }
@@ -951,12 +955,6 @@ module A2OBrew
         a2o_options << '--separate-asm'
       end
 
-      # common shell html
-      emscripten_shell_path = shell_template_html_path
-
-      a2o_options << "--shell-file #{emscripten_shell_path}"
-      dep_paths << emscripten_shell_path
-
       # data file
       a2o_options << "--pre-js #{data_js_path(a2o_target)}"
       dep_paths << data_js_path(a2o_target)
@@ -985,7 +983,7 @@ module A2OBrew
 
       builds << {
         outputs: pre_products_outputs,
-        rule_name: 'html',
+        rule_name: 'compose',
         inputs: linked_objects + dep_paths,
         build_variables: {
           'options' => a2o_options.join(' '),
@@ -1013,10 +1011,12 @@ module A2OBrew
       builds << {
         outputs: products_outputs,
         rule_name: 'generate_products',
-        inputs: products_inputs,
+        inputs: products_inputs + [shell_template_html_path],
         build_variables: {
           'pre_products_dir' => pre_products_dir(a2o_target),
-          'products_dir' => products_dir(a2o_target)
+          'products_dir' => products_dir(a2o_target),
+          'html_path' => products_html_path(a2o_target),
+          'shell_html_path' => shell_template_html_path
         }
       }
 
@@ -1087,7 +1087,7 @@ module A2OBrew
       builds += f[:builds]
 
       # add a symbolic link
-      f = file_link('../../shell_files', shell_files_link_dir(a2o_target), [html_path(a2o_target)])
+      f = file_link('../../shell_files', shell_files_link_dir(a2o_target))
       builds += f[:builds]
 
       builds
