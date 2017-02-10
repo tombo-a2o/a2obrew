@@ -6,6 +6,60 @@
     }
   };
 
+  /* setup Module */
+  Module.preRun = [];
+  Module.postRun = [];
+  Module.print = function(text) {
+    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+    console.log(text);
+  };
+  Module.printErr = function(text) {
+    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+    if (0) { // XXX disabled for safety typeof dump == 'function') {
+      dump(text + '\n'); // fast, straight to the real console
+    } else {
+      console.error(text);
+    }
+  };
+  Module.canvas = (function() {
+    var canvas = document.getElementById('app-canvas');
+
+    // As a default initial behavior, pop up an alert when webgl context is lost. To make your
+    // application robust, you may want to override this behavior before shipping!
+    // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+    canvas.addEventListener('webglcontextlost', function(e) {
+      alert('Please reload the page');
+      e.preventDefault();
+    }, false);
+
+    return canvas;
+  })();
+  Module.setStatus = function(text) {
+    if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+    if (text === Module.setStatus.text) return;
+    var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+    var now = Date.now();
+    if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+    if (m) {
+      text = m[1] + ": " + (parseInt(m[2]) / parseInt(m[4]) * 100).toFixed(2) + "%";
+    }
+    var statusElement = document.getElementById('status');
+    statusElement.innerHTML = text;
+  };
+  Module.totalDependencies = 0;
+  Module.monitorRunDependencies = function(left) {
+    this.totalDependencies = Math.max(this.totalDependencies, left);
+    Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+  };
+
+  window.onerror = function(event) {
+    // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+    Module.setStatus('Exception thrown, see JavaScript console');
+    Module.setStatus = function(text) {
+      if (text) Module.printErr('[post-exception status] ' + text);
+    };
+  };
+
   var script = document.createElement('script');
   script.src = 'application.asm.js';
   script.onload = function() {

@@ -844,13 +844,16 @@ module A2OBrew
       emscripten_parameters[:screen_modes] ||= [{
         width: 640, height: 1136, scale: 2.0
       }]
+      emscripten_parameters = Hash[
+        emscripten_parameters.map do |name, value|
+          [name.to_s.to_camel, value]
+        end
+      ]
 
       # shell parameters should be set into the variable `a2o_shell`
       shell_parameters = active_project_config.dig(:runtime_parameters, :shell) || {}
 
-      em_js = emscripten_parameters.map do |name, value|
-        %(Module[#{name.to_s.to_camel.to_json}] = #{value.to_json};)
-      end
+      em_js = "var Module = #{JSON.pretty_generate(emscripten_parameters)};"
       shell_js = "var A2OShell = #{JSON.pretty_generate(shell_parameters)};"
       [em_js, shell_js].join("\n").gsub("\n", '\n')
     end
