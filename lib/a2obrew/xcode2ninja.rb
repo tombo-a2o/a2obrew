@@ -851,7 +851,7 @@ module A2OBrew
       em_js = emscripten_parameters.map do |name, value|
         %(Module[#{name.to_s.to_camel.to_json}] = #{value.to_json};)
       end
-      shell_js = "A2OShell = #{JSON.pretty_generate(shell_parameters)};"
+      shell_js = "var A2OShell = #{JSON.pretty_generate(shell_parameters)};"
       [em_js, shell_js].join("\n").gsub("\n", '\n')
     end
 
