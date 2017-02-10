@@ -366,7 +366,7 @@ module A2OBrew
       "#{pre_products_tombo_dir(a2o_target)}/parameters.json"
     end
 
-    def runtime_parameters_path(a2o_target)
+    def runtime_parameters_js_path(a2o_target)
       "#{pre_products_application_dir(a2o_target)}/runtime_parameters.js"
     end
 
@@ -831,20 +831,28 @@ module A2OBrew
       builds
     end
 
-    def generate_platform_parameters(active_project_config)
+    def generate_platform_parameters_json(active_project_config)
       {
-        http_proxy_url_prefixes: active_project_config.dig(:runtime_parameters, :http_proxy_url_prefixes) || []
-      }
+        # Steal proxy urls from runtime_parameters
+        http_proxy_url_prefixes: active_project_config.dig(:runtime_parameters, :emscripten, :http_proxy_url_prefixes) || []
+      }.to_json
     end
 
-    def generate_runtime_parameters(active_project_config)
-      runtime_parameters = active_project_config[:runtime_parameters] || {}
-      runtime_parameters[:screen_modes] ||= [{
+    def generate_runtime_parameters_js(active_project_config)
+      # emscripten parameters should be set into the variable `Module`.
+      emscripten_parameters = active_project_config.dig(:runtime_parameters, :emscripten) || {}
+      emscripten_parameters[:screen_modes] ||= [{
         width: 640, height: 1136, scale: 2.0
       }]
-      runtime_parameters.map do |name, value|
+
+      # shell parameters should be set into the variable `a2o_shell`
+      shell_parameters = active_project_config.dig(:runtime_parameters, :shell) || {}
+
+      em_js = emscripten_parameters.map do |name, value|
         %(Module['#{name.to_s.to_camel}'] = #{value.to_json};)
-      end.join('\n')
+      end
+      shell_js = "A2OShell = #{JSON.pretty_generate(shell_parameters)};"
+      [em_js, shell_js].join("\n").gsub("\n", '\n')
     end
 
     def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
@@ -895,17 +903,17 @@ module A2OBrew
         rule_name: 'echo',
         inputs: [],
         build_variables: {
-          contents: generate_platform_parameters(active_project_config).to_json.shell_quote_escape
+          contents: generate_platform_parameters_json(active_project_config).shell_quote_escape
         }
       }
 
       # extra js
       builds << {
-        outputs: [runtime_parameters_path(a2o_target)],
+        outputs: [runtime_parameters_js_path(a2o_target)],
         rule_name: 'echo',
         inputs: [],
         build_variables: {
-          contents: generate_runtime_parameters(active_project_config).shell_quote_escape
+          contents: generate_runtime_parameters_js(active_project_config).shell_quote_escape
         }
       }
 
@@ -946,7 +954,7 @@ module A2OBrew
       dep_paths << data_js_path(a2o_target)
 
       # extra js
-      dep_paths << runtime_parameters_path(a2o_target)
+      dep_paths << runtime_parameters_js_path(a2o_target)
 
       # static link frameworks
       a2o_options += (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries).map { |f| "-framework #{f.ninja_escape}" }

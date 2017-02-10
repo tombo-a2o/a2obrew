@@ -112,7 +112,7 @@
       window.requestAnimationFrame(raf);
     };
 
-    switch (Module.keypadType) {
+    switch (A2OShell.keypad) {
       case 'tap':
         var button = document.getElementById('button-tap');
         button.addEventListener('mousedown', function (e) {
@@ -212,7 +212,7 @@
     backgroundImageElement.width = width;
     backgroundImageElement.height = height;
     // initializing keypad
-    var keypadElement = document.getElementsByClassName('playground-keypad-' + Module.keypadType)[0];
+    var keypadElement = document.getElementsByClassName('playground-keypad-' + A2OShell.keypad)[0];
     keypadElement && (keypadElement.style.display = 'block');
     if (Module.autoStart) {
       start();
