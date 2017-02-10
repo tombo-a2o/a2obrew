@@ -1,7 +1,7 @@
 (function() {
   var messages = {
     warningOnMobile: {
-      en: 'It might not work correctly on mobile devices due to the short of memory or CPU power.\nAre you sure to start this app?',
+      en: 'This app may not work correctly on mobile devices due to insufficient memory or CPU power.\nWould you like to launch the app?',
       ja: 'モバイル端末で実行する場合\u3001メモリやCPUパワーの不足で正常に実行されない恐れがあります\u3002\n実行してもよろしいですか\uFF1F'
     }
   };
