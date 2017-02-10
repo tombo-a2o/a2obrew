@@ -831,6 +831,14 @@ module A2OBrew
       builds
     end
 
+    def hash_key_to_camel(input_hash)
+      Hash[
+        input_hash.map do |name, value|
+          [name.to_s.to_camel, value]
+        end
+      ]
+    end
+
     def generate_platform_parameters_json(active_project_config)
       {
         # Steal proxy urls from runtime_parameters
@@ -844,14 +852,11 @@ module A2OBrew
       emscripten_parameters[:screen_modes] ||= [{
         width: 640, height: 1136, scale: 2.0
       }]
-      emscripten_parameters = Hash[
-        emscripten_parameters.map do |name, value|
-          [name.to_s.to_camel, value]
-        end
-      ]
+      emscripten_parameters = hash_key_to_camel(emscripten_parameters)
 
       # shell parameters should be set into the variable `a2o_shell`
       shell_parameters = active_project_config.dig(:runtime_parameters, :shell) || {}
+      shell_parameters = hash_key_to_camel(shell_parameters)
 
       em_js = "var Module = #{JSON.pretty_generate(emscripten_parameters)};"
       shell_js = "var A2OShell = #{JSON.pretty_generate(shell_parameters)};"

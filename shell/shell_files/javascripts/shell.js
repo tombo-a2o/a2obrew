@@ -268,7 +268,7 @@
     // initializing keypad
     var keypadElement = document.getElementsByClassName('playground-keypad-' + A2OShell.keypad)[0];
     keypadElement && (keypadElement.style.display = 'block');
-    if (Module.autoStart) {
+    if (A2OShell.autoLaunch) {
       start();
     }
   });
