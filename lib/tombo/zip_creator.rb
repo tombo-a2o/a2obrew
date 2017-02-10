@@ -23,8 +23,6 @@ module Tombo
         if File.directory?(input_path)
           zip.mkdir(output_path)
           recursive_zip_add(zip, input_path, output_path)
-        elsif File.symlink?(input_path)
-          # Do Nothing
         else
           zip.get_output_stream(output_path) do |f|
             Logger.logger.info "Add #{output_path}"
