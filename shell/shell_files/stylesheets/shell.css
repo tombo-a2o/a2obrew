@@ -106,14 +106,14 @@ section.header a, section.playground-keypad a {
   color: #333333;
   text-decoration: none;
 }
-section.preview-image a {
+section#preview-image a {
   color: #ffffff;
   text-decoration: none;
 }
 section.header a:hover, section.playground-keypad a:hover {
   color: #666666;
 }
-section.preview-image a:hover {
+section#preview-image a:hover {
   color: #cccccc;
 }
 section.app-markets {
