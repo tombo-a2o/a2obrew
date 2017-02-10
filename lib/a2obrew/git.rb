@@ -4,7 +4,7 @@ require_relative 'util'
 module A2OBrew
   class Git
     # git pull if remote updated
-    def self.update(root_path, branch_name, repository_uri) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/LineLength
+    def self.update(root_path, branch_name, repository_uri) # rubocop:disable Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity
       git_path = "#{root_path}/.git"
       if File.directory?(root_path) && File.directory?(git_path)
         # git clone has already done
@@ -15,7 +15,8 @@ module A2OBrew
         current_branch = `#{git_command} rev-parse --abbrev-ref HEAD`
 
         if branch_name && current_branch != branch_name
-          Util.cmd_exec "#{git_command} checkout #{branch_name}", "fail to change the branch from #{current_branch} to #{branch_name}" # rubocop:disable Metrics/LineLength
+          Util.cmd_exec "#{git_command} checkout #{branch_name}",
+                        "fail to change the branch from #{current_branch} to #{branch_name}"
         end
 
         # check the repository is up to date or not
@@ -42,7 +43,8 @@ module A2OBrew
                         else
                           ''
                         end
-        Util.cmd_exec "git clone #{repository_uri} #{branch_option} #{root_path}", "git clone fails from #{repository_uri} with the branch #{branch_name} to #{root_path}" # rubocop:disable Metrics/LineLength
+        Util.cmd_exec "git clone #{repository_uri} #{branch_option} #{root_path}",
+                      "git clone fails from #{repository_uri} with the branch #{branch_name} to #{root_path}"
       end
     end
   end

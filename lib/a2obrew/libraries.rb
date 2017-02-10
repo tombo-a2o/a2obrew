@@ -4,7 +4,7 @@ require_relative 'util'
 require_relative 'cli_base'
 
 module A2OBrew
-  class Libraries < CLIBase # rubocop:disable Metrics/ClassLength
+  class Libraries < CLIBase
     desc 'upgrade PROJECT_NAMES', 'upgrade (update & build) dependent libraries'
     method_option :target, aliases: '-t', default: 'release', desc: 'Build target (ex. release)'
     def upgrade(*proj_names)
@@ -52,7 +52,7 @@ module A2OBrew
       build_main(:clean, proj_names, target)
     end
 
-    no_commands do # rubocop:disable Metrics/BlockLength
+    no_commands do
       def upgrade_main(proj_names, target)
         update_main(proj_names)
         build_main(:autogen, proj_names)
@@ -77,11 +77,11 @@ module A2OBrew
       end
 
       # TODO: Refactor to rubocop compliant
-      def build_main(command, proj_names, target = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/LineLength
+      def build_main(command, proj_names, target = nil) # rubocop:disable Metrics/PerceivedComplexity,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/LineLength
         check_emsdk_env
         check_target(target)
         depends = A2OCONF[:depends]
-        depends[:projects].each do |proj| # rubocop:disable Metrics/BlockLength
+        depends[:projects].each do |proj|
           @current_command = "a2obrew libraries #{command} #{proj[:name]}"
 
           next unless proj_names.empty? || proj_names.include?(proj[:name])

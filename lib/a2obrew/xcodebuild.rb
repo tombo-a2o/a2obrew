@@ -3,7 +3,7 @@ require_relative 'cli_base'
 require_relative 'xcode2ninja'
 
 module A2OBrew
-  class XcodeBuild < CLIBase # rubocop:disable Metrics/ClassLength
+  class XcodeBuild < CLIBase
     PROJECT_CONFIG_RB_PATH = 'a2o_project_config.rb'
 
     def self.completions(_commands)
@@ -88,11 +88,13 @@ module A2OBrew
       xcodeproj_build_config
     end
 
-    def generate_ninja_build(options) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
+    def generate_ninja_build(options) # rubocop:disable Metrics/AbcSize
       a2o_target = options[:target].intern
       proj_config_path, proj_config = load_project_config(options[:project_config])
       xcodeproj_path = search_xcodeproj_path(options[:xcodeproj_path])
-      xcodeproj_target = options[:xcodeproj_target] || proj_config[:xcodeproj_target] || File.basename(xcodeproj_path, '.xcodeproj') # rubocop:disable LineLength
+      xcodeproj_target = options[:xcodeproj_target] ||
+                         proj_config[:xcodeproj_target] ||
+                         File.basename(xcodeproj_path, '.xcodeproj')
       active_project_config = fetch_active_project_config(proj_config, a2o_target)
       xcodeproj_build_config = find_xcodeproj_build_config(active_project_config, a2o_target)
       ninja_path = "a2o/ninja/#{a2o_target}.ninja.build"

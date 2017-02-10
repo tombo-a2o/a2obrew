@@ -13,7 +13,7 @@ module Tombo
       end
     end
 
-    def self.recursive_zip_add(zip, input_dir_path, output_dir_path) # rubocop:disable Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity,Metrics/LineLength
+    def self.recursive_zip_add(zip, input_dir_path, output_dir_path)
       raise "#{input_dir_path} is not directory" unless File.directory?(input_dir_path)
       Dir.foreach(input_dir_path) do |file_name|
         next if file_name == '.' || file_name == '..'

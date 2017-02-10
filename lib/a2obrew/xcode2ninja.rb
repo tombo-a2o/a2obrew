@@ -42,7 +42,7 @@ module A2OBrew
       @a2obrew_path = a2obrew_path
     end
 
-    def xcode2ninja(output_dir, # rubocop:disable Metrics/MethodLength
+    def xcode2ninja(output_dir,
                     xcodeproj_target = nil, build_config_name = nil,
                     active_project_config = {}, a2o_target = nil)
       raise Informative, 'Please specify Xcode project.' unless @xcodeproj_path
@@ -92,7 +92,7 @@ module A2OBrew
       write_ninja_build(output_dir, target, build_config, a2o_target, builds, rules)
     end
 
-    def generate_build_statements(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/LineLength,Metrics/AbcSize,Metrics/CyclomaticComplexity
+    def generate_build_statements(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/LineLength,AbcSize,CyclomaticComplexity
       builds = []
       target.build_phases.each do |phase|
         builds += case phase
@@ -152,7 +152,7 @@ module A2OBrew
       builds
     end
 
-    def write_ninja_build(output_dir, _target, _build_config, a2o_target, builds, rules) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength
+    def write_ninja_build(output_dir, _target, _build_config, a2o_target, builds, rules) # rubocop:disable Metrics/AbcSize
       Util.mkdir_p(output_dir)
 
       path = File.join(output_dir, "#{a2o_target}.ninja.build")
@@ -214,12 +214,18 @@ module A2OBrew
         {
           rule_name: 'ibtool',
           description: 'ibtool ${in}',
-          command: 'ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compilation-directory `dirname ${temp_dir}` ${in} && ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --link ${resources_dir} ${temp_dir}' # rubocop:disable LineLength
+          command: 'ibtool --errors --warnings --notices --module ${module_name} '\
+                   '--target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text '\
+                   '--compilation-directory `dirname ${temp_dir}` ${in} && '\
+                   'ibtool --errors --warnings --notices --module ${module_name} '\
+                   '--target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text '\
+                   '--link ${resources_dir} ${temp_dir}'
         },
         {
           rule_name: 'ibtool2',
           description: 'ibtool ${in}',
-          command: 'ibtool --errors --warnings --notices --module ${module_name} --target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text --compile ${out} ${in}' # rubocop:disable LineLength
+          command: 'ibtool --errors --warnings --notices --module ${module_name} --target-device iphone '\
+                   '--minimum-deployment-target 9.0 --output-format human-readable-text --compile ${out} ${in}'
         },
         {
           rule_name: 'image-convert',
@@ -234,7 +240,8 @@ module A2OBrew
         {
           rule_name: 'file_packager',
           description: 'execute file packager to ${target}',
-          command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload ${packager_target_dir}@/ --js-output=${js_output} --no-heap-copy ${options} --use-preload-plugins" # rubocop:disable LineLength
+          command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload ${packager_target_dir}@/ "\
+                   '--js-output=${js_output} --no-heap-copy ${options} --use-preload-plugins'
         },
         # NOTE: A2O_LIBBSD_HEADERS indicates <stdlib.h> loads <bsd/stdlib.h> too.
         {
@@ -242,7 +249,8 @@ module A2OBrew
           description: 'compile ${source} to ${out}',
           deps: 'gcc',
           depfile: '${out}.d',
-          command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} -DA2O_LIBBSD_HEADERS -c ${source} -o ${out}' # rubocop:disable LineLength
+          command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} '\
+                   '-DA2O_LIBBSD_HEADERS -c ${source} -o ${out}'
         },
         {
           rule_name: 'link',
@@ -268,7 +276,7 @@ module A2OBrew
         {
           rule_name: 'compose',
           description: 'generate executables: ${out}',
-          command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o ${options} -o ${html_path} ${linked_objects}' # rubocop:disable LineLength
+          command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o ${options} -o ${html_path} ${linked_objects}'
         },
         {
           rule_name: 'generate_products',
@@ -452,8 +460,7 @@ module A2OBrew
 
     # phases
 
-    def resources_build_phase(_xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,Metrics/LineLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
-      # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
+    def resources_build_phase(_xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,AbcSize,LineLength,CyclomaticComplexity,PerceivedComplexity
       builds = []
       resources = []
 
@@ -472,7 +479,7 @@ module A2OBrew
           raise Informative, "Don't support the file #{files_ref.class.name}."
         end
 
-        files.each do |file| # rubocop:disable Metrics/BlockLength
+        files.each do |file|
           local_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
 
           next if resource_filter && !resource_filter.call(local_path.to_s)
@@ -688,7 +695,7 @@ module A2OBrew
       }
     end
 
-    def file_recursive_copy(in_path, out_dir, in_prefix_dir = '.') # rubocop:disable Metrics/MethodLength
+    def file_recursive_copy(in_path, out_dir, in_prefix_dir = '.')
       builds = []
       outputs = []
 
@@ -712,9 +719,7 @@ module A2OBrew
       }
     end
 
-    # rubocop:disable Metrics/LineLength
-    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
-      # FIXME: reduce Metrics/AbcSize,Metrics/MethodLength
+    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength,CyclomaticComplexity,PerceivedComplexity,LineLength
       builds = []
       objects = []
 
@@ -744,11 +749,18 @@ module A2OBrew
 
       # build sources
 
-      cc_flags = [framework_dir_options, header_options, lib_options, prefix_pch_options, other_cflags, preprocessor_definitions, a2o_project_flags(active_project_config, :cc)].join(' ')
+      cc_flags = [framework_dir_options,
+                  header_options,
+                  lib_options,
+                  prefix_pch_options,
+                  other_cflags,
+                  preprocessor_definitions,
+                  a2o_project_flags(active_project_config,
+                                    :cc)].join(' ')
 
       enable_objc_arc = build_setting(target, build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
-      phase.files_references.each do |file| # rubocop:disable Metrics/BlockLength
+      phase.files_references.each do |file|
         if file.parent.isa != 'PBXGroup'
           puts '[WARN] Orphan file: ' + file.name
           next
@@ -869,7 +881,7 @@ module A2OBrew
       [em_js, shell_js].join("\n").gsub("\n", '\n')
     end
 
-    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength
       builds = []
 
       # dynamic link libraries
@@ -950,7 +962,11 @@ module A2OBrew
         dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
       end
 
-      pre_products_outputs = [html_path(a2o_target), html_mem_path(a2o_target), js_path(a2o_target), platform_parameters_json_path(a2o_target), runtime_parameters_js_path(a2o_target)]
+      pre_products_outputs = [html_path(a2o_target),
+                              html_mem_path(a2o_target),
+                              js_path(a2o_target),
+                              platform_parameters_json_path(a2o_target),
+                              runtime_parameters_js_path(a2o_target)]
 
       if A2OCONF[:xcodebuild][:emscripten][:emcc][:separate_asm]
         pre_products_outputs << asm_js_path(a2o_target)
@@ -1025,7 +1041,6 @@ module A2OBrew
 
       builds
     end
-    # rubocop:enable Metrics/LineLength
 
     def static_library_build_phase(_xcodeproj, target, _build_config, _phase, _active_project_config, a2o_target)
       builds = []
@@ -1041,7 +1056,7 @@ module A2OBrew
       builds
     end
 
-    def frameworks_build_phase(_xcodeproj, _target, _build_config, phase, _active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize,LineLength
+    def frameworks_build_phase(_xcodeproj, _target, _build_config, phase, _active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize
       builds = []
 
       @frameworks = []
@@ -1059,7 +1074,9 @@ module A2OBrew
           proxy = file_ref.remote_ref
           remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
           # FIXME: determine remote target more appropriately
-          library_path = File.join(File.dirname(remote_object_file.path), pre_products_dir(a2o_target), file_ref.path) # rubocop:disable LineLength
+          library_path = File.join(File.dirname(remote_object_file.path),
+                                   pre_products_dir(a2o_target),
+                                   file_ref.path)
           @static_libraries_from_other_projects << library_path
         else
           raise Informative, "Unsupported file_ref #{file_ref}"
@@ -1097,7 +1114,7 @@ module A2OBrew
     end
 
     # utils
-    def build_setting(target, build_config, prop, type = nil) # rubocop:disable Metrics/MethodLength
+    def build_setting(target, build_config, prop, type = nil)
       # TODO: check xcconfig file
       default_setting = nil # TODO set iOS default
       project_setting = xcodeproj.build_settings(build_config.name)[prop]
@@ -1138,7 +1155,7 @@ module A2OBrew
       lower
     end
 
-    def expand(value, env, type = nil) # rubocop:disable Metrics/MethodLength,Metrics/PerceivedComplexity
+    def expand(value, env, type = nil)
       if value.is_a?(Array)
         value.map do |v|
           expand(v, env)

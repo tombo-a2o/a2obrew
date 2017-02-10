@@ -17,7 +17,7 @@ module A2OBrew
     end
 
     desc 'init [OPTIONS]', 'show shell script enables shims and autocompletion'
-    def init(*args) # rubocop:disable Metrics/MethodLength
+    def init(*args)
       print = false
 
       args.each do |arg|

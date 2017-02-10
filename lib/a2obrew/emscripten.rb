@@ -56,7 +56,12 @@ module A2OBrew
       end
 
       def build_main
-        Util.cmd_exec("cd #{a2obrew_path}/emsdk && ./emsdk install sdk-a2o-64bit && ./emsdk activate sdk-a2o-64bit && bash -c 'source ./emsdk_env.sh && emcc --clear-cache --clear-ports && emcc -O3 -s USE_LIBPNG=1 -s USE_ZLIB=1 #{a2obrew_path}/scripts/install-emscripten-ports.c'") # rubocop:disable Metrics/LineLength
+        Util.cmd_exec("cd #{a2obrew_path}/emsdk && "\
+                      './emsdk install sdk-a2o-64bit && '\
+                      './emsdk activate sdk-a2o-64bit && '\
+                      "bash -c 'source ./emsdk_env.sh && "\
+                      'emcc --clear-cache --clear-ports && '\
+                      "emcc -O3 -s USE_LIBPNG=1 -s USE_ZLIB=1 #{a2obrew_path}/scripts/install-emscripten-ports.c'")
       rescue CmdExecException => e
         error_exit(e.message, e.exit_status)
       end
