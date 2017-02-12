@@ -50,10 +50,10 @@ bin/a2obrew libraries autogen
 bin/a2obrew libraries configure libbsd
 bin/a2obrew libraries build libbsd
 bin/a2obrew libraries install libbsd
-# blocks-runtime
-bin/a2obrew libraries configure blocks-runtime
-bin/a2obrew libraries build blocks-runtime
-bin/a2obrew libraries install blocks-runtime
+# libclosure
+bin/a2obrew libraries configure libclosure
+bin/a2obrew libraries build libclosure
+bin/a2obrew libraries install libclosure
 # objc4
 bin/a2obrew libraries configure objc4
 bin/a2obrew libraries build objc4
@@ -96,3 +96,6 @@ bin/a2obrew libraries install Chameleon
 
 # Build sample projects (mainly for testing)
 ./scripts/build_sample_projects.sh
+
+# Clean sample projects (mainly for testing)
+./scripts/check_clean_sample_projects.sh
