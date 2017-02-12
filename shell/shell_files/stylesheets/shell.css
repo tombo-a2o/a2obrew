@@ -170,3 +170,10 @@ section.app-markets {
   cursor: pointer;
   display: none;
 }
+a.link-to-other-platforms {
+  text-decoration: none;
+}
+a.link-to-other-platforms img {
+  width: 202px;
+  height: 60px;
+}

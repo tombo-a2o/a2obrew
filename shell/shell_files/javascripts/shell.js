@@ -300,6 +300,10 @@
       window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location));
       return false;
     });
+
+    document.getElementById('app-store-link').href = A2OShell.appStoreURL || '#';
+    document.getElementById('google-play-link').href = A2OShell.googlePlayURL || '#';
+
     // auto launch
     if (A2OShell.autoLaunch) {
       launch();
