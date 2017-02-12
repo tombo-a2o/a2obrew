@@ -578,8 +578,9 @@ module A2OBrew
       # Application Icon
       app_icon = icon_asset_catalog || icon2x || icon
       if app_icon
+        @icon_output_path = icon_output_path(a2o_target)
         builds << {
-          outputs: [icon_output_path(a2o_target)],
+          outputs: [@icon_output_path],
           rule_name: 'image-convert',
           inputs: [app_icon[0]],
           build_variables: {
@@ -964,9 +965,7 @@ module A2OBrew
 
       pre_products_outputs = [html_path(a2o_target),
                               html_mem_path(a2o_target),
-                              js_path(a2o_target),
-                              platform_parameters_json_path(a2o_target),
-                              runtime_parameters_js_path(a2o_target)]
+                              js_path(a2o_target)]
 
       if A2OCONF[:xcodebuild][:emscripten][:emcc][:separate_asm]
         pre_products_outputs << asm_js_path(a2o_target)
@@ -1021,11 +1020,16 @@ module A2OBrew
       #       ```
       #       But currently, just copy them as the original.
 
-      products_inputs = pre_products_outputs + shared_libraries_outputs + [data_path(a2o_target), icon_output_path(a2o_target)]
+      products_inputs = pre_products_outputs + shared_libraries_outputs + [
+        data_path(a2o_target),
+        platform_parameters_json_path(a2o_target),
+        runtime_parameters_js_path(a2o_target)
+      ]
+      products_inputs << @icon_output_path if @icon_output_path
+
       products_outputs = products_inputs.map do |path|
         path.sub('pre_products', 'products')
       end
-      products_outputs << products_html_path(a2o_target)
 
       builds << {
         outputs: products_outputs,
