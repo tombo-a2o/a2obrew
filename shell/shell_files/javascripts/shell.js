@@ -3,6 +3,10 @@
     warningOnMobile: {
       en: 'This app may not work correctly on mobile devices due to insufficient memory or CPU power.\nWould you like to launch the app?',
       ja: 'モバイル端末で実行する場合\u3001メモリやCPUパワーの不足で正常に実行されない恐れがあります\u3002\n実行してもよろしいですか\uFF1F'
+    },
+    exception: {
+      en: 'Oops! Looks like something went wrong. Please try reloading the page.',
+      ja: '問題が発生しました。申し訳ございませんが、ページをリロードしてください。'
     }
   };
 
@@ -56,7 +60,7 @@
 
   window.onerror = function(event) {
     // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
-    Module.setStatus('Exception thrown, see JavaScript console');
+    Module.setStatus(messages.exception[locale]);
     Module.setStatus = function(text) {
       if (text) Module.printErr('[post-exception status] ' + text);
     };
