@@ -1,7 +1,7 @@
 (function() {
   var messages = {
     downloadSize: {
-      en: 'Approx. download size is ',
+      en: 'Download size is approx. ',
       ja: 'ダウンロードサイズ: 約'
     },
     warningOnMobile: {
