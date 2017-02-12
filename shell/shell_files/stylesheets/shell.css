@@ -90,12 +90,21 @@ section.playground-play-button {
   bottom: 0;
   left: 0;
   right: 0;
-  width: 100px;
+  width: 300px;
   height: 100px;
   margin: auto;
 
   font-size: 100px;
   text-align: center;
+}
+section.playground-download-size {
+  position: absolute;
+  text-align: center;
+  font-size: 15px;
+  left: 0;
+  right: 0;
+  margin: auto auto;
+  color: #dddddd;
 }
 section.playground-keypad {
   text-align: center;

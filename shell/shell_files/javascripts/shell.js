@@ -1,5 +1,9 @@
 (function() {
   var messages = {
+    downloadSize: {
+      en: 'Approx. download size is ',
+      ja: 'ダウンロードサイズ: 約'
+    },
     warningOnMobile: {
       en: 'This app may not work correctly on mobile devices due to insufficient memory or CPU power.\nWould you like to launch the app?',
       ja: 'モバイル端末で実行する場合\u3001メモリやCPUパワーの不足で正常に実行されない恐れがあります\u3002\n実行してもよろしいですか\uFF1F'
@@ -246,6 +250,11 @@
         locale = lang;
         break;
       }
+    }
+    // set download text
+    var downloadSizeElement = document.getElementsByClassName("playground-download-size")[0];
+    if(downloadSizeElement && A2OShell.totalFileSize) {
+      downloadSizeElement.textContent = messages.downloadSize[locale] + A2OShell.totalFileSize;
     }
     // initializing screen size
     var isLandscape = Module.initialDeviceOrientation == 3;
