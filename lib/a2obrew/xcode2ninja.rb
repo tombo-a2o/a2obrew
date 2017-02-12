@@ -370,6 +370,10 @@ module A2OBrew
       "#{html_path(a2o_target)}.mem"
     end
 
+    def html_symbols_path(a2o_target)
+      "#{html_path(a2o_target)}.symbols"
+    end
+
     def platform_parameters_json_path(a2o_target)
       "#{pre_products_tombo_dir(a2o_target)}/parameters.json"
     end
@@ -963,9 +967,12 @@ module A2OBrew
         dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
       end
 
-      pre_products_outputs = [html_path(a2o_target),
-                              html_mem_path(a2o_target),
-                              js_path(a2o_target)]
+      pre_products_outputs = [
+        html_path(a2o_target),
+        html_mem_path(a2o_target),
+        js_path(a2o_target),
+        html_symbols_path(a2o_target)
+      ]
 
       if A2OCONF[:xcodebuild][:emscripten][:emcc][:separate_asm]
         pre_products_outputs << asm_js_path(a2o_target)

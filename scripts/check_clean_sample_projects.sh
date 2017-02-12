@@ -8,7 +8,9 @@ eval "$(a2obrew init -)"
 for d in sample_projects/*/; do
   pushd .
   cd "$d"
-  rm -rf ./a2o
-  make
+  make clean
+  # file count should be zero
+  echo "Checking whether make clean properly works or not."
+  find a2o/build -type f | grep -v '\.nib$' | wc -l | grep -E '^(\s+)0$'
   popd
 done

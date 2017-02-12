@@ -96,3 +96,6 @@ bin/a2obrew libraries install Chameleon
 
 # Build sample projects (mainly for testing)
 ./scripts/build_sample_projects.sh
+
+# Clean sample projects (mainly for testing)
+./scripts/check_clean_sample_projects.sh
