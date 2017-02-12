@@ -48,7 +48,7 @@ A2OCONF = {
         clean: 'BUILD=%{build_target_path} make clean'
       },
       {
-        name: 'blocks-runtime',
+        name: 'libclosure',
         path: 'libclosure',
         repository_uri: 'git@github.com:tomboinc/libclosure.git',
         build_path: '%{project_path}',
