@@ -983,9 +983,6 @@ module A2OBrew
       a2o_options << "--pre-js #{data_js_path(a2o_target)}"
       dep_paths << data_js_path(a2o_target)
 
-      # extra js
-      dep_paths << runtime_parameters_js_path(a2o_target)
-
       # static link frameworks
       a2o_options += (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries).map { |f| "-framework #{f.ninja_escape}" }
 
