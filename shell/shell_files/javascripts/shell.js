@@ -70,6 +70,15 @@
     };
   };
 
+  var current_url = (function() {
+    var metas = document.getElementsByTagName('meta');
+    for (var i = 0; i < metas.length; i++) {
+      if (metas[i].getAttribute('property') == 'og:url') {
+        return metas[i].getAttribute('content')
+      }
+    }
+  })() || window.location;
+
   var script = document.createElement('script');
   script.src = 'application.asm.js';
   script.onload = function() {
@@ -295,11 +304,11 @@
       return false;
     });
     document.getElementById('button-tweet').addEventListener('click', function (e) {
-      window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(window.location) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
+      window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(current_url) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
       return false;
     });
     document.getElementById('button-share-on-facebook').addEventListener('click', function (e) {
-      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location));
+      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(current_url));
       return false;
     });
 
