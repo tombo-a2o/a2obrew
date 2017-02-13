@@ -130,6 +130,32 @@ section.app-markets {
 
   text-align: center;
 }
+section.details {
+  position:relative;
+  width: 60%;
+  margin: 0 auto;
+  padding: 40px;
+}
+section.details h1 {
+  font-size: 30px;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+section.footer {
+  background-color: #eee;
+  position: relative;
+  width: 100%;
+  text-align: center;
+  font-size: 13px;
+  padding: 10px;
+  color: #333;
+}
+section.footer a {
+  color: #333;
+}
+section.footer a:hover {
+  color: #666;
+}
 .tooltip {
   position: relative;
   display: inline-block;
