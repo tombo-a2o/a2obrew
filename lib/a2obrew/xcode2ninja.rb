@@ -629,6 +629,14 @@ module A2OBrew
 
       # Launch Image
       app_launch_image = launch_image_asset_catalog || launch_image2x || launch_image
+      if app_launch_image.nil? && active_project_config[:launch_image]
+        path = active_project_config[:launch_image]
+        width, height = Util.image_width_and_height(path)
+        # FIXME: Repair this dirty logic
+        ratio = width >= 640 && height >= 960 ? 2 : 1
+        app_launch_image = [path, ratio]
+      end
+
       if app_launch_image
         @launch_image_output_path = application_launch_image_output_path(a2o_target)
         builds << {

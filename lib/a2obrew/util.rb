@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require 'mkmf'
 require 'rainbow'
+require 'RMagick'
 require 'fileutils'
 
 # Force enable for Rainbow even if the STDOUT/STDERR aren't terminals
@@ -68,6 +69,11 @@ module A2OBrew
       end
 
       exit exit_status
+    end
+
+    def self.image_width_and_height(path)
+      img = Magick::ImageList.new(path)
+      [img.columns, img.rows]
     end
   end
 end
