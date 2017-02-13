@@ -324,6 +324,10 @@ module A2OBrew
       "#{pre_products_tombo_dir(a2o_target)}/icon"
     end
 
+    def tombo_launch_image_dir(a2o_target)
+      "#{pre_products_tombo_dir(a2o_target)}/launch-image"
+    end
+
     def objects_dir(a2o_target)
       "#{build_dir(a2o_target)}/objects"
     end
@@ -384,6 +388,10 @@ module A2OBrew
 
     def icon_output_path(a2o_target)
       "#{tombo_icon_dir(a2o_target)}/icon-60.png"
+    end
+
+    def launch_image_output_path(a2o_target)
+      "#{tombo_launch_image_dir(a2o_target)}/launch-image-320x480.png"
     end
 
     # products dir is packaged
@@ -473,6 +481,10 @@ module A2OBrew
       icon_asset_catalog = nil
       icon2x = nil
       icon = nil
+      launch_image_asset_catalog = nil
+      launch_image2x = nil
+      launch_image = nil
+
       phase.files_references.each do |files_ref| # rubocop:disable Metrics/BlockLength
         case files_ref
         when Xcodeproj::Project::Object::PBXFileReference
@@ -483,7 +495,7 @@ module A2OBrew
           raise Informative, "Don't support the file #{files_ref.class.name}."
         end
 
-        files.each do |file|
+        files.each do |file| # rubocop:disable Metrics/BlockLength
           local_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
 
           next if resource_filter && !resource_filter.call(local_path.to_s)
@@ -532,14 +544,22 @@ module A2OBrew
             resources << remote_path
           else
             if file.path == 'Images.xcassets' || file.path == 'Assets.xcassets'
-              # Asset Catalog for icon
-              icon_asset_catalog = asset_catalog(local_path, target, build_config)
+              # Asset Catalog for icon and launch images
+              icon_asset_catalog, launch_image_asset_catalog = asset_catalog(
+                local_path, target, build_config
+              )
             elsif file.path == 'Icon@2x.png'
-              # old
+              # For an old iPhone application
               icon2x = [local_path, 2]
             elsif file.path == 'Icon.png'
-              # ancient
+              # For an ancient iPhone application
               icon = [local_path, 1]
+            elsif file.path == 'Default@2x.png'
+              # For an old iPhone application
+              launch_image2x = [local_path, 2]
+            elsif file.path == 'Default.png'
+              # For an ancient iPhone application
+              launch_image = [local_path, 1]
             end
 
             in_prefix = if files_ref.class == Xcodeproj::Project::Object::PBXFileReference
@@ -594,6 +614,21 @@ module A2OBrew
         }
       end
 
+      # Launch Image
+      app_launch_image = launch_image_asset_catalog || launch_image2x || launch_image
+      if app_launch_image
+        @launch_image_output_path = launch_image_output_path(a2o_target)
+        builds << {
+          outputs: [@launch_image_output_path],
+          rule_name: 'image-convert',
+          inputs: [app_launch_image[0]],
+          build_variables: {
+            'width' => 320 * app_launch_image[1],
+            'height' => 480 * app_launch_image[1]
+          }
+        }
+      end
+
       # Framework resources
       framework_resources = system_framework_resources(a2o_target)
       builds += framework_resources[:builds]
@@ -639,7 +674,9 @@ module A2OBrew
     end
 
     def find_icon_from_asset_catalog(base_path)
-      contents_images = JSON.parse(File.read(File.join(base_path, 'Contents.json')))['images']
+      contents_images = JSON.parse(File.read(
+                                     File.join(base_path, 'Contents.json')
+      ))['images']
 
       APPLE_APPICONS.each do |width, scale|
         scale_str = "#{scale}x"
@@ -654,19 +691,53 @@ module A2OBrew
       nil
     end
 
-    def asset_catalog(local_path, target, build_config)
-      appicon_name = build_setting(target, build_config, 'ASSETCATALOG_COMPILER_APPICON_NAME') + '.appiconset'
-      # _launchimage_name = build_setting(target, build_config,
-      #                                   'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME') + '.launchimage'
+    def find_launch_image_from_asset_catalog(base_path)
+      contents_images = JSON.parse(File.read(
+                                     File.join(base_path, 'Contents.json')
+      ))['images']
 
+      [2, 1].each do |scale|
+        scale_str = "#{scale}x"
+        orientation = 'portrait' # FIXME: we should consider orientation
+        idiom = 'iphone'
+        subtype = nil
+
+        contents_images.each do |ci|
+          if ci['scale'] == scale_str &&
+             ci['orientation'] == orientation &&
+             ci['idiom'] == idiom &&
+             ci['subtype'] == subtype &&
+             ci['filename']
+            return File.join(base_path, ci['filename']), scale
+          end
+        end
+      end
+    end
+
+    def asset_catalog(local_path, target, build_config)
+      appicon_name = build_setting(
+        target, build_config,
+        'ASSETCATALOG_COMPILER_APPICON_NAME'
+      ) + '.appiconset'
+      launchimage_name = build_setting(
+        target, build_config,
+        'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME'
+      )
+      launchimage_name += '.launchimage' if launchimage_name
+
+      icon = nil
+      launch_image = nil
       Dir.new(local_path).each do |asset_local_path|
-        if asset_local_path == appicon_name
+        if asset_local_path == appicon_name && icon.nil?
           base_path = File.join(local_path, asset_local_path)
-          return find_icon_from_asset_catalog(base_path)
+          icon = find_icon_from_asset_catalog(base_path)
+        elsif asset_local_path == launchimage_name && launch_image.nil?
+          base_path = File.join(local_path, asset_local_path)
+          launch_image = find_launch_image_from_asset_catalog(base_path)
         end
       end
 
-      nil
+      [icon, launch_image]
     end
 
     def file_copy(in_path, out_dir, in_prefix_path)
@@ -1030,6 +1101,7 @@ module A2OBrew
         runtime_parameters_js_path(a2o_target)
       ]
       products_inputs << @icon_output_path if @icon_output_path
+      products_inputs << @launch_image_output_path if @launch_image_output_path
 
       products_outputs = products_inputs.map do |path|
         path.sub('pre_products', 'products')
