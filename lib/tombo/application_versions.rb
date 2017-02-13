@@ -31,7 +31,9 @@ module Tombo
       input_dir = options[:source_directory]
 
       file_exists?(input_dir, 'application/application.html')
+      file_exists?(input_dir, 'application/icon/icon-60.png')
       file_exists?(input_dir, 'tombo/icon/icon-60.png')
+      file_exists?(input_dir, 'application/launch-image/launch-image-320x480.png')
 
       Dir.mktmpdir do |tmp_dir|
         zip_path = File.join(tmp_dir, 'deploy.zip')
