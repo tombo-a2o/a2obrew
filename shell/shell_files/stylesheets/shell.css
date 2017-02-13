@@ -177,3 +177,13 @@ a.link-to-other-platforms img {
   width: 202px;
   height: 60px;
 }
+img#launch-image {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 320px;
+  height: 480px;
+  margin: auto;
+}

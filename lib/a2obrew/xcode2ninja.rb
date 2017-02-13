@@ -343,7 +343,7 @@ module A2OBrew
     end
 
     def pre_products_tombo_dir(a2o_target)
-      "#{pre_products_dir(a2o_target)}/tombo"
+      "#{pre_products_application_dir(a2o_target)}/tombo"
     end
 
     def pre_products_path_prefix(a2o_target)

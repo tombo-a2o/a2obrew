@@ -261,9 +261,11 @@
     var width;
     var height;
     var scale = Module.screenModes[0].scale;
+    var launchImage = document.getElementById('launch-image');
     if (isLandscape) {
       width = Module.screenModes[0].height / scale;
       height = Module.screenModes[0].width / scale;
+      launchImage.style.transform = 'rotate(-90deg)';
     } else {
       width = Module.screenModes[0].width / scale;
       height = Module.screenModes[0].height / scale;
