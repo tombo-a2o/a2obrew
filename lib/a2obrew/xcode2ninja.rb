@@ -320,12 +320,16 @@ module A2OBrew
       "#{bundle_dir(a2o_target)}/Resources"
     end
 
-    def tombo_icon_dir(a2o_target)
+    def application_icon_dir(a2o_target)
       "#{pre_products_tombo_dir(a2o_target)}/icon"
     end
 
-    def tombo_launch_image_dir(a2o_target)
-      "#{pre_products_tombo_dir(a2o_target)}/launch-image"
+    def application_launch_image_dir(a2o_target)
+      "#{pre_products_application_dir(a2o_target)}/launch-image"
+    end
+
+    def tombo_icon_dir(a2o_target)
+      "#{pre_products_application_dir(a2o_target)}/icon"
     end
 
     def objects_dir(a2o_target)
@@ -343,7 +347,7 @@ module A2OBrew
     end
 
     def pre_products_tombo_dir(a2o_target)
-      "#{pre_products_application_dir(a2o_target)}/tombo"
+      "#{pre_products_dir(a2o_target)}/tombo"
     end
 
     def pre_products_path_prefix(a2o_target)
@@ -386,12 +390,16 @@ module A2OBrew
       "#{pre_products_application_dir(a2o_target)}/runtime_parameters.js"
     end
 
-    def icon_output_path(a2o_target)
-      "#{tombo_icon_dir(a2o_target)}/icon-60.png"
+    def application_icon_output_path(a2o_target)
+      "#{application_icon_dir(a2o_target)}/icon-60.png"
     end
 
-    def launch_image_output_path(a2o_target)
-      "#{tombo_launch_image_dir(a2o_target)}/launch-image-320x480.png"
+    def application_launch_image_output_path(a2o_target)
+      "#{application_launch_image_dir(a2o_target)}/launch-image-320x480.png"
+    end
+
+    def tombo_icon_output_path(a2o_target)
+      "#{tombo_icon_dir(a2o_target)}/icon-60.png"
     end
 
     # products dir is packaged
@@ -602,22 +610,27 @@ module A2OBrew
       # Application Icon
       app_icon = icon_asset_catalog || icon2x || icon
       if app_icon
-        @icon_output_path = icon_output_path(a2o_target)
-        builds << {
-          outputs: [@icon_output_path],
-          rule_name: 'image-convert',
-          inputs: [app_icon[0]],
-          build_variables: {
-            'width' => 60 * app_icon[1],
-            'height' => 60 * app_icon[1]
+        @icon_output_paths = [
+          application_icon_output_path(a2o_target),
+          tombo_icon_output_path(a2o_target)
+        ]
+        @icon_output_paths.each do |icon_output_path|
+          builds << {
+            outputs: [icon_output_path],
+            rule_name: 'image-convert',
+            inputs: [app_icon[0]],
+            build_variables: {
+              'width' => 60 * app_icon[1],
+              'height' => 60 * app_icon[1]
+            }
           }
-        }
+        end
       end
 
       # Launch Image
       app_launch_image = launch_image_asset_catalog || launch_image2x || launch_image
       if app_launch_image
-        @launch_image_output_path = launch_image_output_path(a2o_target)
+        @launch_image_output_path = application_launch_image_output_path(a2o_target)
         builds << {
           outputs: [@launch_image_output_path],
           rule_name: 'image-convert',
@@ -1100,7 +1113,7 @@ module A2OBrew
         platform_parameters_json_path(a2o_target),
         runtime_parameters_js_path(a2o_target)
       ]
-      products_inputs << @icon_output_path if @icon_output_path
+      products_inputs.concat(@icon_output_paths) if @icon_output_paths
       products_inputs << @launch_image_output_path if @launch_image_output_path
 
       products_outputs = products_inputs.map do |path|
