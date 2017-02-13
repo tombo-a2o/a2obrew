@@ -321,7 +321,7 @@ module A2OBrew
     end
 
     def application_icon_dir(a2o_target)
-      "#{pre_products_tombo_dir(a2o_target)}/icon"
+      "#{pre_products_application_dir(a2o_target)}/icon"
     end
 
     def application_launch_image_dir(a2o_target)
@@ -329,7 +329,11 @@ module A2OBrew
     end
 
     def tombo_icon_dir(a2o_target)
-      "#{pre_products_application_dir(a2o_target)}/icon"
+      "#{pre_products_tombo_dir(a2o_target)}/icon"
+    end
+
+    def tombo_ogp_dir(a2o_target)
+      "#{pre_products_tombo_dir(a2o_target)}/ogp"
     end
 
     def objects_dir(a2o_target)
@@ -400,6 +404,10 @@ module A2OBrew
 
     def tombo_icon_output_path(a2o_target)
       "#{tombo_icon_dir(a2o_target)}/icon-60.png"
+    end
+
+    def tombo_ogp_image_output_path(a2o_target, lang)
+      "#{tombo_ogp_dir(a2o_target)}/#{lang}.png"
     end
 
     # products dir is packaged
@@ -648,6 +656,20 @@ module A2OBrew
             'height' => 480 * app_launch_image[1]
           }
         }
+      end
+
+      # OGP images
+      if active_project_config[:ogp_images]
+        @ogp_image_output_paths = []
+        active_project_config[:ogp_images].each do |lang, img_path|
+          output_path = tombo_ogp_image_output_path(a2o_target, lang)
+          @ogp_image_output_paths << output_path
+          builds << {
+            outputs: [output_path],
+            rule_name: 'cp_r',
+            inputs: [img_path]
+          }
+        end
       end
 
       # Framework resources
@@ -1123,6 +1145,7 @@ module A2OBrew
       ]
       products_inputs.concat(@icon_output_paths) if @icon_output_paths
       products_inputs << @launch_image_output_path if @launch_image_output_path
+      products_inputs.concat(@ogp_image_output_paths) if @ogp_image_output_paths
 
       products_outputs = products_inputs.map do |path|
         path.sub('pre_products', 'products')
