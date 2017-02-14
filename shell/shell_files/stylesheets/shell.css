@@ -1,195 +1,191 @@
-html {
-  min-height: 100%;
-  position: relative;
+#app-canvas {
+  cursor: pointer;
+  display: none;
 }
-body {
-  padding: 0;
-  margin: 0 0 4em 0;
-
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-section.header {
-  position: relative;
+#launch-image {
+  bottom: 0;
+  height: 480px;
   left: 0;
-  height: 50px;
-
-  background-color: #eeeeee;
-}
-section.header-container {
+  margin: auto;
   position: absolute;
-  left: 0;
-  width: 100%
-}
-section.header-center {
-  position: absolute;
-  left: 0;
   right: 0;
-  height: 50px;
-  top: 6px;
-  margin:0 auto;
-  width: 100px;
+  top: 0;
+  width: 320px;
 }
-div.header-font-icon {
-  position: relative;
-  width: 50px;
-  height: 50px;
-
-  float: left;
-  color: #111111;
-  font-size: 30px;
-  text-align: center;
+#preview-image a {
+  color: #fff;
+  text-decoration: none;
 }
-div.header-right {
-  position: absolute;
-  right: 7px;
-  top: 6px;
-  height: 50px;
+#preview-image a:hover {
+  color: #ccc;
 }
-div.header-left {
-  position: absolute;
-  top: 8px;
-  left: 7px;
-  height: 36px;
-}
-section#status {
-  position: absolute;
+#status {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  display: none;
+  height: 100%;
   left: 0;
+  position: absolute;
+  text-align: center;
   top: 0;
   width: 100%;
-  height: 100%;
-
-  display: none;
-
-  color: #ffffff;
-  text-align: center;
-
-  background-color: rgba(0, 0, 0, 0.8);
 }
-section#status-message {
+#status-message {
   display: table-cell;
   vertical-align: middle;
 }
-section.playground {
-  position: relative;
-  padding: 5px;
-}
-section.playground-main {
-  position: relative;
-  width: 320px;
-  height: 480px;
-  margin: 0 auto;
-}
-div.playground-image-filter {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-
-  background-color: rgba(0, 0, 0, 0.8);
-}
-section.playground-play-button {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 300px;
-  height: 100px;
-  margin: auto;
-
-  font-size: 100px;
-  text-align: center;
-}
-section.playground-download-size {
-  position: absolute;
-  text-align: center;
-  font-size: 15px;
-  left: 0;
-  right: 0;
-  margin: auto auto;
-  color: #dddddd;
-}
-section.playground-keypad {
-  text-align: center;
-  font-size: 50px;
-  display: none;
-}
-section.header a, section.playground-keypad a {
-  color: #333333;
-  text-decoration: none;
-}
-section#preview-image a {
-  color: #ffffff;
-  text-decoration: none;
-}
-section.header a:hover, section.playground-keypad a:hover {
-  color: #666666;
-}
-section#preview-image a:hover {
-  color: #cccccc;
-}
-section.app-markets {
+.app-markets {
   margin: 20px;
-
   text-align: center;
 }
-section.details {
-  position: relative;
-  width: 480px;
+.details {
   margin: 1em auto;
   padding: 1em;
+  position: relative;
+  width: 480px;
 }
-section.details h1 {
-  font-size: 30px;
-  margin-top: 0;
-  margin-bottom: 10px;
-}
-section.details a {
+.details a {
   color: inherit;
 }
-section.footer {
-  position: absolute;
-  padding: 10px;
-  width: 100%;
-  height: 2em;
-  bottom: 0;
-
-  color: #333;
+.details h1 {
+  font-size: 30px;
+  margin-bottom: 10px;
+  margin-top: 0;
+}
+.footer {
   background-color: #eee;
-  text-align: center;
+  bottom: 0;
+  color: #333;
   font-size: 13px;
+  height: 2em;
   line-height: 2em;
+  padding: 10px;
+  position: absolute;
+  text-align: center;
+  width: 100%;
 }
-section.footer a {
+.footer a {
   color: #333;
 }
-section.footer a:hover {
+.header {
+  background-color: #eee;
+  height: 50px;
+  left: 0;
+  position: relative;
+}
+.header a, .playground-keypad a {
+  color: #333;
+  text-decoration: none;
+}
+.header a:hover, .playground-keypad a:hover, .footer a:hover {
   color: #666;
 }
-.tooltip {
+.header-center {
+  height: 50px;
+  left: 0;
+  margin: 0 auto;
+  position: absolute;
+  right: 0;
+  top: 6px;
+  width: 100px;
+}
+.header-container {
+  left: 0;
+  position: absolute;
+  width: 100%;
+}
+.header-font-icon {
+  color: #111;
+  float: left;
+  font-size: 30px;
+  height: 50px;
   position: relative;
+  text-align: center;
+  width: 50px;
+}
+.header-left {
+  height: 36px;
+  left: 7px;
+  position: absolute;
+  top: 8px;
+}
+.header-right {
+  height: 50px;
+  position: absolute;
+  right: 7px;
+  top: 6px;
+}
+.playground {
+  padding: 5px;
+  position: relative;
+}
+.playground-download-size {
+  color: #ddd;
+  font-size: 15px;
+  left: 0;
+  margin: auto;
+  position: absolute;
+  right: 0;
+  text-align: center;
+}
+.playground-image-filter {
+  background-color: rgba(0, 0, 0, 0.8);
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+.playground-keypad {
+  display: none;
+  font-size: 50px;
+  text-align: center;
+}
+.playground-main {
+  height: 480px;
+  margin: 0 auto;
+  position: relative;
+  width: 320px;
+}
+.playground-play-button {
+  bottom: 0;
+  font-size: 100px;
+  height: 100px;
+  left: 0;
+  margin: auto;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  top: 0;
+  width: 300px;
+}
+.tombo-logo {
+  height: 36px;
+  width: 36px;
+}
+.tooltip {
   display: inline-block;
+  position: relative;
 }
 .tooltip-text {
-  visibility: hidden;
-  position: absolute;
-  z-index: 1;
-
-  width: 80px;
-  padding: 5px 0;
-  top: 100%;
-  left: 50%;
-
-  color: #ddd;
-  font-size: 13px;
-  text-align: center;
-
   background-color: #181818;
   border-radius: 6px;
+  color: #ddd;
+  font-size: 13px;
+  left: 50%;
+  padding: 5px 0;
+  position: absolute;
+  text-align: center;
+  top: 100%;
+  visibility: hidden;
+  width: 80px;
+  z-index: 1;
 }
 .tooltip-text-center {
   margin-left: -40px;
+}
+.tooltip-text-em {
+  color: #fcc;
 }
 .tooltip-text-left {
   margin-left: -20px;
@@ -197,34 +193,22 @@ section.footer a:hover {
 .tooltip-text-right {
   margin-left: -70px;
 }
-.tooltip-text-em {
-  color: #fcc;
-}
 .tooltip:hover .tooltip-text {
   visibility: visible;
-}
-#app-canvas {
-  cursor: pointer;
-  display: none;
 }
 a.link-to-other-platforms {
   text-decoration: none;
 }
 a.link-to-other-platforms img {
-  width: 202px;
   height: 60px;
+  width: 202px;
 }
-img#launch-image {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 320px;
-  height: 480px;
-  margin: auto;
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: 0 0 4em;
+  padding: 0;
 }
-img.tombo-logo {
-  width: 36px;
-  height: 36px;
+html {
+  min-height: 100%;
+  position: relative;
 }
