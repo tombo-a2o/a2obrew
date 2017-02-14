@@ -11,7 +11,15 @@
     exception: {
       en: 'Oops! Looks like something went wrong. Please try reloading the page.',
       ja: '問題が発生しました。申し訳ございませんが、ページをリロードしてください。'
-    }
+    },
+    detailsTitle: {
+      en: 'Under the Hood:',
+      ja: 'どうやって動いているの？'
+    },
+    detailsText: {
+      en: '<p>This app was auto-converted from iOS to Web using the <a target="_blank" href="http://tombo.io/a2o/">"A2O" converter</a> by <a target="_blank" href="http://tombo.io/">Tombo, Inc.</a>. If you\'re interested in converting your apps to the Web using A2O, <a target="_blank" href="http://tombo.io/contact_form/">we\'d love to talk to you</a>.<p>Details about the technology can be found in <a target="_blank" href="https://blog.tombo.io/">our blog</a>. <a target="_blank" href="http://tombo.io/contact_form/">Feedback welcome!</a>',
+      ja: '<p>このアプリは<a target="_blank" href="http://tombo.io/">Tombo Inc.</a>で開発した<a target="_blank" href="http://tombo.io/a2o/">A2Oコンバーター</a>によってiOSアプリから自動変換されています。もし、アプリを変換することに興味がある場合、ぜひ<a target="_blank" href="http://tombo.io/contact_form/">ご連絡</a>ください。<p>技術的な詳細については私たちの<a target="_blank" href="https://blog.tombo.io/">ブログ（ただし英語）</a>をご覧ください。<a target="_blank" href="http://tombo.io/contact_form/">フィードバック</a>大歓迎です！'
+    },
   };
 
   /* setup Module */
@@ -264,6 +272,14 @@
     var downloadSizeElement = document.getElementsByClassName("playground-download-size")[0];
     if(downloadSizeElement && A2OShell.totalFileSize) {
       downloadSizeElement.textContent = messages.downloadSize[locale] + A2OShell.totalFileSize;
+    }
+    var detailsTitle = document.getElementById("details-title");
+    if(detailsTitle) {
+      detailsTitle.innerHTML = messages.detailsTitle[locale];
+    }
+    var detailsText = document.getElementById("details-text");
+    if(detailsText) {
+      detailsText.innerHTML = messages.detailsText[locale];
     }
     // initializing screen size
     var isLandscape = Module.initialDeviceOrientation == 3;
