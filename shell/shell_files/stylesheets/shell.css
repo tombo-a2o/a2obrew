@@ -221,3 +221,7 @@ img#launch-image {
   height: 480px;
   margin: auto;
 }
+img.tombo-logo {
+  width: 36px;
+  height: 36px;
+}
