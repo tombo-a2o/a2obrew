@@ -241,33 +241,40 @@
     Module.setStatus('Downloading...');
     document.body.appendChild(script);
   };
-  document.addEventListener('DOMContentLoaded', function() {
-    // get locale
-    var languages = window.navigator.languages ? window.navigator.languages : [window.navigator.language];
-    var cookie = document.cookie.split('; ').reduce(function(p, c, i, a) {
-      var kv = c.split('=');
-      p[kv[0]] = kv[1];
-      return p;
+
+  function getCookieAsObject() {
+    return document.cookie.split('; ').reduce(function(prev, current, index, array) {
+      var keyvalue = current.split('=');
+      prev[keyvalue[0]] = keyvalue[1];
+      return prev;
     }, {});
+  }
+
+  function getLocalizeLanguages() {
+    // Browser languages
+    var languages = window.navigator.languages ? window.navigator.languages : [window.navigator.language];
+
+    // Use platform language settings if exist
+    var cookie = getCookieAsObject();
     if (cookie.locale) {
-      languages = languages.filter(function(e, i, a) {
-        return e != cookie.locale;
+      languages = languages.filter(function(element, index, array) {
+        return element != cookie.locale;
       });
       languages.unshift(cookie.locale);
     }
-    if (!Module.preRun)
+    return languages;
+  }
+
+  function setLanguageEnv(languages) {
+    if (!Module.preRun) {
       Module.preRun = [];
+    }
     Module.preRun.push(function() {
       ENV.LANGUAGES = '(' + languages.join(',') + ')';
     });
-    // get locale
-    for (var i = 0; i < languages.length; i++) {
-      var lang = languages[i].substring(0, 2);
-      if (lang === 'ja' || lang === 'en') {
-        locale = lang;
-        break;
-      }
-    }
+  }
+
+  function localizeShellTexts() {
     // set download text
     var downloadSizeElement = document.getElementsByClassName("playground-download-size")[0];
     if(downloadSizeElement && A2OShell.totalFileSize) {
@@ -281,6 +288,28 @@
     if(detailsText) {
       detailsText.innerHTML = messages.detailsText[locale];
     }
+  }
+
+  function prepareLocaliztion() {
+    var languages = getLocalizeLanguages();
+
+    setLanguageEnv(languages);
+
+    // set locale
+    for (var i = 0; i < languages.length; i++) {
+      var lang = languages[i].substring(0, 2);
+      if (lang === 'ja' || lang === 'en') {
+        locale = lang;
+        break;
+      }
+    }
+
+    localizeShellTexts();
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    prepareLocaliztion();
+
     // initializing screen size
     var isLandscape = Module.initialDeviceOrientation == 3;
     var width;
