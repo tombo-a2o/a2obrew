@@ -70,13 +70,13 @@
     Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
   };
 
-  window.onerror = function(event) {
+  window.addEventListener("error", function(event) {
     // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
     Module.setStatus(messages.exception[locale]);
     Module.setStatus = function(text) {
       if (text) Module.printErr('[post-exception status] ' + text);
     };
-  };
+  });
 
   var current_url = (function() {
     var metas = document.getElementsByTagName('meta');
@@ -307,8 +307,23 @@
     localizeShellTexts();
   }
 
+  function prepareErrorHandler() {
+    if(window.location.hostname == "app.tombo.io") {
+      var airbrake = new airbrakeJs.Client({projectId: 137659, projectKey: '9616430610ed0f212cf574caf6de20dd'});
+
+      window.addEventListener("error", function(event) {
+        airbrake.notify({
+          error: event.error,
+          context: { environment: 'production' }
+        });
+      });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     prepareLocaliztion();
+
+    prepareErrorHandler();
 
     // initializing screen size
     var isLandscape = Module.initialDeviceOrientation == 3;
