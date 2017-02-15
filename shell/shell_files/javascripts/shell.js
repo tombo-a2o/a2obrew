@@ -308,7 +308,7 @@
   }
 
   function prepareErrorHandler() {
-    if(true || window.location.hostname == "app.tombo.io") {
+    if(window.location.hostname == "app.tombo.io") {
       var airbrake = new airbrakeJs.Client({
         projectId: 137659,
         projectKey: '9616430610ed0f212cf574caf6de20dd',
