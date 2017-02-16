@@ -308,7 +308,8 @@
   }
 
   function prepareErrorHandler() {
-    if(window.location.hostname == "app.tombo.io") {
+    var environment = window.location.hostname == 'app.tombo.io' ? 'production' : 'development';
+    if(environment == 'production') {
       var airbrake = new airbrakeJs.Client({
         projectId: 137659,
         projectKey: '9616430610ed0f212cf574caf6de20dd',
@@ -316,9 +317,11 @@
       });
 
       window.addEventListener("error", function(event) {
+        var error = event.error;
+        if(typeof error === "object" && !(error instanceof Error)) error = JSON.stringify(error);
         airbrake.notify({
-          error: event.error,
-          context: { environment: 'production' }
+          error: error,
+          context: { environment: environment }
         });
       });
     }
