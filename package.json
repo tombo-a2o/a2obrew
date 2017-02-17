@@ -1,0 +1,20 @@
+{
+  "name": "a2obrew",
+  "version": "0.0.1",
+  "description": "a2obrew",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomboinc/a2obrew.git"
+  },
+  "author": "Tombo, Inc.",
+  "bugs": {
+    "url": "https://github.com/tomboinc/a2obrew/issues"
+  },
+  "homepage": "https://github.com/tomboinc/a2obrew#readme",
+  "dependencies": {
+    "eslint": "^3.15.0"
+  }
+}

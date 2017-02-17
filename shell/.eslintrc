@@ -1,0 +1,23 @@
+{
+  "extends": ["eslint:recommended"],
+  "plugins": [],
+  "parseOptions": {},
+  "env": {
+    "browser": true
+  },
+  "globals": {
+    "Module": true,
+    "A2OShell": true,
+    "ENV": true,
+    "airbrakeJs": true
+  },
+  "rules": {
+    "no-console": 0,
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "object-curly-spacing": ["error", "always"],
+    "keyword-spacing": ["error", { "before": true }],
+    "func-call-spacing": ["error", "never"],
+    "func-style": ["error", "expression"],
+    "space-before-function-paren": "error"
+  }
+}

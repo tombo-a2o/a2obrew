@@ -30,3 +30,5 @@ if nodenv versions | grep -E "^v6\\.3\\.0$" > /dev/null; then
 else
   nodenv install v6.3.0
 fi
+
+npm install

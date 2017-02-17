@@ -14,4 +14,7 @@ emsdk/
 # Depends
 depends/
 
+# node modules
+node_modules/
+
 commit-hash.yaml

@@ -1,4 +1,6 @@
-(function() {
+'use strict';
+
+(function () {
   var messages = {
     downloadSize: {
       en: 'Download size is approx. ',
@@ -19,38 +21,34 @@
     detailsText: {
       en: '<p>This app was auto-converted from iOS to Web using the <a target="_blank" href="http://tombo.io/a2o/">"A2O" converter</a> by <a target="_blank" href="http://tombo.io/">Tombo, Inc.</a>. If you\'re interested in converting your apps to the Web using A2O, <a target="_blank" href="http://tombo.io/contact_form/">we\'d love to talk to you</a>.<p>Details about the technology can be found in <a target="_blank" href="https://blog.tombo.io/">our blog</a>. <a target="_blank" href="http://tombo.io/contact_form/">Feedback welcome!</a>',
       ja: '<p>このアプリは<a target="_blank" href="http://tombo.io/">Tombo Inc.</a>で開発した<a target="_blank" href="http://tombo.io/a2o/">A2Oコンバーター</a>によってiOSアプリから自動変換されています。もし、アプリを変換することに興味がある場合、ぜひ<a target="_blank" href="http://tombo.io/contact_form/">ご連絡</a>ください。<p>技術的な詳細については私たちの<a target="_blank" href="https://blog.tombo.io/">ブログ（ただし英語）</a>をご覧ください。<a target="_blank" href="http://tombo.io/contact_form/">フィードバック</a>大歓迎です！'
-    },
+    }
   };
 
   /* setup Module */
   Module.preRun = [];
   Module.postRun = [];
-  Module.print = function(text) {
+  Module.print = function (text) {
     if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
     console.log(text);
   };
-  Module.printErr = function(text) {
+  Module.printErr = function (text) {
     if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-    if (0) { // XXX disabled for safety typeof dump == 'function') {
-      dump(text + '\n'); // fast, straight to the real console
-    } else {
-      console.error(text);
-    }
+    console.error(text);
   };
-  Module.canvas = (function() {
+  Module.canvas = (function () {
     var canvas = document.getElementById('app-canvas');
 
     // As a default initial behavior, pop up an alert when webgl context is lost. To make your
     // application robust, you may want to override this behavior before shipping!
     // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
-    canvas.addEventListener('webglcontextlost', function(e) {
+    canvas.addEventListener('webglcontextlost', function (e) {
       alert('Please reload the page');
       e.preventDefault();
     }, false);
 
     return canvas;
   })();
-  Module.setStatus = function(text) {
+  Module.setStatus = function (text) {
     if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
     if (text === Module.setStatus.text) return;
     var statusElement = document.getElementById('status');
@@ -65,20 +63,20 @@
     statusMessageElement.textContent = text;
   };
   Module.totalDependencies = 0;
-  Module.monitorRunDependencies = function(left) {
+  Module.monitorRunDependencies = function (left) {
     this.totalDependencies = Math.max(this.totalDependencies, left);
-    Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+    Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
   };
 
-  window.addEventListener("error", function(event) {
+  window.addEventListener("error", function (_event) {
     // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
     Module.setStatus(messages.exception[locale]);
-    Module.setStatus = function(text) {
+    Module.setStatus = function (text) {
       if (text) Module.printErr('[post-exception status] ' + text);
     };
   });
 
-  var current_url = (function() {
+  var current_url = (function () {
     var metas = document.getElementsByTagName('meta');
     for (var i = 0; i < metas.length; i++) {
       if (metas[i].getAttribute('property') == 'og:url') {
@@ -89,9 +87,9 @@
 
   var script = document.createElement('script');
   script.src = 'application.asm.js';
-  script.onload = function() {
-    setTimeout(function() {
-      (function() {
+  script.onload = function () {
+    setTimeout(function () {
+      (function () {
         var memoryInitializer = 'application.html.mem';
         if (typeof Module.locateFile === 'function') {
           memoryInitializer = Module.locateFile(memoryInitializer);
@@ -109,7 +107,7 @@
     }, 1); // delaying even 1ms is enough to allow compilation memory to be reclaimed
   };
   var locale = 'en';
-  var launch = function() {
+  var launch = function () {
     // show warning if this is mobile
     var ua = navigator.userAgent || navigator.vendor || window.opera;
     if (ua.match(/iPad|iPhone|iPod|Android|(IE| )Mobile[;\/ ]| Tablet;/i)) {
@@ -118,10 +116,10 @@
       }
     }
     var canvas = document.getElementById('app-canvas');
-    canvas.addEventListener('wheel', function(e) {
+    canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
     });
-    var fireSwipe = function(dx, dy) {
+    var fireSwipe = function (dx, dy) {
       if (fireSwipe.working) {
         return;
       }
@@ -152,7 +150,7 @@
         return;
       }
       var frame = 0;
-      var raf = function() {
+      var raf = function () {
         var event;
         var end = false;
         if (frame == 0) {
@@ -196,26 +194,26 @@
     switch (A2OShell.keypad) {
       case 'tap':
         var button = document.getElementById('button-tap');
-        button.addEventListener('mousedown', function (e) {
+        button.addEventListener('mousedown', function (_e) {
           fireSwipe(0, 0);
           return false;
         });
         break;
       case '3way-down':
-        document.getElementById('button-swipe-left').addEventListener('mousedown', function (e) {
+        document.getElementById('button-swipe-left').addEventListener('mousedown', function (_e) {
           fireSwipe(-1, 0);
           return false;
         });
-        document.getElementById('button-swipe-down').addEventListener('mousedown', function (e) {
+        document.getElementById('button-swipe-down').addEventListener('mousedown', function (_e) {
           fireSwipe(0, 1);
           return false;
         });
-        document.getElementById('button-swipe-right').addEventListener('mousedown', function (e) {
+        document.getElementById('button-swipe-right').addEventListener('mousedown', function (_e) {
           fireSwipe(1, 0);
           return false;
         });
         // add key listener
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
           switch (e.which) {
             case 37:
               // ←
@@ -242,22 +240,22 @@
     document.body.appendChild(script);
   };
 
-  function getCookieAsObject() {
-    return document.cookie.split('; ').reduce(function(prev, current, index, array) {
+  var getCookieAsObject = function () {
+    return document.cookie.split('; ').reduce(function (prev, current, _index, _array) {
       var keyvalue = current.split('=');
       prev[keyvalue[0]] = keyvalue[1];
       return prev;
     }, {});
   }
 
-  function getLocalizeLanguages() {
+  var getLocalizeLanguages = function () {
     // Browser languages
     var languages = window.navigator.languages ? window.navigator.languages : [window.navigator.language];
 
     // Use platform language settings if exist
     var cookie = getCookieAsObject();
     if (cookie.locale) {
-      languages = languages.filter(function(element, index, array) {
+      languages = languages.filter(function (element, _index, _array) {
         return element != cookie.locale;
       });
       languages.unshift(cookie.locale);
@@ -265,32 +263,32 @@
     return languages;
   }
 
-  function setLanguageEnv(languages) {
+  var setLanguageEnv=function (languages) {
     if (!Module.preRun) {
       Module.preRun = [];
     }
-    Module.preRun.push(function() {
+    Module.preRun.push(function () {
       ENV.LANGUAGES = '(' + languages.join(',') + ')';
     });
   }
 
-  function localizeShellTexts() {
+  var localizeShellTexts = function () {
     // set download text
     var downloadSizeElement = document.getElementsByClassName("playground-download-size")[0];
-    if(downloadSizeElement && A2OShell.totalFileSize) {
+    if (downloadSizeElement && A2OShell.totalFileSize) {
       downloadSizeElement.textContent = messages.downloadSize[locale] + A2OShell.totalFileSize;
     }
     var detailsTitle = document.getElementById("details-title");
-    if(detailsTitle) {
+    if (detailsTitle) {
       detailsTitle.innerHTML = messages.detailsTitle[locale];
     }
     var detailsText = document.getElementById("details-text");
-    if(detailsText) {
+    if (detailsText) {
       detailsText.innerHTML = messages.detailsText[locale];
     }
   }
 
-  function prepareLocaliztion() {
+  var prepareLocalization = function () {
     var languages = getLocalizeLanguages();
 
     setLanguageEnv(languages);
@@ -307,18 +305,18 @@
     localizeShellTexts();
   }
 
-  function prepareErrorHandler() {
+  var prepareErrorHandler = function () {
     var environment = window.location.hostname == 'app.tombo.io' ? 'production' : 'development';
-    if(environment == 'production') {
+    if (environment == 'production') {
       var airbrake = new airbrakeJs.Client({
         projectId: 137659,
         projectKey: '9616430610ed0f212cf574caf6de20dd',
         onerror: false
       });
 
-      window.addEventListener("error", function(event) {
+      window.addEventListener("error", function (event) {
         var error = event.error;
-        if(typeof error === "object" && !(error instanceof Error)) error = JSON.stringify(error);
+        if (typeof error === "object" && !(error instanceof Error)) error = JSON.stringify(error);
         airbrake.notify({
           error: error,
           context: { environment: environment }
@@ -327,8 +325,8 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    prepareLocaliztion();
+  document.addEventListener('DOMContentLoaded', function () {
+    prepareLocalization();
 
     prepareErrorHandler();
 
@@ -366,15 +364,15 @@
     keypadElement && (keypadElement.style.display = 'block');
 
     // adding events on buttons
-    document.getElementById('button-launch').addEventListener('click', function (e) {
+    document.getElementById('button-launch').addEventListener('click', function (_e) {
       launch();
       return false;
     });
-    document.getElementById('button-tweet').addEventListener('click', function (e) {
+    document.getElementById('button-tweet').addEventListener('click', function (_e) {
       window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(current_url) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
       return false;
     });
-    document.getElementById('button-share-on-facebook').addEventListener('click', function (e) {
+    document.getElementById('button-share-on-facebook').addEventListener('click', function (_e) {
       window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(current_url));
       return false;
     });
