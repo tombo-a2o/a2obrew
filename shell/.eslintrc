@@ -18,6 +18,7 @@
     "keyword-spacing": ["error", { "before": true }],
     "func-call-spacing": ["error", "never"],
     "func-style": ["error", "expression"],
-    "space-before-function-paren": "error"
+    "space-before-function-paren": "error",
+    "quotes": ["error", "single"]
   }
 }

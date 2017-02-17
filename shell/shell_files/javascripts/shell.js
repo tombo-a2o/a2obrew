@@ -65,7 +65,7 @@
     var now = Date.now();
     if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
     if (m) {
-      text = m[1] + ": " + (parseInt(m[2]) / parseInt(m[4]) * 100).toFixed(2) + "%";
+      text = m[1] + ': ' + (parseInt(m[2]) / parseInt(m[4]) * 100).toFixed(2) + '%';
     }
     var statusMessageElement = document.getElementById('status-message');
     statusMessageElement.textContent = text;
@@ -76,7 +76,7 @@
     Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
   };
 
-  window.addEventListener("error", function (_event) {
+  window.addEventListener('error', function (_event) {
     // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
     Module.setStatus(messages.exception[locale]);
     Module.setStatus = function (text) {
@@ -282,20 +282,20 @@
 
   var localizeShell = function () {
     // set download text
-    var downloadSizeElement = document.getElementsByClassName("playground-download-size")[0];
+    var downloadSizeElement = document.getElementsByClassName('playground-download-size')[0];
     if (downloadSizeElement && A2OShell.totalFileSize) {
       downloadSizeElement.textContent = messages.downloadSize[locale] + A2OShell.totalFileSize;
     }
-    var detailsTitle = document.getElementById("details-title");
+    var detailsTitle = document.getElementById('details-title');
     if (detailsTitle) {
       detailsTitle.innerHTML = messages.detailsTitle[locale];
     }
-    var detailsText = document.getElementById("details-text");
+    var detailsText = document.getElementById('details-text');
     if (detailsText) {
       detailsText.innerHTML = messages.detailsText[locale];
     }
-    var appStoreLinkImage = document.getElementById("app-store-link-image");
-    var googlePlayLinkImage = document.getElementById("google-play-link-image");
+    var appStoreLinkImage = document.getElementById('app-store-link-image');
+    var googlePlayLinkImage = document.getElementById('google-play-link-image');
     if (appStoreLinkImage && googlePlayLinkImage) {
       appStoreLinkImage.src = messages.appStoreBadgePath[locale];
       googlePlayLinkImage.src = messages.googlePlayBadgePath[locale];
@@ -328,9 +328,9 @@
         onerror: false
       });
 
-      window.addEventListener("error", function (event) {
+      window.addEventListener('error', function (event) {
         var error = event.error;
-        if (typeof error === "object" && !(error instanceof Error)) error = JSON.stringify(error);
+        if (typeof error === 'object' && !(error instanceof Error)) error = JSON.stringify(error);
         airbrake.notify({
           error: error,
           context: { environment: environment }
