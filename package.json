@@ -10,6 +10,7 @@
     "url": "git+https://github.com/tomboinc/a2obrew.git"
   },
   "author": "Tombo, Inc.",
+  "license": "UNLICENSED",
   "bugs": {
     "url": "https://github.com/tomboinc/a2obrew/issues"
   },
