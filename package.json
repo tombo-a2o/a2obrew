@@ -15,6 +15,7 @@
   },
   "homepage": "https://github.com/tomboinc/a2obrew#readme",
   "dependencies": {
-    "eslint": "^3.15.0"
+    "eslint": "^3.15.0",
+    "htmlhint": "^0.9.13"
   }
 }
