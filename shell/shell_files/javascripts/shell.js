@@ -127,13 +127,25 @@
         return;
       }
     }
+
     var canvas = document.getElementById('app-canvas');
+
     var gl = canvas.getContext('webgl');
+    var isSupported = true;
     if (!gl || !gl.getExtension('OES_vertex_array_object')) {
+      isSupported = false;
+    }
+    try {
+      new AudioContext();
+    } catch (_e) {
+      isSupported = false;
+    }
+    if (!isSupported) {
       if (!confirm(messages.warningNonSupportedBrowsers[locale])) {
         return;
       }
     }
+
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
     });
