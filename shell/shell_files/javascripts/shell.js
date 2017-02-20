@@ -10,6 +10,10 @@
       en: 'This app may not work correctly on mobile devices due to insufficient memory or CPU power.\nWould you like to launch the app?',
       ja: 'モバイル端末で実行する場合\u3001メモリやCPUパワーの不足で正常に実行されない恐れがあります\u3002\n実行してもよろしいですか\uFF1F'
     },
+    warningNonSupportedBrowsers: {
+      en: 'This app may not work correctly on your browser.\nWould you like to launch the app?',
+      ja: 'お使いのブラウザでは正常に実行されない恐れがあります\u3002\n実行してもよろしいですか\uFF1F'
+    },
     exception: {
       en: 'Oops! Looks like something went wrong. Please try reloading the page.',
       ja: '問題が発生しました。申し訳ございませんが、ページをリロードしてください。'
@@ -124,6 +128,12 @@
       }
     }
     var canvas = document.getElementById('app-canvas');
+    var gl = canvas.getContext('webgl');
+    if (!gl || !gl.getExtension('OES_vertex_array_object')) {
+      if (!confirm(messages.warningNonSupportedBrowsers[locale])) {
+        return;
+      }
+    }
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
     });
