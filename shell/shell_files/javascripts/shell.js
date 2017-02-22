@@ -26,6 +26,10 @@
       en: '<p>This app was auto-converted from iOS to Web using the <a target="_blank" href="http://tombo.io/a2o/">"A2O" converter</a> by <a target="_blank" href="http://tombo.io/">Tombo, Inc.</a>. If you\'re interested in converting your apps to the Web using A2O, <a target="_blank" href="http://tombo.io/contact_form/">we\'d love to talk to you</a>.<p>Details about the technology can be found in <a target="_blank" href="https://blog.tombo.io/">our blog</a>. <a target="_blank" href="http://tombo.io/contact_form/">Feedback welcome!</a>',
       ja: '<p>このアプリは<a target="_blank" href="http://tombo.io/">Tombo Inc.</a>で開発した<a target="_blank" href="http://tombo.io/a2o/">A2Oコンバーター</a>によってiOSアプリから自動変換されています。もし、アプリを変換することに興味がある場合、ぜひ<a target="_blank" href="http://tombo.io/contact_form/">ご連絡</a>ください。<p>技術的な詳細については私たちの<a target="_blank" href="https://blog.tombo.io/">ブログ（ただし英語）</a>をご覧ください。<a target="_blank" href="http://tombo.io/contact_form/">フィードバック</a>大歓迎です！'
     },
+    warningBeforeUnload: {
+      en: 'Application will be terminated.',
+      ja: 'アプリが中断されます。'
+    },
     appStoreBadgePath: {
       en: './shell_files/images/app_store_badge.en.svg',
       ja: './shell_files/images/app_store_badge.ja.svg'
@@ -119,7 +123,7 @@
     }, 1); // delaying even 1ms is enough to allow compilation memory to be reclaimed
   };
 
-  var isSupportedBrowser = function() {
+  var isSupportedBrowser = function () {
     var canvas = document.createElement('canvas');
     var gl = canvas.getContext('webgl');
     var isSupported = true;
@@ -134,15 +138,15 @@
     return true;
   }
 
-  var loadWasm = function() {
+  var loadWasm = function () {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', 'application.wasm', true);
     xhr.responseType = 'arraybuffer';
-    xhr.onload = function() {
+    xhr.onload = function () {
       Module.wasmBinary = xhr.response;
 
       var script = document.createElement('script');
-      script.src = "application.js";
+      script.src = 'application.js';
       document.body.appendChild(script);
 
     };
@@ -446,5 +450,11 @@
     if (A2OShell.autoLaunch) {
       launch();
     }
+  });
+
+  window.addEventListener('beforeunload', function (e) {
+    var message = messages.warningBeforeUnload[locale];
+    e.returnValue = message;
+    return message;
   });
 }());
