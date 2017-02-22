@@ -134,6 +134,21 @@
     return true;
   }
 
+  var loadWasm = function() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'application.wasm', true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function() {
+      Module.wasmBinary = xhr.response;
+
+      var script = document.createElement('script');
+      script.src = "application.js";
+      document.body.appendChild(script);
+
+    };
+    xhr.send(null);
+  }
+
   var locale = 'en';
   var launch = function () {
     // show warning if this is mobile
@@ -273,7 +288,12 @@
     document.getElementById('app-canvas').style.display = 'block';
     document.getElementById('preview-image').style.display = 'none';
     Module.setStatus('Downloading...');
-    document.body.appendChild(script);
+
+    if (A2OShell.wasm) {
+      loadWasm();
+    } else {
+      document.body.appendChild(script);
+    }
   };
 
   var getCookieAsObject = function () {
