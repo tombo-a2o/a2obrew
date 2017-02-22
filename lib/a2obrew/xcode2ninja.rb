@@ -1149,7 +1149,7 @@ module A2OBrew
       products_outputs = products_inputs.map do |path|
         path.sub('pre_products', 'products')
       end
-      products_outputs << html_path(a2o_target)
+      products_outputs << products_html_path(a2o_target)
 
       builds << {
         outputs: products_outputs,
