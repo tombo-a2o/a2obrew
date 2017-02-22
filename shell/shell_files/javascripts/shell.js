@@ -118,6 +118,22 @@
       document.body.appendChild(script);
     }, 1); // delaying even 1ms is enough to allow compilation memory to be reclaimed
   };
+
+  var isSupportedBrowser = function() {
+    var canvas = document.createElement('canvas');
+    var gl = canvas.getContext('webgl');
+    var isSupported = true;
+    if (!gl || !gl.getExtension('OES_vertex_array_object')) {
+      return false;
+    }
+    try {
+      new AudioContext();
+    } catch (_e) {
+      return false;
+    }
+    return true;
+  }
+
   var locale = 'en';
   var launch = function () {
     // show warning if this is mobile
@@ -130,17 +146,7 @@
 
     var canvas = document.getElementById('app-canvas');
 
-    var gl = canvas.getContext('webgl');
-    var isSupported = true;
-    if (!gl || !gl.getExtension('OES_vertex_array_object')) {
-      isSupported = false;
-    }
-    try {
-      new AudioContext();
-    } catch (_e) {
-      isSupported = false;
-    }
-    if (!isSupported) {
+    if (!isSupportedBrowser()) {
       if (!confirm(messages.warningNonSupportedBrowsers[locale])) {
         return;
       }
