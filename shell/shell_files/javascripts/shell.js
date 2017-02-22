@@ -102,7 +102,7 @@
   script.onload = function () {
     setTimeout(function () {
       (function () {
-        var memoryInitializer = 'application.html.mem';
+        var memoryInitializer = 'application.js.mem';
         if (typeof Module.locateFile === 'function') {
           memoryInitializer = Module.locateFile(memoryInitializer);
         } else if (Module.memoryInitializerPrefixURL) {

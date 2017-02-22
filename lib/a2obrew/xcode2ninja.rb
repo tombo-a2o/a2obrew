@@ -276,7 +276,7 @@ module A2OBrew
         {
           rule_name: 'compose',
           description: 'generate executables: ${out}',
-          command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o ${options} -o ${html_path} ${linked_objects}'
+          command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o ${options} -o ${js_path} ${linked_objects}'
         },
         {
           rule_name: 'generate_products',
@@ -379,11 +379,11 @@ module A2OBrew
     end
 
     def html_mem_path(a2o_target)
-      "#{html_path(a2o_target)}.mem"
+      "#{js_path(a2o_target)}.mem"
     end
 
     def html_symbols_path(a2o_target)
-      "#{html_path(a2o_target)}.symbols"
+      "#{js_path(a2o_target)}.symbols"
     end
 
     def platform_parameters_json_path(a2o_target)
@@ -1082,7 +1082,6 @@ module A2OBrew
       end
 
       pre_products_outputs = [
-        html_path(a2o_target),
         html_mem_path(a2o_target),
         js_path(a2o_target),
         html_symbols_path(a2o_target)
@@ -1123,7 +1122,7 @@ module A2OBrew
         build_variables: {
           'options' => a2o_options.join(' '),
           'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
-          'html_path' => html_path(a2o_target)
+          'js_path' => js_path(a2o_target)
         }
       }
 
@@ -1150,6 +1149,7 @@ module A2OBrew
       products_outputs = products_inputs.map do |path|
         path.sub('pre_products', 'products')
       end
+      products_outputs << html_path(a2o_target)
 
       builds << {
         outputs: products_outputs,
