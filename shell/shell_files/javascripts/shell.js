@@ -126,7 +126,6 @@
   var isSupportedBrowser = function () {
     var canvas = document.createElement('canvas');
     var gl = canvas.getContext('webgl');
-    var isSupported = true;
     if (!gl || !gl.getExtension('OES_vertex_array_object')) {
       return false;
     }
