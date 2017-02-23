@@ -4,9 +4,6 @@ require 'rainbow'
 require 'RMagick'
 require 'fileutils'
 
-# Force enable for Rainbow even if the STDOUT/STDERR aren't terminals
-Rainbow.enabled = true
-
 module MakeMakefile
   module Logging
     @logfile = File::NULL
