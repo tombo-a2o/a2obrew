@@ -16,6 +16,7 @@
   },
   "rules": {
     "prefer-arrow-callback": ["error"],
+    "no-var": ["error"],
     "no-console": 0,
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "object-curly-spacing": ["error", "always"],
