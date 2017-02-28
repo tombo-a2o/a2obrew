@@ -1,4 +1,4 @@
-let params;
+var params;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
