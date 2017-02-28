@@ -1,5 +1,8 @@
 'use strict';
 
+var Module;
+var A2OShell;
+
 (function () {
   var messages = {
     downloadSize: {
@@ -40,57 +43,62 @@
     },
   };
 
-  /* setup Module */
-  Module.preRun = [];
-  Module.postRun = [];
-  Module.print = function (text) {
-    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-    console.log(text);
-  };
-  Module.printErr = function (text) {
-    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-    console.error(text);
-  };
-  Module.canvas = (function () {
-    var canvas = document.getElementById('app-canvas');
+  // Getting runtime_paramters.json
+  var loadRuntimeParameters = function (callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.onload = function () {
+      var rp = JSON.parse(this.responseText);
+      Module = rp.Module;
+      A2OShell = rp.A2OShell;
 
-    // As a default initial behavior, pop up an alert when webgl context is lost. To make your
-    // application robust, you may want to override this behavior before shipping!
-    // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
-    canvas.addEventListener('webglcontextlost', function (e) {
-      alert('Please reload the page');
-      e.preventDefault();
-    }, false);
+      /* setup Module */
+      Module.preRun = [];
+      Module.postRun = [];
+      Module.print = function (text) {
+        if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+        console.log(text);
+      };
+      Module.printErr = function (text) {
+        if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+        console.error(text);
+      };
+      Module.canvas = (function () {
+        var canvas = document.getElementById('app-canvas');
 
-    return canvas;
-  })();
-  Module.setStatus = function (text) {
-    if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
-    if (text === Module.setStatus.text) return;
-    var statusElement = document.getElementById('status');
-    statusElement.style.display = (text === '' ? 'none' : 'table');
-    var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
-    var now = Date.now();
-    if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
-    if (m) {
-      text = m[1] + ': ' + (parseInt(m[2]) / parseInt(m[4]) * 100).toFixed(2) + '%';
-    }
-    var statusMessageElement = document.getElementById('status-message');
-    statusMessageElement.textContent = text;
-  };
-  Module.totalDependencies = 0;
-  Module.monitorRunDependencies = function (left) {
-    this.totalDependencies = Math.max(this.totalDependencies, left);
-    Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
-  };
+        // As a default initial behavior, pop up an alert when webgl context is lost. To make your
+        // application robust, you may want to override this behavior before shipping!
+        // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+        canvas.addEventListener('webglcontextlost', function (e) {
+          alert('Please reload the page');
+          e.preventDefault();
+        }, false);
 
-  window.addEventListener('error', function (_event) {
-    // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
-    Module.setStatus(messages.exception[locale]);
-    Module.setStatus = function (text) {
-      if (text) Module.printErr('[post-exception status] ' + text);
+        return canvas;
+      })();
+      Module.setStatus = function (text) {
+        if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+        if (text === Module.setStatus.text) return;
+        var statusElement = document.getElementById('status');
+        statusElement.style.display = (text === '' ? 'none' : 'table');
+        var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+        var now = Date.now();
+        if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+        if (m) {
+          text = m[1] + ': ' + (parseInt(m[2]) / parseInt(m[4]) * 100).toFixed(2) + '%';
+        }
+        var statusMessageElement = document.getElementById('status-message');
+        statusMessageElement.textContent = text;
+      };
+      Module.totalDependencies = 0;
+      Module.monitorRunDependencies = function (left) {
+        this.totalDependencies = Math.max(this.totalDependencies, left);
+        Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+      };
+      callback();
     };
-  });
+    xhr.open('GET', 'runtime_parameters.json', true);
+    xhr.send(null);
+  };
 
   var current_url = (function () {
     var metas = document.getElementsByTagName('meta');
@@ -322,7 +330,7 @@
     return languages;
   }
 
-  var setLanguageEnv=function (languages) {
+  var setLanguageEnv = function (languages) {
     if (!Module.preRun) {
       Module.preRun = [];
     }
@@ -391,69 +399,79 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    prepareLocalization();
+    loadRuntimeParameters(function () {
+      prepareLocalization();
 
-    prepareErrorHandler();
+      prepareErrorHandler();
 
-    // initializing screen size
-    var isLandscape = Module.initialDeviceOrientation == 3;
-    var width;
-    var height;
-    var scale = Module.screenModes[0].scale;
-    var launchImage = document.getElementById('launch-image');
-    if (isLandscape) {
-      width = Module.screenModes[0].height / scale;
-      height = Module.screenModes[0].width / scale;
-      launchImage.style.transform = 'rotate(-90deg)';
-    } else {
-      width = Module.screenModes[0].width / scale;
-      height = Module.screenModes[0].height / scale;
-    }
-    // canvas
-    var canvas = document.getElementById('app-canvas');
-    canvas.width = width;
-    canvas.height = height;
+      // initializing screen size
+      var isLandscape = Module.initialDeviceOrientation == 3;
+      var width;
+      var height;
+      var scale = Module.screenModes[0].scale;
+      var launchImage = document.getElementById('launch-image');
+      if (isLandscape) {
+        width = Module.screenModes[0].height / scale;
+        height = Module.screenModes[0].width / scale;
+        launchImage.style.transform = 'rotate(-90deg)';
+      } else {
+        width = Module.screenModes[0].width / scale;
+        height = Module.screenModes[0].height / scale;
+      }
+      // canvas
+      var canvas = document.getElementById('app-canvas');
+      canvas.width = width;
+      canvas.height = height;
 
-    // playground
-    var playgroundElement = document.getElementsByClassName('playground-main')[0];
-    playgroundElement.style.width = width + 'px';
-    playgroundElement.style.height = height + 'px';
+      // playground
+      var playgroundElement = document.getElementsByClassName('playground-main')[0];
+      playgroundElement.style.width = width + 'px';
+      playgroundElement.style.height = height + 'px';
 
-    // background image
-    var backgroundImageElement = playgroundElement.getElementsByTagName('img')[0];
-    backgroundImageElement.width = width;
-    backgroundImageElement.height = height;
+      // background image
+      var backgroundImageElement = playgroundElement.getElementsByTagName('img')[0];
+      backgroundImageElement.width = width;
+      backgroundImageElement.height = height;
 
-    // initializing keypad
-    var keypadElement = document.getElementById('keypad-' + A2OShell.keypad);
-    keypadElement && (keypadElement.style.display = 'block');
+      // initializing keypad
+      var keypadElement = document.getElementById('keypad-' + A2OShell.keypad);
+      keypadElement && (keypadElement.style.display = 'block');
 
-    // adding events on buttons
-    document.getElementById('button-launch').addEventListener('click', function (_e) {
-      launch();
-      return false;
+      // adding events on buttons
+      document.getElementById('button-launch').addEventListener('click', function (_e) {
+        launch();
+        return false;
+      });
+      document.getElementById('button-tweet').addEventListener('click', function (_e) {
+        window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(current_url) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
+        return false;
+      });
+      document.getElementById('button-share-on-facebook').addEventListener('click', function (_e) {
+        window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(current_url));
+        return false;
+      });
+
+      document.getElementById('app-store-link').href = A2OShell.appStoreURL || '#';
+      document.getElementById('google-play-link').href = A2OShell.googlePlayURL || '#';
+
+      window.addEventListener('beforeunload', function (e) {
+        var message = messages.warningBeforeUnload[locale];
+        e.returnValue = message;
+        return message;
+      });
+
+      window.addEventListener('error', function (_event) {
+        // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+        Module.setStatus(messages.exception[locale]);
+        Module.setStatus = function (text) {
+          if (text) Module.printErr('[post-exception status] ' + text);
+        };
+      });
+
+      // auto launch
+      if (A2OShell.autoLaunch) {
+        launch();
+      }
     });
-    document.getElementById('button-tweet').addEventListener('click', function (_e) {
-      window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(current_url) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
-      return false;
-    });
-    document.getElementById('button-share-on-facebook').addEventListener('click', function (_e) {
-      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(current_url));
-      return false;
-    });
-
-    document.getElementById('app-store-link').href = A2OShell.appStoreURL || '#';
-    document.getElementById('google-play-link').href = A2OShell.googlePlayURL || '#';
-
-    // auto launch
-    if (A2OShell.autoLaunch) {
-      launch();
-    }
-  });
-
-  window.addEventListener('beforeunload', function (e) {
-    var message = messages.warningBeforeUnload[locale];
-    e.returnValue = message;
-    return message;
   });
 }());

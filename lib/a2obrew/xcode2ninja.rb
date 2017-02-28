@@ -390,8 +390,8 @@ module A2OBrew
       "#{pre_products_tombo_dir(a2o_target)}/parameters.json"
     end
 
-    def runtime_parameters_js_path(a2o_target)
-      "#{pre_products_application_dir(a2o_target)}/runtime_parameters.js"
+    def runtime_parameters_json_path(a2o_target)
+      "#{pre_products_application_dir(a2o_target)}/runtime_parameters.json"
     end
 
     def application_icon_output_path(a2o_target)
@@ -983,7 +983,7 @@ module A2OBrew
       }.to_json
     end
 
-    def generate_runtime_parameters_js(active_project_config)
+    def generate_runtime_parameters_json(active_project_config, target)
       # emscripten parameters should be set into the variable `Module`.
       emscripten_parameters = active_project_config.dig(:runtime_parameters, :emscripten) || {}
       emscripten_parameters[:screen_modes] ||= [{
@@ -993,11 +993,20 @@ module A2OBrew
 
       # shell parameters should be set into the variable `A2OShell`
       shell_parameters = active_project_config.dig(:runtime_parameters, :shell) || {}
+      shell_parameters[:service_worker_cache_name] = "tombo-#{target.product_name}-v#{Time.now.to_i}"
+      shell_parameters[:urls_to_cache] = [
+        './application.asm.js',
+        './application.dat',
+        './application.js',
+        './application.mem',
+        './application.symbols',
+        './Foundation.so.js'
+      ]
+
       shell_parameters = hash_key_to_camel(shell_parameters)
 
-      em_js = "var Module = #{JSON.pretty_generate(emscripten_parameters)};"
-      shell_js = "var A2OShell = #{JSON.pretty_generate(shell_parameters)};"
-      [em_js, shell_js].join("\n").gsub("\n", '\n')
+      JSON.pretty_generate('Module': emscripten_parameters,
+                           'A2OShell': shell_parameters).gsub("\n", '\n')
     end
 
     def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength
@@ -1052,13 +1061,13 @@ module A2OBrew
         }
       }
 
-      # extra js
+      # extra json
       builds << {
-        outputs: [runtime_parameters_js_path(a2o_target)],
+        outputs: [runtime_parameters_json_path(a2o_target)],
         rule_name: 'echo',
         inputs: [],
         build_variables: {
-          contents: generate_runtime_parameters_js(active_project_config).shell_quote_escape
+          contents: generate_runtime_parameters_json(active_project_config, target).shell_quote_escape
         }
       }
 
@@ -1140,7 +1149,7 @@ module A2OBrew
       products_inputs = pre_products_outputs + shared_libraries_outputs + [
         data_path(a2o_target),
         platform_parameters_json_path(a2o_target),
-        runtime_parameters_js_path(a2o_target)
+        runtime_parameters_json_path(a2o_target)
       ]
       products_inputs.concat(@icon_output_paths) if @icon_output_paths
       products_inputs << @launch_image_output_path if @launch_image_output_path
