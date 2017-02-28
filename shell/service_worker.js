@@ -18,23 +18,11 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      if (response) { return response; }
-      let fetchRequest = event.request.clone();
-
-      return fetch(fetchRequest, {
-        credentials: 'include'
-      }).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        let responseToCache = response.clone();
-
-        caches.open(params.serviceWorkerCacheName).then((cache) => {
-          cache.put(event.request, responseToCache);
-        })
-
+      if (response) {
+        console.log(`Fetch from cache: ${response.url}`);
         return response;
-      });
+      }
+      return fetch(event.request);
     })
   );
 });

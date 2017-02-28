@@ -440,12 +440,12 @@ module A2OBrew
       "#{shell_template_dir}/shell_files"
     end
 
-    def shell_template_html_path
-      "#{shell_template_dir}/shell.html"
+    def application_template_html_path
+      "#{shell_template_dir}/application.html"
     end
 
     def service_worker_template_js_path
-      "#{shell_template_dir}/sw.js"
+      "#{shell_template_dir}/service_worker.js"
     end
 
     # emscripten paths
@@ -1170,14 +1170,14 @@ module A2OBrew
         outputs: products_outputs,
         rule_name: 'generate_products',
         inputs: products_inputs + [
-          shell_template_html_path,
+          application_template_html_path,
           service_worker_template_js_path
         ],
         build_variables: {
           'pre_products_dir' => pre_products_dir(a2o_target),
           'products_dir' => products_dir(a2o_target),
           'products_application_dir' => products_application_dir(a2o_target),
-          'shell_html_path' => shell_template_html_path,
+          'shell_html_path' => application_template_html_path,
           'service_worker_js_path' => service_worker_template_js_path
         }
       }

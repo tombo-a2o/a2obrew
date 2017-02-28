@@ -406,7 +406,7 @@ var A2OShell;
 
   var registerServiceWorker = function (callback) {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('../../sw.js').then(function (registration) {
+      navigator.serviceWorker.register('../../service_worker.js').then(function (registration) {
         console.log('ServiceWorker registration successful with scope: ', registration.scope)
         callback();
       }).catch(function (err) {
