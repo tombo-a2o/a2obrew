@@ -765,6 +765,8 @@ module A2OBrew
           end
         end
       end
+
+      nil
     end
 
     def asset_catalog(local_path, target, build_config)
