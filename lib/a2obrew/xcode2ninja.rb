@@ -994,13 +994,13 @@ module A2OBrew
       # shell parameters should be set into the variable `A2OShell`
       shell_parameters = active_project_config.dig(:runtime_parameters, :shell) || {}
       shell_parameters[:service_worker_cache_name] = "tombo-#{target.product_name}-v#{Time.now.to_i}"
-      shell_parameters[:urls_to_cache] = [
-        './application.asm.js',
-        './application.dat',
-        './application.js',
-        './application.mem',
-        './application.symbols',
-        './Foundation.so.js'
+      shell_parameters[:paths_to_cache] = [
+        'application.asm.js',
+        'application.dat',
+        'application.js',
+        'application.js.mem',
+        'application.js.symbols',
+        'Foundation.so.js'
       ]
 
       shell_parameters = hash_key_to_camel(shell_parameters)

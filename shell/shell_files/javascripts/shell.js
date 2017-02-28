@@ -307,13 +307,19 @@ var A2OShell;
     }
   };
 
+  var launchWithServiceWorker = function () {
+    registerServiceWorker(function () {
+      launch();
+    });
+  };
+
   var getCookieAsObject = function () {
     return document.cookie.split('; ').reduce(function (prev, current, _index, _array) {
       var keyvalue = current.split('=');
       prev[keyvalue[0]] = keyvalue[1];
       return prev;
     }, {});
-  }
+  };
 
   var getLocalizeLanguages = function () {
     // Browser languages
@@ -328,7 +334,7 @@ var A2OShell;
       languages.unshift(cookie.locale);
     }
     return languages;
-  }
+  };
 
   var setLanguageEnv = function (languages) {
     if (!Module.preRun) {
@@ -337,7 +343,7 @@ var A2OShell;
     Module.preRun.push(function () {
       ENV.LANGUAGES = '(' + languages.join(',') + ')';
     });
-  }
+  };
 
   var localizeShell = function () {
     // set download text
@@ -359,7 +365,7 @@ var A2OShell;
       appStoreLinkImage.src = messages.appStoreBadgePath[locale];
       googlePlayLinkImage.src = messages.googlePlayBadgePath[locale];
     }
-  }
+  };
 
   var prepareLocalization = function () {
     var languages = getLocalizeLanguages();
@@ -376,7 +382,7 @@ var A2OShell;
     }
 
     localizeShell();
-  }
+  };
 
   var prepareErrorHandler = function () {
     var environment = window.location.hostname == 'app.tombo.io' ? 'production' : 'development';
@@ -396,82 +402,101 @@ var A2OShell;
         });
       });
     }
-  }
+  };
+
+  var registerServiceWorker = function (callback) {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./shell_files/javascripts/sw.js').then(function (registration) {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope)
+        callback();
+      }).catch(function (err) {
+        console.log('ServiceWorker registration failed: ', err);
+        callback();
+      });
+    } else {
+      console.log('No ServiceWorker');
+      callback();
+    }
+  };
+
+  var main = function () {
+    prepareLocalization();
+
+    prepareErrorHandler();
+
+    // initializing screen size
+    var isLandscape = Module.initialDeviceOrientation == 3;
+    var width;
+    var height;
+    var scale = Module.screenModes[0].scale;
+    var launchImage = document.getElementById('launch-image');
+    if (isLandscape) {
+      width = Module.screenModes[0].height / scale;
+      height = Module.screenModes[0].width / scale;
+      launchImage.style.transform = 'rotate(-90deg)';
+    } else {
+      width = Module.screenModes[0].width / scale;
+      height = Module.screenModes[0].height / scale;
+    }
+    // canvas
+    var canvas = document.getElementById('app-canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    // playground
+    var playgroundElement = document.getElementsByClassName('playground-main')[0];
+    playgroundElement.style.width = width + 'px';
+    playgroundElement.style.height = height + 'px';
+
+    // background image
+    var backgroundImageElement = playgroundElement.getElementsByTagName('img')[0];
+    backgroundImageElement.width = width;
+    backgroundImageElement.height = height;
+
+    // initializing keypad
+    var keypadElement = document.getElementById('keypad-' + A2OShell.keypad);
+    keypadElement && (keypadElement.style.display = 'block');
+
+    // adding events on buttons
+    document.getElementById('button-launch').addEventListener('click', function (_e) {
+      launchWithServiceWorker();
+      return false;
+    });
+    document.getElementById('button-tweet').addEventListener('click', function (_e) {
+      window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(current_url) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
+      return false;
+    });
+    document.getElementById('button-share-on-facebook').addEventListener('click', function (_e) {
+      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(current_url));
+      return false;
+    });
+
+    document.getElementById('app-store-link').href = A2OShell.appStoreURL || '#';
+    document.getElementById('google-play-link').href = A2OShell.googlePlayURL || '#';
+
+    window.addEventListener('beforeunload', function (e) {
+      var message = messages.warningBeforeUnload[locale];
+      e.returnValue = message;
+      return message;
+    });
+
+    window.addEventListener('error', function (_event) {
+      // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+      Module.setStatus(messages.exception[locale]);
+      Module.setStatus = function (text) {
+        if (text) Module.printErr('[post-exception status] ' + text);
+      };
+    });
+
+    // auto launch
+    if (A2OShell.autoLaunch) {
+      launchWithServiceWorker();
+    }
+  };
 
   document.addEventListener('DOMContentLoaded', function () {
     loadRuntimeParameters(function () {
-      prepareLocalization();
-
-      prepareErrorHandler();
-
-      // initializing screen size
-      var isLandscape = Module.initialDeviceOrientation == 3;
-      var width;
-      var height;
-      var scale = Module.screenModes[0].scale;
-      var launchImage = document.getElementById('launch-image');
-      if (isLandscape) {
-        width = Module.screenModes[0].height / scale;
-        height = Module.screenModes[0].width / scale;
-        launchImage.style.transform = 'rotate(-90deg)';
-      } else {
-        width = Module.screenModes[0].width / scale;
-        height = Module.screenModes[0].height / scale;
-      }
-      // canvas
-      var canvas = document.getElementById('app-canvas');
-      canvas.width = width;
-      canvas.height = height;
-
-      // playground
-      var playgroundElement = document.getElementsByClassName('playground-main')[0];
-      playgroundElement.style.width = width + 'px';
-      playgroundElement.style.height = height + 'px';
-
-      // background image
-      var backgroundImageElement = playgroundElement.getElementsByTagName('img')[0];
-      backgroundImageElement.width = width;
-      backgroundImageElement.height = height;
-
-      // initializing keypad
-      var keypadElement = document.getElementById('keypad-' + A2OShell.keypad);
-      keypadElement && (keypadElement.style.display = 'block');
-
-      // adding events on buttons
-      document.getElementById('button-launch').addEventListener('click', function (_e) {
-        launch();
-        return false;
-      });
-      document.getElementById('button-tweet').addEventListener('click', function (_e) {
-        window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(current_url) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
-        return false;
-      });
-      document.getElementById('button-share-on-facebook').addEventListener('click', function (_e) {
-        window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(current_url));
-        return false;
-      });
-
-      document.getElementById('app-store-link').href = A2OShell.appStoreURL || '#';
-      document.getElementById('google-play-link').href = A2OShell.googlePlayURL || '#';
-
-      window.addEventListener('beforeunload', function (e) {
-        var message = messages.warningBeforeUnload[locale];
-        e.returnValue = message;
-        return message;
-      });
-
-      window.addEventListener('error', function (_event) {
-        // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
-        Module.setStatus(messages.exception[locale]);
-        Module.setStatus = function (text) {
-          if (text) Module.printErr('[post-exception status] ' + text);
-        };
-      });
-
-      // auto launch
-      if (A2OShell.autoLaunch) {
-        launch();
-      }
+      main();
     });
   });
 }());
