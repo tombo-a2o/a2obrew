@@ -2,7 +2,9 @@ let params;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    fetch('../../runtime_parameters.json').then((response) => {
+    fetch('../../runtime_parameters.json', {
+      credentials: 'include'
+    }).then((response) => {
       return response.json();
     }).then((json) => {
       params = json.A2OShell;
@@ -21,7 +23,9 @@ self.addEventListener('fetch', (event) => {
       if (response) { return response; }
       let fetchRequest = event.request.clone();
 
-      return fetch(fetchRequest).then((response) => {
+      return fetch(fetchRequest, {
+        credentials: 'include'
+      }).then((response) => {
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
