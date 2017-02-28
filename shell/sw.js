@@ -2,7 +2,7 @@ let params;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    fetch('../../runtime_parameters.json', {
+    fetch('runtime_parameters.json', {
       credentials: 'include'
     }).then((response) => {
       return response.json();
@@ -10,9 +10,7 @@ self.addEventListener('install', (event) => {
       params = json.A2OShell;
       return caches.open(params.serviceWorkerCacheName);
     }).then((cache) => {
-      return cache.addAll(params.pathsToCache.map((path) => {
-        return `../../${path}`;
-      }));
+      return cache.addAll(params.pathsToCache);
     })
   );
 });
