@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'pty'
 require 'mkmf'
 require 'rainbow'
 require 'RMagick'
@@ -36,11 +37,21 @@ module A2OBrew
       FileUtils.mkdir_p(path) unless File.directory?(path)
     end
 
-    def self.cmd_exec(cmd, error_msg = nil)
+    def self.cmd_exec(cmd, error_msg = nil, &output_filter)
       puts_delimiter(cmd)
-      pid = fork
-      exec(cmd) if pid.nil?
-      _, stat = Process.waitpid2(pid)
+      PTY.spawn(cmd) do |stdout, stdin, pid|
+        begin
+          stdin.close
+          stdout.each do |line|
+            yield line unless output_filter.nil?
+            puts line
+          end
+        rescue Error::EIO # rubocop:disable Lint/HandleExceptions
+        ensure
+          Process.wait pid
+        end
+      end
+      stat = $CHILD_STATUS
       if stat.exitstatus.nonzero?
         error_msg ||= "Error: #{cmd}"
         raise CmdExecException.new(error_msg, stat.exitstatus)
@@ -71,6 +82,10 @@ module A2OBrew
     def self.image_width_and_height(path)
       img = Magick::ImageList.new(path)
       [img.columns, img.rows]
+    end
+
+    def self.filter_ansi_esc(str)
+      str.gsub(/\e\[\d{1,3}[mK]/, '')
     end
   end
 end

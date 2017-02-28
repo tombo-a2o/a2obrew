@@ -128,13 +128,29 @@ EOF
       active_project_config
     end
 
+    BUILD_LOG_PATH = 'a2o/build.log'
+    UNRESOLVED_SYMBOL_LOG_PATH = 'a2o/unresolved'
+
+    def execute_ninja_build(ninja_path, options)
+      build_log = File.open(BUILD_LOG_PATH, 'w')
+      unresolved = []
+      jobs = "-j #{options[:jobs]}" if options[:jobs]
+      Util.cmd_exec("ninja -v -f #{ninja_path} #{jobs}", 'ninja build error') do |line|
+        build_log.write Util.filter_ansi_esc(line)
+        case line.chomp
+        when / unresolved symbol: (.+)\z/
+          unresolved << Regexp.last_match(1)
+        end
+      end
+      File.open(UNRESOLVED_SYMBOL_LOG_PATH, 'w').write(unresolved.sort.join("\n"))
+    end
+
     def execute_ninja_command(ninja_path, options)
       if options[:clean]
         Util.cmd_exec "ninja -v -f #{ninja_path} -t clean", 'ninja clean error'
         Util.cmd_exec "rm -f #{ninja_path}", "remove ninja file error: #{ninja_path}"
       else
-        jobs = "-j #{options[:jobs]}" if options[:jobs]
-        Util.cmd_exec "ninja -v -f #{ninja_path} #{jobs}", 'ninja build error'
+        execute_ninja_build(ninja_path, options)
       end
     rescue CmdExecException => e
       error_exit(e.message, e.exit_status)
