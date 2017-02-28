@@ -418,12 +418,16 @@ module A2OBrew
       "#{build_dir(a2o_target)}/products"
     end
 
-    def products_html_path(a2o_target)
-      "#{products_dir(a2o_target)}/application/application.html"
-    end
-
     def products_application_dir(a2o_target)
       "#{products_dir(a2o_target)}/application"
+    end
+
+    def products_html_path(a2o_target)
+      "#{products_application_dir(a2o_target)}/application.html"
+    end
+
+    def products_service_worker_js_path(a2o_target)
+      "#{products_application_dir(a2o_target)}/service_worker.js"
     end
 
     # a2obrew paths
@@ -1165,6 +1169,7 @@ module A2OBrew
         path.sub('pre_products', 'products')
       end
       products_outputs << products_html_path(a2o_target)
+      products_outputs << products_service_worker_js_path(a2o_target)
 
       builds << {
         outputs: products_outputs,
