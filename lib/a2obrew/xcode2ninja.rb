@@ -380,11 +380,11 @@ module A2OBrew
       "#{pre_products_path_prefix(a2o_target)}.html"
     end
 
-    def html_mem_path(a2o_target)
+    def js_mem_path(a2o_target)
       "#{js_path(a2o_target)}.mem"
     end
 
-    def html_symbols_path(a2o_target)
+    def js_symbols_path(a2o_target)
       "#{js_path(a2o_target)}.symbols"
     end
 
@@ -1097,7 +1097,7 @@ module A2OBrew
       a2o_options += a2o_flags
 
       pre_products_outputs = [
-        html_mem_path(a2o_target),
+        js_mem_path(a2o_target),
         js_path(a2o_target)
       ]
 
@@ -1108,7 +1108,7 @@ module A2OBrew
         a2o_flags.include?('-Oz')
       )
         a2o_options << '--emit-symbol-map'
-        pre_products_outputs << html_symbols_path(a2o_target)
+        pre_products_outputs << js_symbols_path(a2o_target)
       end
 
       # detect emscripten file changes
