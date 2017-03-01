@@ -384,8 +384,9 @@ var A2OShell;
     localizeShell();
   };
 
+  var environment = window.location.hostname == 'app.tombo.io' ? 'production' : 'development';
+
   var prepareErrorHandler = function () {
-    var environment = window.location.hostname == 'app.tombo.io' ? 'production' : 'development';
     if (environment == 'production') {
       var airbrake = new airbrakeJs.Client({
         projectId: 137659,
@@ -474,11 +475,13 @@ var A2OShell;
     document.getElementById('app-store-link').href = A2OShell.appStoreURL || '#';
     document.getElementById('google-play-link').href = A2OShell.googlePlayURL || '#';
 
-    window.addEventListener('beforeunload', function (e) {
-      var message = messages.warningBeforeUnload[locale];
-      e.returnValue = message;
-      return message;
-    });
+    if (environment === 'production') {
+      window.addEventListener('beforeunload', function (e) {
+        var message = messages.warningBeforeUnload[locale];
+        e.returnValue = message;
+        return message;
+      });
+    }
 
     window.addEventListener('error', function (_event) {
       // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
