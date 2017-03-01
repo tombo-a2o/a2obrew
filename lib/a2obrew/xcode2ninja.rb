@@ -1021,7 +1021,7 @@ module A2OBrew
                            'A2OShell': shell_parameters).gsub("\n", '\n')
     end
 
-    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength
+    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength,CyclomaticComplexity,PerceivedComplexity,LineLength
       builds = []
 
       # dynamic link libraries
@@ -1085,28 +1085,37 @@ module A2OBrew
 
       # executable
 
-      # generate html
+      # generate js compiler flags
       a2o_options = [
         '-v',
         '-s VERBOSE=1',
         '-s LZ4=1',
         '-s NATIVE_LIBDISPATCH=1',
-        '--memory-init-file 1',
-        '--emit-symbol-map'
+        '--memory-init-file 1'
       ]
-      a2o_options << a2o_project_flags(active_project_config, :html)
+      a2o_flags = a2o_project_flags(active_project_config, :html).split
+      a2o_options += a2o_flags
+
+      pre_products_outputs = [
+        html_mem_path(a2o_target),
+        js_path(a2o_target)
+      ]
+
+      if !a2o_flags.include?('-g') && (
+        a2o_flags.include?('-O2') ||
+        a2o_flags.include?('-O3') ||
+        a2o_flags.include?('-Os') ||
+        a2o_flags.include?('-Oz')
+      )
+        a2o_options << '--emit-symbol-map'
+        pre_products_outputs << html_symbols_path(a2o_target)
+      end
 
       # detect emscripten file changes
       dep_paths = file_list("#{emscripten_dir}/src/")
       A2OCONF[:xcodebuild][:static_link_frameworks].each do |f|
         dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
       end
-
-      pre_products_outputs = [
-        html_mem_path(a2o_target),
-        js_path(a2o_target),
-        html_symbols_path(a2o_target)
-      ]
 
       if A2OCONF[:xcodebuild][:emscripten][:emcc][:separate_asm]
         pre_products_outputs << asm_js_path(a2o_target)
