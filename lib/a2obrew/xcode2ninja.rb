@@ -1011,7 +1011,6 @@ module A2OBrew
         'application.dat',
         'application.js',
         'application.js.mem',
-        'application.js.symbols',
         'Foundation.so.js'
       ]
 
