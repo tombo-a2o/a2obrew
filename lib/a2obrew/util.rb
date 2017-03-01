@@ -43,13 +43,14 @@ module A2OBrew
         begin
           stdin.close
           stdout.each do |line|
-            yield line unless output_filter.nil?
             puts line
+            yield line unless output_filter.nil?
           end
-        rescue Error::EIO # rubocop:disable Lint/HandleExceptions
-        ensure
-          Process.wait pid
+        rescue Errno::EIO # rubocop:disable Lint/HandleExceptions
+        rescue Interrupt
+          raise CmdExecException.new('Interrupt', 1)
         end
+        Process.wait pid
       end
       stat = $CHILD_STATUS
       if stat.exitstatus.nonzero?
