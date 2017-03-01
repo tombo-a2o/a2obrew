@@ -1092,7 +1092,7 @@ module A2OBrew
         '-s NATIVE_LIBDISPATCH=1',
         '--memory-init-file 1'
       ]
-      a2o_flags = a2o_project_flags(active_project_config, :html).split
+      a2o_flags = (a2o_project_flags(active_project_config, :html) || '').split
       a2o_options += a2o_flags
 
       pre_products_outputs = [
