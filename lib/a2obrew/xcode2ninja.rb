@@ -185,6 +185,9 @@ module A2OBrew
     end
 
     def generate_rules # rubocop:disable Metrics/MethodLength
+      swiftc_path = `xcrun --sdk iphoneos --find swiftc`.chomp
+      iphone_sdk_path = `xcrun --sdk iphoneos --show-sdk-path`.chomp
+
       [
         {
           rule_name: 'cp_r',
@@ -246,11 +249,17 @@ module A2OBrew
         # NOTE: A2O_LIBBSD_HEADERS indicates <stdlib.h> loads <bsd/stdlib.h> too.
         {
           rule_name: 'cc',
-          description: 'compile ${source} to ${out}',
+          description: 'c/c++/obj-c compile ${source} to ${out}',
           deps: 'gcc',
           depfile: '${out}.d',
           command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} '\
                    '-DA2O_LIBBSD_HEADERS -c ${source} -o ${out}'
+        },
+        {
+          rule_name: 'swiftc',
+          description: 'swift compile ${source} to ${out}',
+          # FIXME: target should be changed
+          command: "#{swiftc_path} -sdk #{iphone_sdk_path} -target armv7-apple-ios8.0 -emit-bc ${source} -o ${out}"
         },
         {
           rule_name: 'link',
@@ -912,9 +921,13 @@ module A2OBrew
 
         case file.last_known_file_type
         when 'sourcecode.cpp.cpp', 'sourcecode.cpp.objcpp'
+          rule_name = 'cc'
           file_cflags << "-std=#{cxx_std}" if cxx_std
         when 'sourcecode.c.c', 'sourcecode.c.objc'
+          rule_name = 'cc'
           file_cflags << "-std=#{c_std}" if c_std
+        when 'sourcecode.swift'
+          rule_name = 'swiftc'
         when 'sourcecode.c.h'
           # ignore header file
           next
@@ -926,7 +939,7 @@ module A2OBrew
 
         builds << {
           outputs: [object],
-          rule_name: 'cc',
+          rule_name: rule_name,
           inputs: [source_path],
           build_variables: {
             'file_cflags' => file_cflags.join(' '),
