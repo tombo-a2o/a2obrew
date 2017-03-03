@@ -26,13 +26,21 @@ module Tombo
     end
 
     def ssl_certificate_verify?
-      # default true
-      @config['ssl_certificate_verify'] != 'false'
+      if @config.key?('ssl_certificate_verify')
+        @config['ssl_certificate_verify']
+      else
+        # default true
+        true
+      end
     end
 
     def compress_with_zopfli?
-      # default true
-      @config['compress_with_zopfli'] != 'false'
+      if @config.key?('compress_with_zopfli')
+        @config['compress_with_zopfli']
+      else
+        # default true
+        true
+      end
     end
 
     private
