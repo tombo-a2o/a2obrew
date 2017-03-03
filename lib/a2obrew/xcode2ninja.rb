@@ -578,7 +578,7 @@ module A2OBrew
             }
             resources << remote_path
           else
-            if files_ref.name == 'Images.xcassets' || files_ref.name == 'Assets.xcassets'
+            if file.name == 'Images.xcassets' || file.name == 'Assets.xcassets'
               # Asset Catalog for icon and launch images
               icon_asset_catalog, launch_image_asset_catalog = asset_catalog(
                 local_path, target, build_config
