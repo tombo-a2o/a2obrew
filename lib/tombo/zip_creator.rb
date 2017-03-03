@@ -5,15 +5,15 @@ require 'httpclient'
 
 module Tombo
   class ZipCreator
-    def self.create_zip(output_zip_path, input_directory_path)
+    def self.create_zip(output_zip_path, input_directory_path, use_zopfli)
       Zip.sort_entries = true
       Zip.default_compression = Zlib::BEST_COMPRESSION
       Zip::File.open(output_zip_path, Zip::File::CREATE) do |zip|
-        recursive_zip_add(zip, input_directory_path, '')
+        recursive_zip_add(zip, input_directory_path, '', use_zopfli)
       end
     end
 
-    def self.recursive_zip_add(zip, input_dir_path, output_dir_path)
+    def self.recursive_zip_add(zip, input_dir_path, output_dir_path, use_zopfli)
       raise "#{input_dir_path} is not directory" unless File.directory?(input_dir_path)
       Dir.foreach(input_dir_path) do |file_name|
         next if file_name == '.' || file_name == '..'
@@ -22,25 +22,29 @@ module Tombo
 
         if File.directory?(input_path)
           zip.mkdir(output_path)
-          recursive_zip_add(zip, input_path, output_path)
+          recursive_zip_add(zip, input_path, output_path, use_zopfli)
         else
           zip.get_output_stream(output_path) do |f|
             Logger.logger.info "Add #{output_path}"
             f.write(File.read(input_path))
           end
 
-          add_gzip_compressed(zip, input_path, output_path)
+          add_gzip_compressed(zip, input_path, output_path, use_zopfli)
         end
       end
     end
 
-    def self.add_gzip_compressed(zip, input_path, output_path)
+    def self.add_gzip_compressed(zip, input_path, output_path, use_zopfli)
       case File.extname(input_path).intern
       when :'.html', :'.js', :'.css', :'.mem'
         unless File.exist?("#{input_path}.gz")
           zip.get_output_stream("#{output_path}.gz") do |f|
             Logger.logger.info "Compress #{output_path}.gz"
-            gzipped = `zopfli -c "#{input_path}"`
+            gzipped = if use_zopfli
+                        `zopfli -c "#{input_path}"`
+                      else
+                        `gzip -c "#{input_path}"`
+                      end
             Logger.logger.info "#{File.size(input_path)} => #{gzipped.size}"
             f.write(gzipped)
           end

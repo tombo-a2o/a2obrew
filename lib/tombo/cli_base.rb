@@ -39,7 +39,7 @@ module Tombo
 
     def request(method, path, query = nil, body = nil, extheader = {})
       cl = HTTPClient.new
-      cl.ssl_config.verify_mode = nil unless @dotfile.ssl_certificate_verify
+      cl.ssl_config.verify_mode = nil unless @dotfile.ssl_certificate_verify?
       # cl.connect_timeout = 120.0
       # cl.debug_dev = STDOUT
 

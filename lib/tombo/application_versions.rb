@@ -37,7 +37,7 @@ module Tombo
 
       Dir.mktmpdir do |tmp_dir|
         zip_path = File.join(tmp_dir, 'deploy.zip')
-        ZipCreator.create_zip(zip_path, input_dir)
+        ZipCreator.create_zip(zip_path, input_dir, @dotfile.compress_with_zopfli?)
         uploaded_file_id = create_uploaded_file(zip_path)
 
         create_application_version(application_id, version, uploaded_file_id)

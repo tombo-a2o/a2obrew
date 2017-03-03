@@ -25,8 +25,14 @@ module Tombo
       @config['developer_credential']
     end
 
-    def ssl_certificate_verify
-      @config['ssl_certificate_verify'] == 'true'
+    def ssl_certificate_verify?
+      # default true
+      @config['ssl_certificate_verify'] != 'false'
+    end
+
+    def compress_with_zopfli?
+      # default true
+      @config['compress_with_zopfli'] != 'false'
     end
 
     private
@@ -60,6 +66,7 @@ module Tombo
 developer_portal_uri = #{dev_portal_uri}
 developer_credential = #{dev_credential}
 ssl_certificate_verify = true
+compress_with_zopfli = false
 EOF
       end
     end
