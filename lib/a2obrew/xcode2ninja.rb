@@ -948,7 +948,7 @@ module A2OBrew
 
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
-      header_options = (header_search_paths + user_header_search_paths.split + header_dirs).map { |dir| "-I#{dir}" }.join(' ')
+      header_options = (header_search_paths + user_header_search_paths.split + header_dirs).map { |dir| "-I\"#{dir}\"" }.join(' ')
 
       if build_setting(target, build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
         prefix_pch = build_setting(target, build_config, 'GCC_PREFIX_HEADER')
