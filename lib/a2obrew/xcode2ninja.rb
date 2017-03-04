@@ -931,8 +931,11 @@ module A2OBrew
         when 'sourcecode.c.h'
           # ignore header file
           next
+        when 'sourcecode.javascript'
+          puts 'WARNING: currently not support for javascript source'
+          next
         else
-          raise Informative, "Unsupported file type #{file} #{file.last_known_file_type}"
+          raise Informative, "Unsupported file type '#{file.last_known_file_type}' of #{file.path}"
         end
 
         objects << object
