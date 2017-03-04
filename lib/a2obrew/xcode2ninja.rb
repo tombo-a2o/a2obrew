@@ -92,7 +92,7 @@ module A2OBrew
       write_ninja_build(output_dir, target, build_config, a2o_target, builds, rules)
     end
 
-    def generate_build_statements(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/LineLength,AbcSize,CyclomaticComplexity
+    def generate_build_statements(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,CyclomaticComplexity
       builds = []
       target.build_phases.each do |phase|
         builds += case phase
@@ -859,7 +859,59 @@ module A2OBrew
       }
     end
 
-    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength,CyclomaticComplexity,PerceivedComplexity,LineLength
+    def source_build_phase(file, cc_flags, enable_objc_arc, c_std, cxx_std, builds, objects, _xcodeproj, _target, _build_config, _phase, _active_project_config, a2o_target) # rubocop:disable Metrics/LineLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
+      if file.parent.isa != 'PBXGroup'
+        puts '[WARN] Orphan file: ' + file.name
+        return
+      end
+      source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
+      basename = source_path.basename('.*').to_s
+      uid = Digest::SHA1.new.update(source_path.to_s).to_s[0, 7]
+      object = File.join(objects_dir(a2o_target), basename + '-' + uid + '.o')
+
+      settings = file.build_files[0].settings
+      file_cflags = []
+      if settings && settings.key?('COMPILER_FLAGS')
+        file_cflags += settings['COMPILER_FLAGS'].split
+      end
+      if enable_objc_arc
+        file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
+      end
+
+      case file.last_known_file_type
+      when 'sourcecode.cpp.cpp', 'sourcecode.cpp.objcpp'
+        rule_name = 'cc'
+        file_cflags << "-std=#{cxx_std}" if cxx_std
+      when 'sourcecode.c.c', 'sourcecode.c.objc'
+        rule_name = 'cc'
+        file_cflags << "-std=#{c_std}" if c_std
+      when 'sourcecode.swift'
+        rule_name = 'swiftc'
+      when 'sourcecode.c.h'
+        # ignore header file
+        return
+      when 'sourcecode.javascript'
+        puts 'WARNING: currently not support for javascript source'
+        return
+      else
+        raise Informative, "Unsupported file type '#{file.last_known_file_type}' of #{file.path}"
+      end
+
+      objects << object
+
+      builds << {
+        outputs: [object],
+        rule_name: rule_name,
+        inputs: [source_path],
+        build_variables: {
+          'file_cflags' => file_cflags.join(' '),
+          'source' => source_path,
+          'cc_flags' => cc_flags
+        }
+      }
+    end
+
+    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,LineLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
       builds = []
       objects = []
 
@@ -901,55 +953,11 @@ module A2OBrew
       enable_objc_arc = build_setting(target, build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
       phase.files_references.each do |file|
-        if file.parent.isa != 'PBXGroup'
-          puts '[WARN] Orphan file: ' + file.name
-          next
-        end
-        source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
-        basename = source_path.basename('.*').to_s
-        uid = Digest::SHA1.new.update(source_path.to_s).to_s[0, 7]
-        object = File.join(objects_dir(a2o_target), basename + '-' + uid + '.o')
-
-        settings = file.build_files[0].settings
-        file_cflags = []
-        if settings && settings.key?('COMPILER_FLAGS')
-          file_cflags += settings['COMPILER_FLAGS'].split
-        end
-        if enable_objc_arc
-          file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
-        end
-
-        case file.last_known_file_type
-        when 'sourcecode.cpp.cpp', 'sourcecode.cpp.objcpp'
-          rule_name = 'cc'
-          file_cflags << "-std=#{cxx_std}" if cxx_std
-        when 'sourcecode.c.c', 'sourcecode.c.objc'
-          rule_name = 'cc'
-          file_cflags << "-std=#{c_std}" if c_std
-        when 'sourcecode.swift'
-          rule_name = 'swiftc'
-        when 'sourcecode.c.h'
-          # ignore header file
-          next
-        when 'sourcecode.javascript'
-          puts 'WARNING: currently not support for javascript source'
-          next
-        else
-          raise Informative, "Unsupported file type '#{file.last_known_file_type}' of #{file.path}"
-        end
-
-        objects << object
-
-        builds << {
-          outputs: [object],
-          rule_name: rule_name,
-          inputs: [source_path],
-          build_variables: {
-            'file_cflags' => file_cflags.join(' '),
-            'source' => source_path,
-            'cc_flags' => cc_flags
-          }
-        }
+        source_build_phase(
+          file, cc_flags, enable_objc_arc, c_std, cxx_std,
+          builds, objects,
+          xcodeproj, target, build_config, phase, active_project_config, a2o_target
+        )
       end
 
       # stubs
@@ -1032,8 +1040,8 @@ module A2OBrew
 
       shell_parameters = hash_key_to_camel(shell_parameters)
 
-      JSON.pretty_generate('Module': emscripten_parameters,
-                           'A2OShell': shell_parameters).gsub("\n", '\n')
+      JSON.pretty_generate(Module: emscripten_parameters,
+                           A2OShell: shell_parameters).gsub("\n", '\n')
     end
 
     def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength,CyclomaticComplexity,PerceivedComplexity,LineLength
