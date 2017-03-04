@@ -864,6 +864,22 @@ module A2OBrew
         puts '[WARN] Orphan file: ' + file.name
         return
       end
+      case file
+      when Xcodeproj::Project::Object::PBXFileReference # rubocop:disable Lint/EmptyWhen
+        # pass through!
+      when Xcodeproj::Project::Object::XCVersionGroup
+        file.files.each do |inner_file|
+          source_build_phase(
+            inner_file, cc_flags, enable_objc_arc, c_std, cxx_std,
+            builds, objects,
+            xcodeproj, target, build_config, phase, active_project_config, a2o_target
+          )
+        end
+        return
+      else
+        raise Informative, "Unsupported file class '#{file.class}' of #{file.path}"
+      end
+
       source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
       basename = source_path.basename('.*').to_s
       uid = Digest::SHA1.new.update(source_path.to_s).to_s[0, 7]
