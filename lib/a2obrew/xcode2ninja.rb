@@ -1325,6 +1325,7 @@ module A2OBrew
         'SRCROOT' => xcodeproj_dir,
         'PLATFORM_NAME' => 'emscripten',
         'SDKROOT' => emscripten_dir,
+        'SDK_DIR' => '', # FIXME: currently ignores
         'DEVELOPER_FRAMEWORKS_DIR' => '', # FIXME: currently ignores
         'MYPROJ_HOME' => '', # FIXME: currently ignores
         'TARGET_NAME' => target.name
