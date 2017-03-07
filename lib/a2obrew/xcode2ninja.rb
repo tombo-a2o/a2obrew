@@ -906,6 +906,9 @@ module A2OBrew
       when 'sourcecode.c.h'
         # ignore header file
         return
+      when 'sourcecode.glsl'
+        # ignore GL SL source file
+        return
       when 'sourcecode.javascript'
         puts 'WARNING: currently not support for javascript source'
         return
@@ -1237,6 +1240,15 @@ module A2OBrew
         }
       }
 
+      # copy shell.html resources
+      out_dir = build_dir(a2o_target)
+      f = file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
+      builds += f[:builds]
+
+      # add a symbolic link
+      f = file_link('../../shell_files', shell_files_link_dir(a2o_target))
+      builds += f[:builds]
+
       builds
     end
 
@@ -1296,19 +1308,8 @@ module A2OBrew
       []
     end
 
-    def after_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, a2o_target)
-      builds = []
-
-      # copy shell.html resources
-      out_dir = build_dir(a2o_target)
-      f = file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
-      builds += f[:builds]
-
-      # add a symbolic link
-      f = file_link('../../shell_files', shell_files_link_dir(a2o_target))
-      builds += f[:builds]
-
-      builds
+    def after_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
+      []
     end
 
     # utils
