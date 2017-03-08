@@ -120,6 +120,17 @@ BUILD
         clean: 'make clean'
       },
       {
+        name: 'libxml2',
+        path: 'libxml2',
+        repository_uri: 'git@github.com:tomboinc/libxml2.git',
+        branch: 'emscripten',
+        autogen: 'mkdir -p m4 && autoreconf -i',
+        configure: 'emconfigure %{project_path}/configure --with-http=no --with-ftp=no --with-python=no --with-threads=no --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags}"',
+        build: 'emmake make',
+        install: 'emmake make install',
+        clean: 'BUILD=%{build_target_path} make clean'
+      },
+      {
         name: 'freetype',
         path: 'freetype',
         repository_uri: 'git@github.com:fchiba/freetype.git',
