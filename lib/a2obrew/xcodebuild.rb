@@ -15,6 +15,7 @@ module A2OBrew
     method_option :project_config, aliases: '-p', desc: 'Project config ruby path'
     method_option :target, aliases: '-t', default: 'release', desc: 'Build target for a2o(ex. release)'
     method_option :jobs, type: :numeric, aliases: '-j', desc: 'the number of jobs to run simultaneously'
+    method_option :keep, type: :numeric, aliases: '-k', desc: 'keep going until N jobs fail'
     method_option :xcodeproj_target, desc: 'Build target for xcodeproj'
     def build
       check_emsdk_env
@@ -135,7 +136,8 @@ EOF
       build_log = File.open(BUILD_LOG_PATH, 'w')
       unresolved = []
       jobs = "-j #{options[:jobs]}" if options[:jobs]
-      Util.cmd_exec("ninja -v -f #{ninja_path} #{jobs}", 'ninja build error') do |line|
+      keep = "-k #{options[:keep]}" if options[:keep]
+      Util.cmd_exec("ninja -v -f #{ninja_path} #{jobs} #{keep}", 'ninja build error') do |line|
         build_log.write Util.filter_ansi_esc(line)
         case line.chomp
         when / unresolved symbol: (.+)\z/
