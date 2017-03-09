@@ -136,8 +136,11 @@
   text-align: center;
 }
 .playground-volume a {
-  padding: 0 1em;
-  margin: 0 1em;
+  padding-right: 32px;
+  margin-right: 48px;
+}
+.playground-volume-pinch input {
+  height: 24px;
 }
 .playground-keypad {
   display: none;
