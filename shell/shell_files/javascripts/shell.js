@@ -43,6 +43,8 @@ var A2OShell;
     },
   };
 
+  var environment = window.location.hostname == 'app.tombo.io' ? 'production' : 'development';
+
   // Getting runtime_paramters.json
   var loadRuntimeParameters = function (callback) {
     var xhr = new XMLHttpRequest();
@@ -53,7 +55,14 @@ var A2OShell;
 
       /* setup Module */
       Module.preRun = [];
-      Module.postRun = [];
+      Module.postRun = [function() {
+        if (environment !== 'production') {
+          // auto mute
+          if (A2OShell.autoMute) {
+            Module.CoreAudio.setGainRatio(0);
+          }
+        }
+      }];
       Module.print = function (text) {
         if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
         console.log(text);
@@ -384,10 +393,8 @@ var A2OShell;
     localizeShell();
   };
 
-  var environment = window.location.hostname == 'app.tombo.io' ? 'production' : 'development';
-
   var prepareErrorHandler = function () {
-    if (environment == 'production') {
+    if (environment === 'production') {
       var airbrake = new airbrakeJs.Client({
         projectId: 137659,
         projectKey: '9616430610ed0f212cf574caf6de20dd',
@@ -501,9 +508,11 @@ var A2OShell;
       };
     });
 
-    // auto launch
-    if (A2OShell.autoLaunch) {
-      launchWithServiceWorker();
+    if (environment !== 'production') {
+      // auto launch
+      if (A2OShell.autoLaunch) {
+        launchWithServiceWorker();
+      }
     }
   };
 
