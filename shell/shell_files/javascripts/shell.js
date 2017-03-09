@@ -483,6 +483,16 @@ var A2OShell;
       });
     }
 
+    // volume
+    document.getElementById('button-volume-on').addEventListener('click', function (_e) {
+      Module.CoreAudio.setGainRatio(1);
+      return false;
+    });
+    document.getElementById('button-volume-off').addEventListener('click', function (_e) {
+      Module.CoreAudio.setGainRatio(0);
+      return false;
+    });
+
     window.addEventListener('error', function (_event) {
       // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
       Module.setStatus(messages.exception[locale]);

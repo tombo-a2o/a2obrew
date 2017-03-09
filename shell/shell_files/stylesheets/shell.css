@@ -67,11 +67,11 @@
   left: 0;
   position: relative;
 }
-.header a, .playground-keypad a {
+.header a, .playground-volume a, .playground-keypad a {
   color: #333;
   text-decoration: none;
 }
-.header a:hover, .playground-keypad a:hover, .footer a:hover {
+.header a:hover, .playground-volume a:hover, .playground-keypad a:hover, .footer a:hover {
   color: #666;
 }
 .header-center {
@@ -130,6 +130,14 @@
   position: absolute;
   top: 0;
   width: 100%;
+}
+.playground-volume {
+  font-size: 32px;
+  text-align: center;
+}
+.playground-volume a {
+  padding: 0 1em;
+  margin: 0 1em;
 }
 .playground-keypad {
   display: none;
