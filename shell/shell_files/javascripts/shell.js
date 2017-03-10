@@ -45,6 +45,7 @@ var A2OShell;
 
   var environment = window.location.hostname == 'app.tombo.io' ? 'production' : 'development';
   var afterLaunch = false;
+  var rangeVolume = document.getElementById('range-volume');
 
   // Getting runtime_paramters.json
   var loadRuntimeParameters = function (callback) {
@@ -57,12 +58,16 @@ var A2OShell;
       /* setup Module */
       Module.preRun = [];
       Module.postRun = [function() {
-        if (environment !== 'production') {
-          // auto mute
-          if (A2OShell.autoMute) {
-            mute();
-          }
+        // set initial audio gain
+        var gainRatio;
+        if (rangeVolume.getAttribute('disabled')) {
+          gainRatio = 0;
+        } else {
+          gainRatio = rangeVolume.value / 100;
         }
+        Module.CoreAudio.setGainRatio(gainRatio);
+
+        // launch check flag
         afterLaunch = true;
       }];
       Module.print = function (text) {
@@ -429,18 +434,6 @@ var A2OShell;
     }
   };
 
-  var mute = function() {
-    if (!afterLaunch) { return; }
-    var rv = document.getElementById('range-volume');
-    if (rv.getAttribute('disabled')) {
-      rv.removeAttribute('disabled');
-      Module.CoreAudio.setGainRatio(rv.value / 100);
-    } else {
-      rv.setAttribute('disabled', 'disabled');
-      Module.CoreAudio.setGainRatio(0);
-    }
-  };
-
   var main = function () {
     prepareLocalization();
 
@@ -506,7 +499,16 @@ var A2OShell;
 
     // volume
     document.getElementById('button-volume-off').addEventListener('click', function (_e) {
-      mute();
+      var gainRatio;
+      if (rangeVolume.getAttribute('disabled')) {
+        rangeVolume.removeAttribute('disabled');
+        gainRatio = rangeVolume.value / 100;
+      } else {
+        rangeVolume.setAttribute('disabled', 'disabled');
+        gainRatio = 0;
+      }
+      if (!afterLaunch) { return false; }
+      Module.CoreAudio.setGainRatio(gainRatio);
       return false;
     });
     document.getElementById('range-volume').addEventListener('input', function (e) {
@@ -515,15 +517,17 @@ var A2OShell;
       Module.CoreAudio.setGainRatio(gainRatio);
     });
     document.getElementById('button-volume-down').addEventListener('click', function (_e) {
-      var rv = document.getElementById('range-volume');
-      rv.value = (+rv.value - 10) + '';
-      Module.CoreAudio.setGainRatio(rv.value / 100);
+      if (rangeVolume.getAttribute('disabled')) { return false; }
+      rangeVolume.value = (+rangeVolume.value - 10) + '';
+      if (!afterLaunch) { return false; }
+      Module.CoreAudio.setGainRatio(rangeVolume.value / 100);
       return false;
     });
     document.getElementById('button-volume-up').addEventListener('click', function (_e) {
-      var rv = document.getElementById('range-volume');
-      rv.value = (+rv.value + 10) + '';
-      Module.CoreAudio.setGainRatio(rv.value / 100);
+      if (rangeVolume.getAttribute('disabled')) { return false; }
+      rangeVolume.value = (+rangeVolume.value + 10) + '';
+      if (!afterLaunch) { return false; }
+      Module.CoreAudio.setGainRatio(rangeVolume.value / 100);
       return false;
     });
 
@@ -539,6 +543,10 @@ var A2OShell;
       // auto launch
       if (A2OShell.autoLaunch) {
         launchWithServiceWorker();
+      }
+      // auto mute
+      if (A2OShell.autoMute) {
+        rangeVolume.setAttribute('disabled', 'disabled');
       }
     }
   };
