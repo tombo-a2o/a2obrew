@@ -135,7 +135,7 @@
   font-size: 32px;
   text-align: center;
 }
-.playground-volume a {
+#button-volume-off {
   padding-right: 32px;
   margin-right: 48px;
 }

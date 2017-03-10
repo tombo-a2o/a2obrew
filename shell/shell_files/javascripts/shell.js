@@ -509,10 +509,22 @@ var A2OShell;
       mute();
       return false;
     });
-    document.getElementById('range-volume').addEventListener('change', function (e) {
+    document.getElementById('range-volume').addEventListener('input', function (e) {
       if (!afterLaunch) { return; }
       var gainRatio = event.target.value / 100;
       Module.CoreAudio.setGainRatio(gainRatio);
+    });
+    document.getElementById('button-volume-down').addEventListener('click', function (_e) {
+      var rv = document.getElementById('range-volume');
+      rv.value = (+rv.value - 10) + '';
+      Module.CoreAudio.setGainRatio(rv.value / 100);
+      return false;
+    });
+    document.getElementById('button-volume-up').addEventListener('click', function (_e) {
+      var rv = document.getElementById('range-volume');
+      rv.value = (+rv.value + 10) + '';
+      Module.CoreAudio.setGainRatio(rv.value / 100);
+      return false;
     });
 
     window.addEventListener('error', function (_event) {
