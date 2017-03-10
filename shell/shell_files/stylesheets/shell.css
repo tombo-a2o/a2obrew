@@ -134,10 +134,19 @@
 .playground-volume {
   font-size: 32px;
   text-align: center;
+  height: 32px;
+  line-height: 32px;
+  vertical-align: middle;
 }
 #button-volume-off {
-  padding-right: 32px;
   margin-right: 48px;
+  padding-right: 32px;
+}
+.mute-status {
+  font-size: 16px;
+  line-height: 32px;
+  vertical-align: top;
+  margin-left: -8px;
 }
 .playground-volume-pinch input {
   height: 24px;

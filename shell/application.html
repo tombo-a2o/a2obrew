@@ -56,7 +56,10 @@
         <canvas width="320" height="480" id="app-canvas" oncontextmenu="event.preventDefault()"></canvas>
       </section>
       <section class="playground-volume" id="volume-panel">
-        <a class="tooltip" href="javascript:void(0)" id="button-volume-off"><i class="fa fa-volume-off" aria-hidden="true"></i></a>
+        <a class="tooltip" href="javascript:void(0)" id="button-volume-off">
+          <i class="fa fa-volume-off" aria-hidden="true"></i>
+          <i class="fa fa-times mute-status" aria-hidden="true"></i>
+        </a>
         <span class="playground-volume-pinch">
           <a class="tooltip" href="javascript:void(0)" id="button-volume-down"><i class="fa fa-volume-down" aria-hidden="true"></i></a>
           <input type="range" min="0" max="100" value="100" id="range-volume">
