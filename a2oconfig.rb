@@ -128,7 +128,7 @@ BUILD
         configure: 'emconfigure %{project_path}/configure --with-http=no --with-ftp=no --with-python=no --with-threads=no --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags}"',
         build: 'emmake make',
         install: 'emmake make install',
-        clean: 'BUILD=%{build_target_path} make clean'
+        clean: '([ -f Makefile ] && make clean) || true'
       },
       {
         name: 'freetype',
