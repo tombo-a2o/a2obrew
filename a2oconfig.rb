@@ -172,11 +172,15 @@ BUILD
           AdSupport
           AssetsLibrary
           AudioToolbox
+          CommonCrypto
           Cocoa
           CoreAudio
+          CoreData
+          CoreGraphics
           CoreLocation
           CoreMotion
           CoreTelephony
+          CoreText
           GameKit
           ImageIO
           MapKit
@@ -184,7 +188,9 @@ BUILD
           MessageUI
           MobileCoreServices
           MultipeerConnectivity
+          Onyx2D
           OpenGLES
+          QuartzCore
           QuickLook
           Security
           Social
@@ -192,40 +198,8 @@ BUILD
           SystemConfiguration
           TomboAFNetworking
           TomboKit
-          iAd
-        )
-      },
-      {
-        name: 'cocotron',
-        path: 'cocotron',
-        repository_uri: 'git@github.com:tomboinc/cocotron.git',
-        branch: 'feature/emscripten',
-        autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
-        build_path: '%{project_path}',
-        build: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make -j8',
-        install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
-        clean: 'BUILD_DIR=%{build_target_path} make clean',
-        frameworks: %w(
-          CommonCrypto
-          CoreData
-          CoreGraphics
-          CoreText
-          Onyx2D
-          QuartzCore
-        )
-      },
-      {
-        name: 'Chameleon',
-        path: 'Chameleon',
-        repository_uri: 'git@github.com:tomboinc/Chameleon.git',
-        branch: 'feature/with_cocotron',
-        autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
-        build_path: '%{project_path}',
-        build: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make -j8',
-        install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
-        clean: 'BUILD_DIR=%{build_target_path} make clean',
-        frameworks: %w(
           UIKit
+          iAd
         )
       }
     ]

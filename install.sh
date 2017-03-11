@@ -82,14 +82,6 @@ bin/a2obrew libraries install Foundation
 bin/a2obrew libraries configure A2OFrameworks
 bin/a2obrew libraries build A2OFrameworks
 bin/a2obrew libraries install A2OFrameworks
-# cocotron
-bin/a2obrew libraries configure cocotron
-bin/a2obrew libraries build cocotron
-bin/a2obrew libraries install cocotron
-# Chameleon
-bin/a2obrew libraries configure Chameleon
-bin/a2obrew libraries build Chameleon
-bin/a2obrew libraries install Chameleon
 
 # Install commit hooks
 ./scripts/install_commit_hooks.sh
