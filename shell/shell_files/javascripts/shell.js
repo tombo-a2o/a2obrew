@@ -420,7 +420,8 @@ var A2OShell;
   };
 
   var registerServiceWorker = function (callback) {
-    if ('serviceWorker' in navigator) {
+    if ((environment === 'production' || A2OShell.useServiceWorker) &&
+        'serviceWorker' in navigator) {
       navigator.serviceWorker.register('service_worker.js').then(function (registration) {
         console.log('ServiceWorker registration successful with scope: ', registration.scope)
         callback();
