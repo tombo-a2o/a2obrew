@@ -269,6 +269,23 @@ var A2OShell;
       window.requestAnimationFrame(raf);
     };
 
+    var fireRotate = function (degree) {
+      fireRotate.degree += degree;
+      var e = new Event("devicemotion");
+      var rad = fireRotate.degree / 180 * Math.PI;
+      e.acceleration = {x:null, y:null, z:null};
+      e.accelerationIncludingGravity = {
+        x: Math.cos(rad) * 9.80619920,
+        y: Math.sin(rad) * 9.80619920,
+        z: 0
+      };
+      e.rotationRate = {alpha:null, beta:null, gamma:null};
+      console.log(e);
+      canvas.dispatchEvent(e);
+    };
+    fireRotate.degree = 90;
+
+
     switch (A2OShell.keypad) {
       case 'tap':
         var button = document.getElementById('button-tap');
@@ -306,6 +323,44 @@ var A2OShell;
             case 40:
               // ↓
               fireSwipe(0, 1);
+              e.preventDefault();
+              break;
+          }
+        });
+        break;
+      case 'tilt':
+        document.getElementById('button-rotate-left').addEventListener('mousedown', function (_e) {
+          console.log("left");
+          fireRotate(-5);
+          return false;
+        });
+        document.getElementById('button-tap').addEventListener('mousedown', function (_e) {
+          console.log("tap");
+          fireSwipe(0, 0);
+          return false;
+        });
+        document.getElementById('button-rotate-right').addEventListener('mousedown', function (_e) {
+          console.log("right");
+          fireRotate(5);
+          return false;
+        });
+        // add key listener
+        document.addEventListener('keydown', function (e) {
+          switch (e.which) {
+            case 37:
+              // ←
+              fireRotate(-5);
+              e.preventDefault();
+              break;
+            case 39:
+              // →
+              fireRotate(5);
+              e.preventDefault();
+              break;
+            case 38:
+            case 40:
+              // ↑ or ↓
+              fireSwipe(0, 0);
               e.preventDefault();
               break;
           }
