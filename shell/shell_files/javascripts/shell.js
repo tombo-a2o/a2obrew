@@ -57,7 +57,7 @@ var A2OShell;
 
       /* setup Module */
       Module.preRun = [];
-      Module.postRun = [function() {
+      Module.postRun = [function () {
         // set initial audio gain
         var gainRatio;
         if (rangeVolume.getAttribute('disabled')) {
@@ -271,15 +271,15 @@ var A2OShell;
 
     var fireRotate = function (degree) {
       fireRotate.degree += degree;
-      var e = new Event("devicemotion");
+      var e = new Event('devicemotion');
       var rad = fireRotate.degree / 180 * Math.PI;
-      e.acceleration = {x:null, y:null, z:null};
+      e.acceleration = { x:null, y:null, z:null };
       e.accelerationIncludingGravity = {
         x: Math.cos(rad) * 9.80619920,
         y: Math.sin(rad) * 9.80619920,
         z: 0
       };
-      e.rotationRate = {alpha:null, beta:null, gamma:null};
+      e.rotationRate = { alpha:null, beta:null, gamma:null };
       console.log(e);
       canvas.dispatchEvent(e);
     };
@@ -330,17 +330,17 @@ var A2OShell;
         break;
       case 'tilt':
         document.getElementById('button-rotate-left').addEventListener('mousedown', function (_e) {
-          console.log("left");
+          console.log('left');
           fireRotate(-5);
           return false;
         });
         document.getElementById('button-tap').addEventListener('mousedown', function (_e) {
-          console.log("tap");
+          console.log('tap');
           fireSwipe(0, 0);
           return false;
         });
         document.getElementById('button-rotate-right').addEventListener('mousedown', function (_e) {
-          console.log("right");
+          console.log('right');
           fireRotate(5);
           return false;
         });
