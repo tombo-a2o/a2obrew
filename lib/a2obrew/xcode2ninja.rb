@@ -320,7 +320,7 @@ module A2OBrew
     end
 
     def bundle_dir(a2o_target)
-      "#{packager_target_dir(a2o_target)}/Contents"
+      "#{packager_target_dir(a2o_target)}/a2o_application.app"
     end
 
     def framework_bundle_dir(a2o_target)
@@ -328,7 +328,7 @@ module A2OBrew
     end
 
     def resources_dir(a2o_target)
-      "#{bundle_dir(a2o_target)}/Resources"
+      bundle_dir(a2o_target)
     end
 
     def application_icon_dir(a2o_target)
