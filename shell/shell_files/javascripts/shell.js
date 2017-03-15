@@ -280,7 +280,6 @@ var A2OShell;
         z: 0
       };
       e.rotationRate = { alpha:null, beta:null, gamma:null };
-      console.log(e);
       canvas.dispatchEvent(e);
       canvas.style.transform = "rotate("+(fireRotate.degree-90)+"deg)";
     };
@@ -331,12 +330,10 @@ var A2OShell;
         break;
       case 'tilt':
         document.getElementById('button-rotate-left').addEventListener('mousedown', function (_e) {
-          console.log('left');
           fireRotate(-5);
           return false;
         });
         document.getElementById('button-rotate-right').addEventListener('mousedown', function (_e) {
-          console.log('right');
           fireRotate(5);
           return false;
         });
