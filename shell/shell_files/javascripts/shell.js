@@ -282,6 +282,7 @@ var A2OShell;
       e.rotationRate = { alpha:null, beta:null, gamma:null };
       console.log(e);
       canvas.dispatchEvent(e);
+      canvas.style.transform = "rotate("+(fireRotate.degree-90)+"deg)";
     };
     fireRotate.degree = 90;
 
@@ -334,11 +335,6 @@ var A2OShell;
           fireRotate(-5);
           return false;
         });
-        document.getElementById('button-tap').addEventListener('mousedown', function (_e) {
-          console.log('tap');
-          fireSwipe(0, 0);
-          return false;
-        });
         document.getElementById('button-rotate-right').addEventListener('mousedown', function (_e) {
           console.log('right');
           fireRotate(5);
@@ -355,12 +351,6 @@ var A2OShell;
             case 39:
               // →
               fireRotate(5);
-              e.preventDefault();
-              break;
-            case 38:
-            case 40:
-              // ↑ or ↓
-              fireSwipe(0, 0);
               e.preventDefault();
               break;
           }
