@@ -87,5 +87,6 @@ fi
 if brew list imagemagick > /dev/null; then
   echo "* imagemagick is installed"
 else
-  brew install imagemagick
+  brew install imagemagick@6
+  brew link --force imagemagick@6
 fi
