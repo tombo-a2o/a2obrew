@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'bash -c "./install.sh rebuild"'
+                sh 'bash -lc "./install.sh rebuild"'
             }
         }
     }
