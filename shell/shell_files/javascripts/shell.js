@@ -554,7 +554,7 @@ var A2OShell;
       Module.CoreAudio.setGainRatio(gainRatio);
       return false;
     });
-    document.getElementById('range-volume').addEventListener('input', function (e) {
+    document.getElementById('range-volume').addEventListener('input', function (event) {
       if (!afterLaunch) { return; }
       var gainRatio = event.target.value / 100;
       Module.CoreAudio.setGainRatio(gainRatio);
