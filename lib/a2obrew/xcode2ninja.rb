@@ -1172,7 +1172,9 @@ module A2OBrew
       a2o_options += (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries).map { |f| "-framework #{f.ninja_escape}" }
 
       # dynamic link frameworks
-      unless shared_libraries.empty?
+      if shared_libraries.empty?
+        a2o_options << '-s MAIN_MODULE=2'
+      else
         a2o_options << '-s MAIN_MODULE=2 -s LINKABLE=0'
         a2o_options << "-s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)}"
         a2o_options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target)}"
