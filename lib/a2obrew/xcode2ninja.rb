@@ -1070,6 +1070,7 @@ module A2OBrew
 
       shared_libraries = A2OCONF[:xcodebuild][:dynamic_link_frameworks]
 
+      shared_libraries_outputs = []
       unless shared_libraries.empty?
         builds << {
           outputs: [shared_library_js_path(a2o_target)],
@@ -1080,7 +1081,6 @@ module A2OBrew
           }
         }
 
-        shared_libraries_outputs = []
         shared_libraries.each do |f|
           source = "#{frameworks_dir}/#{f}.framework/#{f}.so.js"
           dest = "#{pre_products_application_dir(a2o_target)}/#{f}.so.js"
