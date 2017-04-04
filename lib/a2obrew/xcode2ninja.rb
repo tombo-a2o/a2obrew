@@ -290,7 +290,7 @@ module A2OBrew
         {
           rule_name: 'text_to_json_array',
           description: 'Convert text items to json array',
-          command: '(cat ${in}; echo ${extra}) | ruby -e "puts ARGF.map{|l| l.strip}.to_s" > ${out}'
+          command: '(cat ${in}; echo ${extra}) | grep . | sort | uniq | ruby -e "puts ARGF.map{|l| l.strip}.to_s" > ${out}'
         },
         {
           rule_name: 'compose',
@@ -509,6 +509,10 @@ module A2OBrew
 
     def library_functions_js_path(a2o_target)
       "#{emscripten_work_dir(a2o_target)}/lib_funcs.js"
+    end
+
+    def objc_msg_functions_js_path(a2o_target)
+      "#{emscripten_work_dir(a2o_target)}/msgfuncs.js"
     end
 
     def a2o_project_flags(active_project_config, rule)
@@ -1082,18 +1086,20 @@ module A2OBrew
 
       shared_libraries_outputs = []
       unless shared_libraries.empty?
+        shared_lib_ext = active_project_config.dig(:runtime_parameters, :shell, :wasm) ? 'wasm' : 'so.js'
+
         builds << {
           outputs: [shared_library_js_path(a2o_target)],
           rule_name: 'echo',
           inputs: [],
           build_variables: {
-            'contents' => 'Module.dynamicLibraries = [' + shared_libraries.map { |f| "\"#{f}.so.js\"" }.join(',') + '];'
+            'contents' => 'Module.dynamicLibraries = [' + shared_libraries.map { |f| "\"#{f}.#{shared_lib_ext}\"" }.join(',') + '];'
           }
         }
 
         shared_libraries.each do |f|
-          source = "#{frameworks_dir}/#{f}.framework/#{f}.so.js"
-          dest = "#{pre_products_application_dir(a2o_target)}/#{f}.so.js"
+          source = "#{frameworks_dir}/#{f}.framework/#{f}.#{shared_lib_ext}"
+          dest = "#{pre_products_application_dir(a2o_target)}/#{f}.#{shared_lib_ext}"
           builds << {
             outputs: [dest],
             rule_name: 'cp_r',
@@ -1111,7 +1117,7 @@ module A2OBrew
         builds << {
           outputs: [exports_js_path(a2o_target)],
           rule_name: 'text_to_json_array',
-          inputs: [exports_js_path(a2o_target) + '.txt'],
+          inputs: [exports_js_path(a2o_target) + '.txt'] + shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.#{shared_lib_ext}.msgfuncs" },
           build_variables: {
             'extra': '_main'
           }
@@ -1127,6 +1133,12 @@ module A2OBrew
           outputs: [library_functions_js_path(a2o_target)],
           rule_name: 'text_to_json_array',
           inputs: [library_functions_js_path(a2o_target) + '.txt']
+        }
+
+        builds << {
+          outputs: [objc_msg_functions_js_path(a2o_target)],
+          rule_name: 'text_to_json_array',
+          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.#{shared_lib_ext}.msgfuncs" }
         }
       end
 
@@ -1203,6 +1215,7 @@ module A2OBrew
         a2o_options << '-s MAIN_MODULE=2 -s LINKABLE=0'
         a2o_options << "-s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)}"
         a2o_options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target)}"
+        a2o_options << "-s GENERATE_OBJC_MSG_FUNCTIONS=@#{objc_msg_functions_js_path(a2o_target)}"
         a2o_options << "--pre-js #{shared_library_js_path(a2o_target)}"
         dep_paths += [exports_js_path(a2o_target), library_functions_js_path(a2o_target), shared_library_js_path(a2o_target)]
       end
