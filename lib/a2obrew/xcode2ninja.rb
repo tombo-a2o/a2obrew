@@ -267,20 +267,30 @@ module A2OBrew
           command: 'llvm-link -o ${out} ${in} ${link_flags}'
         },
         {
-          rule_name: 'exports_js',
-          description: 'Functions to be exported in main module, which are referenced from shared libraries',
-          command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -e "puts (ARGF.map{|l| '_'+l.strip.split(': ',2)[1]}+['_main']).to_s" > ${out}! # rubocop:disable LineLength
+          rule_name: 'undefined_names_text',
+          description: 'Print undefined symbol names in static libraries (one symbol per one line)',
+          command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -ple 'sub(/^.*: /,"_")' > ${out}!
+          # input:
+          # build/debug/Foundation.bc: predicate_set_out
+          # <---    filename      -->  <---- symbol ----
+          # output:
+          # select '_'+symbol
         },
         {
-          rule_name: 'library_functions_js',
-          description: 'Functions defined in side module',
-          command: %q!llvm-nm -print-file-name -defined-only ${in} | ruby -e "puts (ARGF.map{ |l| l.strip.split(': ',2)[1][9..-1].split(' ',2)}.select{ |t,s| s if 'DTS'.include?(t) }.map{|t,s| '_'+s}).to_s" > ${out}! # rubocop:disable LineLength
+          rule_name: 'defined_names_text',
+          description: 'Print defined symbol names in static libraries (one symbol per one line)',
+          command: %q!llvm-nm -print-file-name -defined-only ${in} | ruby -nle 'sub(/^.*:[ -]+/,""); print "_"+$$_[2..-1] if "DTS".include? $$_[0]' > ${out}! # rubocop:disable LineLength
           # input:
           # build/debug/Foundation.bc: -------- T predicate_set_out
           # <---    filename      -->  <--??--> ^ <---- symbol ----
           #                                   type
           # output:
-          # select '_'+name where type == "T" or "D" or "S"
+          # select '_'+symbol where type == "T" or "D" or "S"
+        },
+        {
+          rule_name: 'text_to_json_array',
+          description: 'Convert text items to json array',
+          command: '(cat ${in}; echo ${extra}) | ruby -e "puts ARGF.map{|l| l.strip}.to_s" > ${out}'
         },
         {
           rule_name: 'compose',
@@ -1093,15 +1103,30 @@ module A2OBrew
         end
 
         builds << {
+          outputs: [exports_js_path(a2o_target) + '.txt'],
+          rule_name: 'undefined_names_text',
+          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
+        }
+
+        builds << {
           outputs: [exports_js_path(a2o_target)],
-          rule_name: 'exports_js',
+          rule_name: 'text_to_json_array',
+          inputs: [exports_js_path(a2o_target) + '.txt'],
+          build_variables: {
+            'extra': '_main'
+          }
+        }
+
+        builds << {
+          outputs: [library_functions_js_path(a2o_target) + '.txt'],
+          rule_name: 'defined_names_text',
           inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
         }
 
         builds << {
           outputs: [library_functions_js_path(a2o_target)],
-          rule_name: 'library_functions_js',
-          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
+          rule_name: 'text_to_json_array',
+          inputs: [library_functions_js_path(a2o_target) + '.txt']
         }
       end
 
