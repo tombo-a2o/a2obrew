@@ -267,30 +267,9 @@ module A2OBrew
           command: 'llvm-link -o ${out} ${in} ${link_flags}'
         },
         {
-          rule_name: 'undefined_names_text',
-          description: 'Print undefined symbol names in static libraries (one symbol per one line)',
-          command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -ple 'sub(/^.*: /,"_")' > ${out}!
-          # input:
-          # build/debug/Foundation.bc: predicate_set_out
-          # <---    filename      -->  <---- symbol ----
-          # output:
-          # select '_'+symbol
-        },
-        {
-          rule_name: 'defined_names_text',
-          description: 'Print defined symbol names in static libraries (one symbol per one line)',
-          command: %q!llvm-nm -print-file-name -defined-only ${in} | ruby -nle 'sub(/^.*:[ -]+/,""); print "_"+$$_[2..-1] if "DTS".include? $$_[0]' > ${out}! # rubocop:disable LineLength
-          # input:
-          # build/debug/Foundation.bc: -------- T predicate_set_out
-          # <---    filename      -->  <--??--> ^ <---- symbol ----
-          #                                   type
-          # output:
-          # select '_'+symbol where type == "T" or "D" or "S"
-        },
-        {
-          rule_name: 'text_to_json_array',
-          description: 'Convert text items to json array',
-          command: '(cat ${in}; echo ${extra}) | grep . | sort | uniq | ruby -e "puts ARGF.map{|l| l.strip}.to_s" > ${out}'
+          rule_name: 'extract_symbol_arrays',
+          description: 'Extract symbol names from `externals` file (one symbol per one line)',
+          command: "ruby -ryaml -e 'puts (ARGV.map{|file| YAML.load_file(file).values_at(*%w|${keys}|)}.flatten + %w|${extra}|).to_s' ${in} > ${out}"
         },
         {
           rule_name: 'compose',
@@ -503,8 +482,12 @@ module A2OBrew
       "#{emscripten_work_dir(a2o_target)}/shared.js"
     end
 
-    def exports_js_path(a2o_target)
-      "#{emscripten_work_dir(a2o_target)}/exports.js"
+    def exported_functions_js_path(a2o_target)
+      "#{emscripten_work_dir(a2o_target)}/exported_functions.js"
+    end
+
+    def exported_variables_js_path(a2o_target)
+      "#{emscripten_work_dir(a2o_target)}/exported_variables.js"
     end
 
     def library_functions_js_path(a2o_target)
@@ -1108,37 +1091,43 @@ module A2OBrew
           shared_libraries_outputs << dest
         end
 
-        builds << {
-          outputs: [exports_js_path(a2o_target) + '.txt'],
-          rule_name: 'undefined_names_text',
-          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
-        }
+        external_files = shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.#{shared_lib_ext}.externals" }
 
         builds << {
-          outputs: [exports_js_path(a2o_target)],
-          rule_name: 'text_to_json_array',
-          inputs: [exports_js_path(a2o_target) + '.txt'] + shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.#{shared_lib_ext}.msgfuncs" },
+          outputs: [exported_functions_js_path(a2o_target)],
+          rule_name: 'extract_symbol_arrays',
+          inputs: external_files,
           build_variables: {
-            'extra': '_main'
+            keys: 'msgFuncs declares',
+            extra: '_main'
           }
         }
 
         builds << {
-          outputs: [library_functions_js_path(a2o_target) + '.txt'],
-          rule_name: 'defined_names_text',
-          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
+          outputs: [exported_variables_js_path(a2o_target)],
+          rule_name: 'extract_symbol_arrays',
+          inputs: external_files,
+          build_variables: {
+            keys: 'externs'
+          }
         }
 
         builds << {
           outputs: [library_functions_js_path(a2o_target)],
-          rule_name: 'text_to_json_array',
-          inputs: [library_functions_js_path(a2o_target) + '.txt']
+          rule_name: 'extract_symbol_arrays',
+          inputs: external_files,
+          build_variables: {
+            keys: 'exports'
+          }
         }
 
         builds << {
           outputs: [objc_msg_functions_js_path(a2o_target)],
-          rule_name: 'text_to_json_array',
-          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.#{shared_lib_ext}.msgfuncs" }
+          rule_name: 'extract_symbol_arrays',
+          inputs: external_files,
+          build_variables: {
+            keys: 'msgFuncs'
+          }
         }
       end
 
@@ -1213,11 +1202,13 @@ module A2OBrew
         a2o_options << '-s MAIN_MODULE=2'
       else
         a2o_options << '-s MAIN_MODULE=2 -s LINKABLE=0'
-        a2o_options << "-s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)}"
-        a2o_options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target)}"
+        a2o_options << "-s EXPORTED_FUNCTIONS=@#{exported_functions_js_path(a2o_target)}"
+        a2o_options << "-s EXPORTED_VARIABLES=@#{exported_variables_js_path(a2o_target)}"
         a2o_options << "-s GENERATE_OBJC_MSG_FUNCTIONS=@#{objc_msg_functions_js_path(a2o_target)}"
+        a2o_options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target)}"
         a2o_options << "--pre-js #{shared_library_js_path(a2o_target)}"
-        dep_paths += [exports_js_path(a2o_target), library_functions_js_path(a2o_target), shared_library_js_path(a2o_target)]
+        dep_paths += [exported_functions_js_path(a2o_target), exported_variables_js_path(a2o_target),
+                      objc_msg_functions_js_path(a2o_target), library_functions_js_path(a2o_target), shared_library_js_path(a2o_target)]
       end
 
       # other static libraries
