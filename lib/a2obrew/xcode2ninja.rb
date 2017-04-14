@@ -1159,14 +1159,16 @@ module A2OBrew
         '-s VERBOSE=1',
         '-s LZ4=1',
         '-s NATIVE_LIBDISPATCH=1',
-        '--memory-init-file 1'
+        '--memory-init-file 1',
+        '--separate-asm'
       ]
       a2o_flags = (a2o_project_flags(active_project_config, :html) || '').split
       a2o_options += a2o_flags
 
       pre_products_outputs = [
         js_mem_path(a2o_target),
-        js_path(a2o_target)
+        js_path(a2o_target),
+        asm_js_path(a2o_target)
       ]
 
       if !a2o_flags.include?('-g') && (
@@ -1183,11 +1185,6 @@ module A2OBrew
       dep_paths = file_list("#{emscripten_dir}/src/")
       A2OCONF[:xcodebuild][:static_link_frameworks].each do |f|
         dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
-      end
-
-      if A2OCONF[:xcodebuild][:emscripten][:emcc][:separate_asm]
-        pre_products_outputs << asm_js_path(a2o_target)
-        a2o_options << '--separate-asm'
       end
 
       # data file
