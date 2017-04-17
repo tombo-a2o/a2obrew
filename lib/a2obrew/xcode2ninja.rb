@@ -1059,7 +1059,10 @@ module A2OBrew
         'application.dat',
         'application.js',
         'application.js.mem',
-        'Foundation.so.js'
+        'Foundation.so.js',
+        'application-wasm.js',
+        'application-wasm.wasm',
+        'Foundation.wasm'
       ]
 
       shell_parameters = hash_key_to_camel(shell_parameters)
