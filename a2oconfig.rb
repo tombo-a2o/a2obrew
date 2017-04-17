@@ -178,9 +178,12 @@ BUILD
           CoreData
           CoreGraphics
           CoreLocation
+          CoreMedia
           CoreMotion
           CoreTelephony
           CoreText
+          EventKit
+          EventKitUI
           GameKit
           ImageIO
           MapKit
@@ -189,6 +192,7 @@ BUILD
           MobileCoreServices
           MultipeerConnectivity
           Onyx2D
+          OpenAL
           OpenGLES
           QuartzCore
           QuickLook
@@ -199,6 +203,7 @@ BUILD
           TomboAFNetworking
           TomboKit
           UIKit
+          WebKit
           iAd
         )
       }
@@ -214,7 +219,7 @@ BUILD
       UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
       CoreGraphics QuartzCore CFNetwork OpenGLES Onyx2D CoreText
       Social AVFoundation StoreKit CoreFoundation MapKit GameKit MultipeerConnectivity
-      MobileCoreServices OpenAL CoreMedia WebKit EventKit EventKitUI
+      MobileCoreServices
     ),
     dynamic_link_frameworks: %w(
       Foundation
