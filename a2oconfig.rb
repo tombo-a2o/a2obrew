@@ -208,9 +208,6 @@ BUILD
     emscripten: {
       file_packager: {
         separate_metadata: false
-      },
-      emcc: {
-        separate_asm: true
       }
     },
     static_link_frameworks: %w(

@@ -267,20 +267,9 @@ module A2OBrew
           command: 'llvm-link -o ${out} ${in} ${link_flags}'
         },
         {
-          rule_name: 'exports_js',
-          description: 'Functions to be exported in main module, which are referenced from shared libraries',
-          command: %q!llvm-nm -print-file-name -just-symbol-name -undefined-only ${in} | ruby -e "puts (ARGF.map{|l| '_'+l.strip.split(': ',2)[1]}+['_main']).to_s" > ${out}! # rubocop:disable LineLength
-        },
-        {
-          rule_name: 'library_functions_js',
-          description: 'Functions defined in side module',
-          command: %q!llvm-nm -print-file-name -defined-only ${in} | ruby -e "puts (ARGF.map{ |l| l.strip.split(': ',2)[1][9..-1].split(' ',2)}.select{ |t,s| s if 'DTS'.include?(t) }.map{|t,s| '_'+s}).to_s" > ${out}! # rubocop:disable LineLength
-          # input:
-          # build/debug/Foundation.bc: -------- T predicate_set_out
-          # <---    filename      -->  <--??--> ^ <---- symbol ----
-          #                                   type
-          # output:
-          # select '_'+name where type == "T" or "D" or "S"
+          rule_name: 'extract_symbol_arrays',
+          description: 'Extract symbol names from `externals` file (one symbol per one line)',
+          command: "ruby -ryaml -e 'puts (ARGV.map{|file| YAML.load_file(file).values_at(*%w|${keys}|)}.flatten + %w|${extra}|).to_s' ${in} > ${out}"
         },
         {
           rule_name: 'compose',
@@ -383,6 +372,14 @@ module A2OBrew
 
     def asm_js_path(a2o_target)
       "#{pre_products_path_prefix(a2o_target)}.asm.js"
+    end
+
+    def wasm_js_path(a2o_target)
+      "#{pre_products_path_prefix(a2o_target)}-wasm.js"
+    end
+
+    def wasm_path(a2o_target)
+      "#{pre_products_path_prefix(a2o_target)}-wasm.wasm"
     end
 
     def html_path(a2o_target)
@@ -489,16 +486,24 @@ module A2OBrew
       "#{data_js_path(a2o_target)}.metadata"
     end
 
-    def shared_library_js_path(a2o_target)
-      "#{emscripten_work_dir(a2o_target)}/shared.js"
+    def shared_library_js_path(a2o_target, extension)
+      "#{emscripten_work_dir(a2o_target)}/shared.#{extension}.js"
     end
 
-    def exports_js_path(a2o_target)
-      "#{emscripten_work_dir(a2o_target)}/exports.js"
+    def exported_functions_js_path(a2o_target, extension)
+      "#{emscripten_work_dir(a2o_target)}/exported_functions.#{extension}.js"
     end
 
-    def library_functions_js_path(a2o_target)
-      "#{emscripten_work_dir(a2o_target)}/lib_funcs.js"
+    def exported_variables_js_path(a2o_target, extension)
+      "#{emscripten_work_dir(a2o_target)}/exported_variables.#{extension}.js"
+    end
+
+    def library_functions_js_path(a2o_target, extension)
+      "#{emscripten_work_dir(a2o_target)}/lib_funcs.#{extension}.js"
+    end
+
+    def objc_msg_functions_js_path(a2o_target, extension)
+      "#{emscripten_work_dir(a2o_target)}/msgfuncs.#{extension}.js"
     end
 
     def a2o_project_flags(active_project_config, rule)
@@ -1054,7 +1059,10 @@ module A2OBrew
         'application.dat',
         'application.js',
         'application.js.mem',
-        'Foundation.so.js'
+        'Foundation.so.js',
+        'application-wasm.js',
+        'application-wasm.wasm',
+        'Foundation.wasm'
       ]
 
       shell_parameters = hash_key_to_camel(shell_parameters)
@@ -1063,49 +1071,101 @@ module A2OBrew
                            A2OShell: shell_parameters).gsub("\n", '\n')
     end
 
-    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength,CyclomaticComplexity,PerceivedComplexity,LineLength
-      builds = []
-
-      # dynamic link libraries
-
-      shared_libraries = A2OCONF[:xcodebuild][:dynamic_link_frameworks]
-
-      shared_libraries_outputs = []
-      unless shared_libraries.empty?
-        builds << {
-          outputs: [shared_library_js_path(a2o_target)],
-          rule_name: 'echo',
-          inputs: [],
-          build_variables: {
-            'contents' => 'Module.dynamicLibraries = [' + shared_libraries.map { |f| "\"#{f}.so.js\"" }.join(',') + '];'
-          }
-        }
-
-        shared_libraries.each do |f|
-          source = "#{frameworks_dir}/#{f}.framework/#{f}.so.js"
-          dest = "#{pre_products_application_dir(a2o_target)}/#{f}.so.js"
-          builds << {
-            outputs: [dest],
-            rule_name: 'cp_r',
-            inputs: [source]
-          }
-          shared_libraries_outputs << dest
-        end
-
-        builds << {
-          outputs: [exports_js_path(a2o_target)],
-          rule_name: 'exports_js',
-          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
-        }
-
-        builds << {
-          outputs: [library_functions_js_path(a2o_target)],
-          rule_name: 'library_functions_js',
-          inputs: shared_libraries.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.a" }
+    def generate_share_library_build_params(a2o_target, dynamic_link_frameworks, extension) # rubocop:disable Metrics/AbcSize,MethodLength
+      if dynamic_link_frameworks.empty?
+        return {
+          builds: [],
+          outputs: [],
+          options: ['-s MAIN_MODULE=2'],
+          dep_paths: []
         }
       end
 
-      # platform parameter file
+      builds = []
+      outputs = []
+      options = ['-s MAIN_MODULE=2 -s LINKABLE=0']
+      dep_paths = []
+
+      dynamic_link_frameworks.each do |f|
+        source = "#{frameworks_dir}/#{f}.framework/#{f}.#{extension}"
+        dest = "#{pre_products_application_dir(a2o_target)}/#{f}.#{extension}"
+        builds << {
+          outputs: [dest],
+          rule_name: 'cp_r',
+          inputs: [source]
+        }
+        outputs << dest
+      end
+
+      builds << {
+        outputs: [shared_library_js_path(a2o_target, extension)],
+        rule_name: 'echo',
+        inputs: [],
+        build_variables: {
+          'contents' => 'Module.dynamicLibraries = [' + dynamic_link_frameworks.map { |f| "\"#{f}.#{extension}\"" }.join(',') + '];'
+        }
+      }
+
+      external_files = dynamic_link_frameworks.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.#{extension}.externals" }
+
+      builds << {
+        outputs: [exported_functions_js_path(a2o_target, extension)],
+        rule_name: 'extract_symbol_arrays',
+        inputs: external_files,
+        build_variables: {
+          keys: 'msgFuncs declares',
+          extra: '_main'
+        }
+      }
+      builds << {
+        outputs: [exported_variables_js_path(a2o_target, extension)],
+        rule_name: 'extract_symbol_arrays',
+        inputs: external_files,
+        build_variables: {
+          keys: 'externs'
+        }
+      }
+      builds << {
+        outputs: [library_functions_js_path(a2o_target, extension)],
+        rule_name: 'extract_symbol_arrays',
+        inputs: external_files,
+        build_variables: {
+          keys: 'exports'
+        }
+      }
+      builds << {
+        outputs: [objc_msg_functions_js_path(a2o_target, extension)],
+        rule_name: 'extract_symbol_arrays',
+        inputs: external_files,
+        build_variables: {
+          keys: 'msgFuncs'
+        }
+      }
+
+      options << "--pre-js #{shared_library_js_path(a2o_target, extension)}"
+      options << "-s EXPORTED_FUNCTIONS=@#{exported_functions_js_path(a2o_target, extension)}"
+      options << "-s EXPORTED_VARIABLES=@#{exported_variables_js_path(a2o_target, extension)}"
+      options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target, extension)}"
+      options << "-s GENERATE_OBJC_MSG_FUNCTIONS=@#{objc_msg_functions_js_path(a2o_target, extension)}"
+
+      dep_paths << shared_library_js_path(a2o_target, extension)
+      dep_paths << exported_functions_js_path(a2o_target, extension)
+      dep_paths << exported_variables_js_path(a2o_target, extension)
+      dep_paths << library_functions_js_path(a2o_target, extension)
+      dep_paths << objc_msg_functions_js_path(a2o_target, extension)
+
+      {
+        builds: builds,
+        outputs: outputs,
+        options: options,
+        dep_paths: dep_paths
+      }
+    end
+
+    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength,CyclomaticComplexity,PerceivedComplexity,LineLength
+      builds = []
+
+      # platform parameter json
       builds << {
         outputs: [platform_parameters_json_path(a2o_target)],
         rule_name: 'echo',
@@ -1115,7 +1175,7 @@ module A2OBrew
         }
       }
 
-      # extra json
+      # runtime parameter json
       builds << {
         outputs: [runtime_parameters_json_path(a2o_target)],
         rule_name: 'echo',
@@ -1133,14 +1193,20 @@ module A2OBrew
         '-s VERBOSE=1',
         '-s LZ4=1',
         '-s NATIVE_LIBDISPATCH=1',
-        '--memory-init-file 1'
+        '--memory-init-file 1',
+        '--separate-asm'
       ]
       a2o_flags = (a2o_project_flags(active_project_config, :html) || '').split
       a2o_options += a2o_flags
 
-      pre_products_outputs = [
+      pre_products_outputs_asm = [
         js_mem_path(a2o_target),
-        js_path(a2o_target)
+        js_path(a2o_target),
+        asm_js_path(a2o_target)
+      ]
+      pre_products_outputs_wasm = [
+        wasm_js_path(a2o_target),
+        wasm_path(a2o_target)
       ]
 
       if !a2o_flags.include?('-g') && (
@@ -1150,53 +1216,63 @@ module A2OBrew
         a2o_flags.include?('-Oz')
       )
         a2o_options << '--emit-symbol-map'
-        pre_products_outputs << js_symbols_path(a2o_target)
+        pre_products_outputs_asm << js_symbols_path(a2o_target)
       end
 
       # detect emscripten file changes
       dep_paths = file_list("#{emscripten_dir}/src/")
-      A2OCONF[:xcodebuild][:static_link_frameworks].each do |f|
-        dep_paths.concat(file_list("#{frameworks_dir}/#{f}.framework/#{f}"))
-      end
-
-      if A2OCONF[:xcodebuild][:emscripten][:emcc][:separate_asm]
-        pre_products_outputs << asm_js_path(a2o_target)
-        a2o_options << '--separate-asm'
-      end
 
       # data file
       a2o_options << "--pre-js #{data_js_path(a2o_target)}"
       dep_paths << data_js_path(a2o_target)
 
-      # static link frameworks
-      a2o_options += (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - shared_libraries).map { |f| "-framework #{f.ninja_escape}" }
+      dynamic_link_frameworks = A2OCONF[:xcodebuild][:dynamic_link_frameworks]
+      static_link_frameworks = (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - dynamic_link_frameworks)
 
-      # dynamic link frameworks
-      if shared_libraries.empty?
-        a2o_options << '-s MAIN_MODULE=2'
-      else
-        a2o_options << '-s MAIN_MODULE=2 -s LINKABLE=0'
-        a2o_options << "-s EXPORTED_FUNCTIONS=@#{exports_js_path(a2o_target)}"
-        a2o_options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target)}"
-        a2o_options << "--pre-js #{shared_library_js_path(a2o_target)}"
-        dep_paths += [exports_js_path(a2o_target), library_functions_js_path(a2o_target), shared_library_js_path(a2o_target)]
-      end
+      # static link frameworks
+      a2o_options += static_link_frameworks.map { |f| "-framework #{f.ninja_escape}" }
+      dep_paths += static_link_frameworks.map { |f| "#{frameworks_dir}/#{f}.framework" }
 
       # other static libraries
-      a2o_options += %w(icuuc icui18n icudata crypto).map { |lib| "-l#{lib}" }
+      static_libs = %w(icuuc icui18n icudata crypto)
+      a2o_options += static_libs.map { |lib| "-l#{lib}" }
       a2o_options << `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip
+      # TODO: dpe_paths += static_libs.map{ |lib| real path of lib }
 
       # objects
       linked_objects = @static_libraries_from_other_projects + [bitcode_path(a2o_target, target)]
 
+      # asm
+      asm_shared_lib_params = generate_share_library_build_params(a2o_target, dynamic_link_frameworks, 'so.js')
+      asm_a2o_options = a2o_options + asm_shared_lib_params[:options]
+      asm_dep_paths = dep_paths + asm_shared_lib_params[:dep_paths]
+      builds += asm_shared_lib_params[:builds]
+
       builds << {
-        outputs: pre_products_outputs,
+        outputs: pre_products_outputs_asm,
         rule_name: 'compose',
-        inputs: linked_objects + dep_paths,
+        inputs: linked_objects + asm_dep_paths,
         build_variables: {
-          'options' => a2o_options.join(' '),
+          'options' => asm_a2o_options.join(' '),
           'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
           'js_path' => js_path(a2o_target)
+        }
+      }
+
+      # wasm
+      wasm_shared_lib_params = generate_share_library_build_params(a2o_target, dynamic_link_frameworks, 'wasm')
+      wasm_a2o_options = a2o_options + wasm_shared_lib_params[:options] + ['-s BINARYEN=1']
+      wasm_dep_paths = dep_paths + wasm_shared_lib_params[:dep_paths]
+      builds += wasm_shared_lib_params[:builds]
+
+      builds << {
+        outputs: pre_products_outputs_wasm,
+        rule_name: 'compose',
+        inputs: linked_objects + wasm_dep_paths,
+        build_variables: {
+          'options' => wasm_a2o_options.join(' '),
+          'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
+          'js_path' => wasm_js_path(a2o_target)
         }
       }
 
@@ -1211,7 +1287,7 @@ module A2OBrew
       #       ```
       #       But currently, just copy them as the original.
 
-      products_inputs = pre_products_outputs + shared_libraries_outputs + [
+      products_inputs = pre_products_outputs_asm + pre_products_outputs_wasm + asm_shared_lib_params[:outputs] + wasm_shared_lib_params[:outputs] + [
         data_path(a2o_target),
         platform_parameters_json_path(a2o_target),
         runtime_parameters_json_path(a2o_target)

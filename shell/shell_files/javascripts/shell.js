@@ -163,13 +163,13 @@ var A2OShell;
 
   var loadWasm = function () {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'application.wasm', true);
+    xhr.open('GET', 'application-wasm.wasm', true);
     xhr.responseType = 'arraybuffer';
     xhr.onload = function () {
       Module.wasmBinary = xhr.response;
 
       var script = document.createElement('script');
-      script.src = 'application.js';
+      script.src = 'application-wasm.js';
       document.body.appendChild(script);
 
     };
@@ -358,7 +358,7 @@ var A2OShell;
     document.getElementById('preview-image').style.display = 'none';
     Module.setStatus('Downloading...');
 
-    if (A2OShell.wasm) {
+    if (typeof WebAssembly === 'object') {
       loadWasm();
     } else {
       document.body.appendChild(script);
