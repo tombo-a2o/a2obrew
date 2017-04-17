@@ -214,7 +214,7 @@ BUILD
       UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
       CoreGraphics QuartzCore CFNetwork OpenGLES Onyx2D CoreText
       Social AVFoundation StoreKit CoreFoundation MapKit GameKit MultipeerConnectivity
-      MobileCoreServices
+      MobileCoreServices OpenAL CoreMedia WebKit EventKit EventKitUI
     ),
     dynamic_link_frameworks: %w(
       Foundation
