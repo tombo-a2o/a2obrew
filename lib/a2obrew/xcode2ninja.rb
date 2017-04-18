@@ -378,6 +378,10 @@ module A2OBrew
       "#{pre_products_path_prefix(a2o_target)}-wasm.js"
     end
 
+    def wasm_asm_js_path(a2o_target)
+      "#{pre_products_path_prefix(a2o_target)}-wasm.asm.js"
+    end
+
     def wasm_path(a2o_target)
       "#{pre_products_path_prefix(a2o_target)}-wasm.wasm"
     end
@@ -1206,6 +1210,7 @@ module A2OBrew
       ]
       pre_products_outputs_wasm = [
         wasm_js_path(a2o_target),
+        wasm_asm_js_path(a2o_target),
         wasm_path(a2o_target)
       ]
 
