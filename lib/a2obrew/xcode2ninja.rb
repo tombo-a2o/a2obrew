@@ -398,6 +398,10 @@ module A2OBrew
       "#{js_path(a2o_target)}.symbols"
     end
 
+    def wasm_js_symbols_path(a2o_target)
+      "#{wasm_js_path(a2o_target)}.symbols"
+    end
+
     def platform_parameters_json_path(a2o_target)
       "#{pre_products_tombo_dir(a2o_target)}/parameters.json"
     end
@@ -1222,6 +1226,7 @@ module A2OBrew
       )
         a2o_options << '--emit-symbol-map'
         pre_products_outputs_asm << js_symbols_path(a2o_target)
+        pre_products_outputs_wasm << wasm_js_symbols_path(a2o_target)
       end
 
       # detect emscripten file changes
