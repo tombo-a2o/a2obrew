@@ -1114,7 +1114,7 @@ module A2OBrew
         inputs: external_files,
         build_variables: {
           keys: 'msgFuncs declares',
-          extra: '_main'
+          extra: '_main _emscripten_pause_main_loop _audioPlayer_stopAll'
         }
       }
       builds << {

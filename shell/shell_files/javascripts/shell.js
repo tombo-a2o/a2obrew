@@ -580,6 +580,8 @@ var A2OShell;
       Module.setStatus = function (text) {
         if (text) Module.printErr('[post-exception status] ' + text);
       };
+      Module['_emscripten_pause_main_loop']();
+      Module['_audioPlayer_stopAll']();
     });
 
     if (environment !== 'production') {
