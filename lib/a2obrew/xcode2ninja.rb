@@ -502,10 +502,6 @@ module A2OBrew
       "#{emscripten_work_dir(a2o_target)}/lib_funcs.#{extension}.js"
     end
 
-    def objc_msg_functions_js_path(a2o_target, extension)
-      "#{emscripten_work_dir(a2o_target)}/msgfuncs.#{extension}.js"
-    end
-
     def a2o_project_flags(active_project_config, rule)
       active_project_config.dig(:flags, rule)
     end
@@ -1113,7 +1109,7 @@ module A2OBrew
         rule_name: 'extract_symbol_arrays',
         inputs: external_files,
         build_variables: {
-          keys: 'msgFuncs declares',
+          keys: 'declares',
           extra: '_main _emscripten_pause_main_loop _audioPlayer_stopAll'
         }
       }
@@ -1133,26 +1129,16 @@ module A2OBrew
           keys: 'exports'
         }
       }
-      builds << {
-        outputs: [objc_msg_functions_js_path(a2o_target, extension)],
-        rule_name: 'extract_symbol_arrays',
-        inputs: external_files,
-        build_variables: {
-          keys: 'msgFuncs'
-        }
-      }
 
       options << "--pre-js #{shared_library_js_path(a2o_target, extension)}"
       options << "-s EXPORTED_FUNCTIONS=@#{exported_functions_js_path(a2o_target, extension)}"
       options << "-s EXPORTED_VARIABLES=@#{exported_variables_js_path(a2o_target, extension)}"
       options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target, extension)}"
-      options << "-s GENERATE_OBJC_MSG_FUNCTIONS=@#{objc_msg_functions_js_path(a2o_target, extension)}"
 
       dep_paths << shared_library_js_path(a2o_target, extension)
       dep_paths << exported_functions_js_path(a2o_target, extension)
       dep_paths << exported_variables_js_path(a2o_target, extension)
       dep_paths << library_functions_js_path(a2o_target, extension)
-      dep_paths << objc_msg_functions_js_path(a2o_target, extension)
 
       {
         builds: builds,
