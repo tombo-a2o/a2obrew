@@ -23,7 +23,7 @@ class Object
 end
 
 module A2OBrew
-  class Xcode2Ninja # rubocop:disable Metrics/ClassLength
+  class Xcode2Ninja
     APPLE_APPICONS = [
       [60, 3], # 60x60@3x 180x180 (main icon for iPhone retina iOS 8-)
       [76, 2], # 76x76@2x 152x152 (main icon for iPad   retina iOS 7-)
@@ -1170,7 +1170,7 @@ module A2OBrew
       }
     end
 
-    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength,CyclomaticComplexity,PerceivedComplexity,LineLength
+    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength,PerceivedComplexity,LineLength
       builds = []
 
       # platform parameter json
@@ -1354,7 +1354,7 @@ module A2OBrew
       builds
     end
 
-    def frameworks_build_phase(_xcodeproj, _target, _build_config, phase, _active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize
+    def frameworks_build_phase(_xcodeproj, _target, _build_config, phase, _active_project_config, a2o_target)
       builds = []
 
       @frameworks = []
@@ -1478,7 +1478,7 @@ module A2OBrew
       end
     end
 
-    def get_nib_paths_from_storyboard(storyboard_path) # rubocop:disable Metrics/AbcSize
+    def get_nib_paths_from_storyboard(storyboard_path)
       d = REXML::Document.new(File.read(storyboard_path))
 
       nib_list = []

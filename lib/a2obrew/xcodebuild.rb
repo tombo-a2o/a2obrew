@@ -89,7 +89,7 @@ module A2OBrew
       xcodeproj_build_config
     end
 
-    def generate_ninja_build(options) # rubocop:disable Metrics/AbcSize
+    def generate_ninja_build(options)
       a2o_target = options[:target].intern
       proj_config_path, proj_config = load_project_config(options[:project_config])
       xcodeproj_path = search_xcodeproj_path(options[:xcodeproj_path])

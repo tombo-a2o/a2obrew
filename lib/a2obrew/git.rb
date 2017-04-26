@@ -4,7 +4,7 @@ require_relative 'util'
 module A2OBrew
   class Git
     # git pull if remote updated
-    def self.update(root_path, branch_name, repository_uri) # rubocop:disable Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity
+    def self.update(root_path, branch_name, repository_uri) # rubocop:disable Metrics/PerceivedComplexity
       git_path = "#{root_path}/.git"
       if File.directory?(root_path) && File.directory?(git_path)
         # git clone has already done

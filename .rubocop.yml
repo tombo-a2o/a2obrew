@@ -1,18 +1,23 @@
 inherit_from: .rubocop_todo.yml
 
 AllCops:
+  TargetRubyVersion: 2.3
+  DisplayCopNames: true
   Exclude:
     - emsdk/**/*
     - depends/**/*
 
 Metrics/AbcSize:
-  Max: 20
+  Max: 30
+
+Metrics/CyclomaticComplexity:
+  Max: 10
 
 Metrics/BlockLength:
   Max: 60
 
 Metrics/ClassLength:
-  Max: 200
+  Enabled: false
 
 Metrics/MethodLength:
   Max: 60
@@ -23,5 +28,5 @@ Metrics/LineLength:
 Metrics/PerceivedComplexity:
   Max: 8
 
-Metrics/CyclomaticComplexity:
-  Max: 7
+Style/Documentation:
+  Enabled: false
