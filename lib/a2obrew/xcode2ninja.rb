@@ -1186,7 +1186,6 @@ module A2OBrew
         '-v',
         '-s VERBOSE=1',
         '-s LZ4=1',
-        '-s NATIVE_LIBDISPATCH=1',
         '--memory-init-file 1',
         '--separate-asm'
       ]
