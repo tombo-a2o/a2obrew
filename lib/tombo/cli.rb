@@ -5,6 +5,7 @@
 require_relative 'cli_base'
 require_relative 'applications'
 require_relative 'application_versions'
+require_relative 'developers'
 
 module Tombo
   class CLI < CLIBase
@@ -18,5 +19,8 @@ module Tombo
 
     desc 'application_versions SUBCOMMAND', 'handle application versions'
     subcommand 'application_versions', ApplicationVersions
+
+    desc 'developers SUBCOMMAND', 'handle developers'
+    subcommand 'developers', Developers
   end
 end
