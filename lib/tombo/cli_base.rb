@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'thor'
 require 'json'
 require 'logger'
@@ -45,13 +46,23 @@ module Tombo
 
       header_with_credential = credential_headers(extheader)
       response = cl.request(method, @dotfile.developer_portal_uri(path), query, body, header_with_credential)
-      json = JSON.parse(response.body)
-      if json['errors'] && !json['errors'].empty?
-        puts 'API error'
-        json['errors'].each do |error|
-          puts error
-        end
+
+      begin
+        json = JSON.parse(response.body)
+      rescue JSON::ParserError
+        # All API should respond with JSON
+        puts 'API Response is not JSON:'
+        puts response.body
         error_exit('API failed')
+      end
+
+      if (json['errors'] && !json['errors'].empty?) || response.status != 200
+        # TODO: Handle response.status == 401 and tell what to do
+        Logger.logger.error 'API error'
+        json['errors'].each do |error|
+          Logger.logger.error error
+        end
+        exit 1
       end
 
       json
