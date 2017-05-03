@@ -138,6 +138,7 @@ EOF
       jobs = "-j #{options[:jobs]}" if options[:jobs]
       keep = "-k #{options[:keep]}" if options[:keep]
       Util.cmd_exec("ninja -v -f #{ninja_path} #{jobs} #{keep}", 'ninja build error') do |line|
+        puts line
         build_log.write Util.filter_ansi_esc(line)
         case line.chomp
         when / unresolved symbol: (.+)\z/

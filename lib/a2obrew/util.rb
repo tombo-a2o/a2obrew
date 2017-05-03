@@ -43,8 +43,11 @@ module A2OBrew
         begin
           stdin.close
           stdout.each do |line|
-            puts line
-            yield line unless output_filter.nil?
+            if output_filter.nil?
+              puts line
+            else
+              yield line
+            end
           end
         rescue Errno::EIO # rubocop:disable Lint/HandleExceptions
         rescue Interrupt
