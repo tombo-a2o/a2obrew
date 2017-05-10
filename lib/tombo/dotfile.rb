@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'inifile'
 require 'highline'
 
@@ -7,14 +8,14 @@ module Tombo
     def initialize(profile_name = nil, base_path = nil)
       @base_path = checked_base_path(base_path)
 
-      section = profile_name.nil? ? 'default' : "profile #{profile_name}"
-      @config_path = checked_config_path(File.join(@base_path, 'config'))
+      @section = Dotfile.profile_to_section(profile_name)
+      @config_path = Dotfile.checked_config_path(File.join(@base_path, 'config'))
 
-      ini_file = IniFile.load(@config_path)
+      @ini_file = IniFile.load(@config_path)
 
-      raise "Invalid profile #{profile_name}" unless ini_file.has_section?(section)
+      raise "Invalid profile #{profile_name}" unless @ini_file.has_section?(@section)
 
-      @config = ini_file[section]
+      @config = @ini_file[@section]
     end
 
     def developer_portal_uri(path)
@@ -43,7 +44,23 @@ module Tombo
       end
     end
 
-    private
+    def profile?(profile_name)
+      @ini_file.has_section?(Dotfile.profile_to_section(profile_name))
+    end
+
+    def set_profile(profile_name, config)
+      merged_config = Dotfile.default_config.merge(config)
+      @ini_file[Dotfile.profile_to_section(profile_name)] = merged_config
+      @ini_file.save
+    end
+
+    def self.profile_to_section(profile_name)
+      if profile_name.nil?
+        'default'
+      else
+        "profile #{profile_name}"
+      end
+    end
 
     def checked_base_path(base_path)
       if base_path.nil?
@@ -55,28 +72,26 @@ module Tombo
       base_path
     end
 
-    def checked_config_path(config_path)
+    def self.checked_config_path(config_path)
       generate_config(config_path) unless File.exist?(config_path)
       config_path
     end
 
-    def generate_config(config_path)
+    def self.generate_config(config_path)
       puts "Generate #{config_path} to save platform informations"
-      hl = HighLine.new
-      dev_portal_uri = hl.ask('Developer portal URI:') do |q|
-        q.default = 'https://developer.tombo.io'
-      end
-      dev_credential = hl.ask('Developer credential id:')
 
-      File.open(config_path, 'w') do |f|
-        f.puts <<EOF
-[default]
-developer_portal_uri = #{dev_portal_uri}
-developer_credential = #{dev_credential}
-ssl_certificate_verify = true
-compress_with_zopfli = false
-EOF
-      end
+      ini_file = IniFile.new
+      ini_file['default'] = default_config
+      ini_file.save(filename: config_path)
+    end
+
+    def self.default_config
+      {
+        developer_portal_uri: 'https://developer.tombo.io',
+        developer_credential: 'PLEASE_SET_CREDENTIAL',
+        ssl_certificate_verify: true,
+        compress_with_zopfli: true
+      }
     end
   end
 end

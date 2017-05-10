@@ -6,6 +6,7 @@ require_relative 'cli_base'
 require_relative 'applications'
 require_relative 'application_versions'
 require_relative 'developers'
+require_relative 'test'
 
 module Tombo
   class CLI < CLIBase
@@ -22,5 +23,8 @@ module Tombo
 
     desc 'developers SUBCOMMAND', 'handle developers'
     subcommand 'developers', Developers
+
+    desc 'test SUBCOMMAND', 'test with local Tombo platform'
+    subcommand 'test', Test
   end
 end

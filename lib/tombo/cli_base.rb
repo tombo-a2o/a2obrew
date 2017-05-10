@@ -3,7 +3,7 @@
 require 'thor'
 require 'json'
 require 'logger'
-require_relative '../a2obrew/util'
+require_relative 'dotfile'
 
 module Tombo
   module Logger
@@ -51,8 +51,8 @@ module Tombo
         json = JSON.parse(response.body)
       rescue JSON::ParserError
         # All API should respond with JSON
-        puts 'API Response is not JSON:'
-        puts response.body
+        Logger.logger.error 'API Response is not JSON:'
+        Logger.logger.error response.body
         error_exit('API failed')
       end
 
@@ -62,6 +62,7 @@ module Tombo
         json['errors'].each do |error|
           Logger.logger.error error
         end
+        puts json
         exit 1
       end
 
@@ -103,7 +104,7 @@ module Tombo
       d['id']
     end
 
-    def output(data, color = true)
+    def output(data, color = false)
       if STDOUT.tty? && color
         require 'json_color'
         puts JsonColor.colorize(JSON.pretty_generate(data))
