@@ -54,6 +54,10 @@ module Tombo
       @ini_file.save
     end
 
+    def delete_profile(profile_name)
+      @ini_file.delete_section(profile_name)
+    end
+
     def self.profile_to_section(profile_name)
       if profile_name.nil?
         'default'
