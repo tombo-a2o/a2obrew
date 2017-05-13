@@ -18,6 +18,27 @@ module Tombo
       output(json)
     end
 
+    desc 'create', 'applications create'
+    method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
+    method_option :default_language_id, desc: 'Default language ID', required: true
+    method_option :screen_name, desc: 'screen name for URL ex.) https://app.tombo.io/screen_name', required: true
+    def create
+      body = {
+        'application[default_language_id]' => options[:default_language_id],
+        'application[screen_name]' => options[:screen_name]
+      }
+
+      json = request('POST', '/applications.json', nil, body)
+
+      d = json['data']
+
+      if d.nil? || d['type'] != 'applications' || d['id'].nil?
+        raise 'Cannot update application'
+      end
+
+      output(json)
+    end
+
     desc 'update', 'applications update'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     method_option :application_id, desc: 'The ID of the application to be updated', required: true
