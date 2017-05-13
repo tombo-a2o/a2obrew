@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'set'
 require 'json'
 require 'xcodeproj'
@@ -576,7 +577,7 @@ module A2OBrew
               }
             }
             resources << remote_path
-          elsif %w(.caf .aiff).include? File.extname(file.path)
+          elsif %w[.caf .aiff].include? File.extname(file.path)
             # convert caf file to mp4, but leave file name as is
             remote_path = File.join(resources_dir(a2o_target), local_path.basename)
 
@@ -626,7 +627,7 @@ module A2OBrew
         resources << infoplist
 
         # TODO: replace all variables
-        variables = %w(PRODUCT_NAME PRODUCT_BUNDLE_IDENTIFIER)
+        variables = %w[PRODUCT_NAME PRODUCT_BUNDLE_IDENTIFIER]
         commands = variables.map do |key|
           value = build_setting(target, build_config, key)
           "-e s/\\$\\(#{key}\\)/#{value}/g -e s/\\${#{key}}/#{value}/g "
@@ -951,7 +952,7 @@ module A2OBrew
       # build settings
       lib_dirs = build_setting(target, build_config, 'LIBRARY_SEARCH_PATHS', :array)
       framework_search_paths = build_setting(target, build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
-      header_search_paths = build_setting(target, build_config, 'HEADER_SEARCH_PATHS', :array).select { |value| value != '' }
+      header_search_paths = build_setting(target, build_config, 'HEADER_SEARCH_PATHS', :array).reject { |value| value == '' }
       user_header_search_paths = build_setting(target, build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ''
       other_cflags = (build_setting(target, build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
       cxx_std = build_setting(target, build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
@@ -1229,7 +1230,7 @@ module A2OBrew
       dep_paths += static_link_frameworks.map { |f| "#{frameworks_dir}/#{f}.framework" }
 
       # other static libraries
-      static_libs = %w(icuuc icui18n icudata crypto)
+      static_libs = %w[icuuc icui18n icudata crypto]
       a2o_options += static_libs.map { |lib| "-l#{lib}" }
       a2o_options << `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip
       # TODO: dpe_paths += static_libs.map{ |lib| real path of lib }
