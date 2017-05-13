@@ -9,11 +9,18 @@ module Tombo
     PROFILE = 'test-platform'
     LANGUAGE_ID = 14 # ja
     SCREEN_NAME = 'test'
-    DEV_PORTAL_URI = 'https://192.168.99.100:8002'
+    HOST = '192.168.99.100'
+    PLATFORM_URI = "https://#{HOST}"
+    DEV_PORTAL_URI = "https://#{HOST}:8002"
 
     desc 'upload', 'upload application into Tombo platform'
-    def upload(*_proj_names) # rubocop:disable Metrics/AbcSize,PerceivedComplexity,MethodLength
+    def upload(*source_directories) # rubocop:disable Metrics/AbcSize,PerceivedComplexity,MethodLength,CyclomaticComplexity
       # rubocop: disable Metrics/LineLength
+
+      # Check source_directory
+      error_exit('Specify source directory to be uploaded') if source_directories.length != 1
+      source_directory = source_directories[0]
+
       # Check profile
       dotfile = Dotfile.new
       create_developer = false
@@ -69,6 +76,9 @@ module Tombo
       end
 
       # Now we can access the platform server
+
+      # Check we have already had a application which has the screen_name SCREEN_NAME
+      # If exists, fetch the application_id.
       lines = []
       A2OBrew::Util.cmd_exec("tombocli applications index -p #{PROFILE} 2>/dev/null") do |line|
         lines << line
@@ -84,6 +94,7 @@ module Tombo
         puts "Cannot find application `#{SCREEN_NAME}`"
       end
 
+      # If application_id is nil, create the application which has the screen_name SCREEN_NAME
       if application_id.nil?
         lines = []
         A2OBrew::Util.cmd_exec("tombocli applications create -p #{PROFILE} --default-language-id #{LANGUAGE_ID} --screen-name #{SCREEN_NAME} 2>/dev/null") do |line|
@@ -98,7 +109,29 @@ module Tombo
         end
       end
 
-      puts application_id
+      # Create application version
+      version = Time.now.strftime('%Y%m%d%H%M%S%3N') # msec
+      lines = []
+      A2OBrew::Util.cmd_exec("tombocli application_versions create -p #{PROFILE} --application-id #{application_id} --version #{version} --source-directory #{source_directory} 2>/dev/null") do |line|
+        lines << line
+      end
+
+      application_version_id = nil
+      begin
+        application_version = JSON.parse(lines.join("\n"))['data']
+        application_version_id = application_version['id']
+      rescue JSON::ParserError
+        error_exit('Cannot create an application version')
+      end
+
+      # Set the application version latest
+      lines = []
+      A2OBrew::Util.cmd_exec("tombocli applications update -p #{PROFILE} --application-id #{application_id} --active-version-id #{application_version_id} 2>/dev/null") do |line|
+        lines << line
+      end
+
+      # Open the default browser to show
+      system("open #{PLATFORM_URI}/#{SCREEN_NAME}")
     end
   end
 end
