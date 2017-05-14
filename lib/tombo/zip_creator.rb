@@ -9,9 +9,11 @@ module Tombo
     def self.create_zip(output_zip_path, input_directory_path, use_zopfli)
       Zip.sort_entries = true
       Zip.default_compression = Zlib::BEST_COMPRESSION
+      Logger.logger.info "Create application zip on #{output_zip_path}"
       Zip::File.open(output_zip_path, Zip::File::CREATE) do |zip|
         recursive_zip_add(zip, input_directory_path, '', use_zopfli)
       end
+      Logger.logger.info "Finish creation of #{output_zip_path}"
     end
 
     def self.recursive_zip_add(zip, input_dir_path, output_dir_path, use_zopfli)
