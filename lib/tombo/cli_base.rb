@@ -58,8 +58,8 @@ module Tombo
 
       if (json['errors'] && !json['errors'].empty?) || response.status != 200
         # TODO: Handle response.status == 401 and tell what to do
-        Logger.logger.error 'API error'
-        json['errors'].each do |error|
+        Logger.logger.error "API error status: #{response.status}"
+        json['errors']&.each do |error|
           Logger.logger.error error
         end
         puts json
