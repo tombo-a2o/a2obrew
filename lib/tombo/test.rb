@@ -46,7 +46,8 @@ module Tombo
 
         # Create new profile on ~/.tombo/config
         dotfile.set_profile(PROFILE, developer_portal_uri: DEV_PORTAL_URI,
-                                     ssl_certificate_verify: false)
+                                     ssl_certificate_verify: false,
+                                     compress_with_zopfli: false)
 
         # Create new developer
         name = 'a2obrew/tombocli integrated test'
@@ -67,6 +68,7 @@ module Tombo
           # Create new profile on ~/.tombo/config with credential
           dotfile.set_profile(PROFILE, developer_portal_uri: DEV_PORTAL_URI,
                                        ssl_certificate_verify: false,
+                                       compress_with_zopfli: false,
                                        developer_credential: developer_credential)
         rescue A2OBrew::CmdExecException, JSON::ParserError => e
           puts lines

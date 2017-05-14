@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'zip'
 require 'find'
 require 'httpclient'
@@ -43,7 +44,8 @@ module Tombo
             gzipped = if use_zopfli
                         `zopfli -c "#{input_path}"`
                       else
-                        `gzip -c "#{input_path}"`
+                        # Use fastest (worst) compression
+                        `gzip -1 -c "#{input_path}"`
                       end
             Logger.logger.info "#{File.size(input_path)} => #{gzipped.size}"
             f.write(gzipped)
