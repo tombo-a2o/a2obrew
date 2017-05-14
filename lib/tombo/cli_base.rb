@@ -38,7 +38,7 @@ module Tombo
       exit exit_status
     end
 
-    def request(method, path, query = nil, body = nil, extheader = {})
+    def request(method, path, query = nil, body = nil, extheader = {}) # rubocop:disable Metrics/AbcSize
       cl = HTTPClient.new
       cl.ssl_config.verify_mode = nil unless @dotfile.ssl_certificate_verify?
       # cl.connect_timeout = 120.0
@@ -55,8 +55,7 @@ module Tombo
         Logger.logger.error response.body
         error_exit('API failed')
       end
-
-      if (json['errors'] && !json['errors'].empty?) || response.status != 200
+      if (json['errors'] && !json['errors'].empty?) || !HTTP::Status.successful?(response.status)
         # TODO: Handle response.status == 401 and tell what to do
         Logger.logger.error "API error status: #{response.status}"
         json['errors']&.each do |error|
