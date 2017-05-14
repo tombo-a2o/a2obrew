@@ -64,7 +64,7 @@ module Tombo
             lines << line
           end
           created_developer = JSON.parse(lines.join("\n"))
-          developer_credential = created_developer['data']['attributes']['developer_credential']['secret']
+          developer_credential = created_developer['data']['attributes']['credential']
           # Create new profile on ~/.tombo/config with credential
           dotfile.set_profile(PROFILE, developer_portal_uri: DEV_PORTAL_URI,
                                        ssl_certificate_verify: false,
