@@ -5,6 +5,7 @@
 require_relative 'cli_base'
 require_relative 'applications'
 require_relative 'application_versions'
+require_relative 'application_localizes'
 require_relative 'developers'
 require_relative 'test'
 
@@ -20,6 +21,9 @@ module Tombo
 
     desc 'application_versions SUBCOMMAND', 'handle application versions'
     subcommand 'application_versions', ApplicationVersions
+
+    desc 'application_localizes SUBCOMMAND', 'handle application localizes'
+    subcommand 'application_localizes', ApplicationLocalizes
 
     desc 'developers SUBCOMMAND', 'handle developers'
     subcommand 'developers', Developers

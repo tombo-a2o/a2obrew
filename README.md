@@ -106,8 +106,9 @@ Use these commands.
 ```sh
 # check the application id
 tombocli applications index
-# Or create an application (Can accessable with the URL https://app.tombo.io/a2oapp)
-tombocli applications create --default-language-id 14 --screen-name a2oapp
+# Or create an application and application localize (Can accessable with the URL https://app.tombo.io/a2oapp)
+tombocli applications create --default-language-id=14 --screen-name=a2oapp
+tombocli application_localizes create --application-id=67454963-23ad-4868-88bf-3c97fad31685 --language-id=14
 # upload
 tombocli application_versions create --application-id=67454963-23ad-4868-88bf-3c97fad31685 --version=1.0.1-beta --source-directory=a2o/build/release/products
 # change latest version

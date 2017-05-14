@@ -109,6 +109,10 @@ module Tombo
         rescue JSON::ParserError
           error_exit('Cannot create an application')
         end
+
+        # Create application localize
+        A2OBrew::Util.cmd_exec("tombocli application_localizes create -p #{PROFILE} --application-id #{application_id} --language-id #{LANGUAGE_ID} --name #{SCREEN_NAME} 2>/dev/null") do |line|
+        end
       end
 
       # Create application version
@@ -127,9 +131,7 @@ module Tombo
       end
 
       # Set the application version latest
-      lines = []
       A2OBrew::Util.cmd_exec("tombocli applications update -p #{PROFILE} --application-id #{application_id} --active-version-id #{application_version_id} 2>/dev/null") do |line|
-        lines << line
       end
 
       # Open the default browser to show
