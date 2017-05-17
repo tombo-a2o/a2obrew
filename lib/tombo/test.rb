@@ -4,6 +4,8 @@ require_relative 'dotfile'
 require_relative 'cli_base'
 require_relative '../a2obrew/util'
 
+require 'httpclient'
+
 module Tombo
   class Test < CLIBase
     PROFILE = 'test-platform'
@@ -20,6 +22,22 @@ module Tombo
       # Check source_directory
       error_exit('Specify source directory to be uploaded') if source_directories.length != 1
       source_directory = source_directories[0]
+      application_html_path = File.join(source_directory, 'application', 'application.html')
+      unless File.file?(application_html_path)
+        error_exit('Cannot find application.html')
+      end
+
+      # Check https connection
+      begin
+        Timeout.timeout(1) do
+          cl = HTTPClient.new
+          cl.ssl_config.verify_mode = nil
+          r = cl.get(DEV_PORTAL_URI)
+          raise unless HTTP::Status.successful?(r.status)
+        end
+      rescue
+        error_exit("Cannot connect to #{DEV_PORTAL_URI}")
+      end
 
       # Check profile
       dotfile = Dotfile.new
@@ -99,8 +117,14 @@ module Tombo
       # If application_id is nil, create the application which has the screen_name SCREEN_NAME
       if application_id.nil?
         lines = []
-        A2OBrew::Util.cmd_exec("tombocli applications create -p #{PROFILE} --default-language-id #{LANGUAGE_ID} --screen-name #{SCREEN_NAME} 2>/dev/null") do |line|
-          lines << line
+        begin
+          A2OBrew::Util.cmd_exec("tombocli applications create -p #{PROFILE} --default-language-id #{LANGUAGE_ID} --screen-name #{SCREEN_NAME} 2>/dev/null") do |line|
+            lines << line
+          end
+        rescue A2OBrew::CmdExecException => e
+          puts lines
+          puts e
+          error_exit "Cannot create an application. Maybe the screen name `#{SCREEN_NAME}` is already taken."
         end
 
         begin
