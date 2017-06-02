@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'thor'
 require_relative 'util'
 
@@ -25,10 +26,10 @@ module A2OBrew
 
     # die unless emcc
     def check_emsdk_env
-      error_exit(<<EOF) if find_executable('emcc').nil?
-Cannot find emcc. Execute the command below.
+      error_exit(<<~EOF) if find_executable('emcc').nil?
+        Cannot find emcc. Execute the command below.
 
-eval "$(a2obrew init -)"
+        eval "$(a2obrew init -)"
 EOF
     end
 

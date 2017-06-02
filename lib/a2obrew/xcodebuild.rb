@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'cli_base'
 require_relative 'xcode2ninja'
 
@@ -101,14 +102,14 @@ module A2OBrew
       ninja_path = "a2o/ninja/#{a2o_target}.ninja.build"
 
       Util.puts_delimiter("# Generate #{ninja_path}")
-      puts <<EOF
-a2o:
-  target: #{a2o_target}
-  proj_config_path: #{proj_config_path}
-xcodeproj:
-  xcodeproj_path: #{xcodeproj_path}
-  xcodeproj_target: #{xcodeproj_target}
-  xocdeproj_build_config: #{xcodeproj_build_config}
+      puts <<~EOF
+        a2o:
+          target: #{a2o_target}
+          proj_config_path: #{proj_config_path}
+        xcodeproj:
+          xcodeproj_path: #{xcodeproj_path}
+          xcodeproj_target: #{xcodeproj_target}
+          xocdeproj_build_config: #{xcodeproj_build_config}
 EOF
       xn = Xcode2Ninja.new(xcodeproj_path, a2obrew_path)
       gen_paths = xn.xcode2ninja('a2o/ninja', xcodeproj_target,

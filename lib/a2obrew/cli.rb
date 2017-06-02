@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 # encoding: utf-8
 # frozen_string_literal: true
 
@@ -26,20 +25,20 @@ module A2OBrew
 
       if print
         shell = current_shell
-        if shell == :bash || shell == :zsh
-          puts <<COMPLETIONS
-source "#{a2obrew_path}/bin/completions/a2obrew.#{shell}"
+        if %i[bash zsh].include?(shell)
+          puts <<~COMPLETIONS
+            source "#{a2obrew_path}/bin/completions/a2obrew.#{shell}"
 COMPLETIONS
         end
-        puts <<INIT
-source "#{emsdk_path}/emsdk_env.sh"
+        puts <<~INIT
+          source "#{emsdk_path}/emsdk_env.sh"
 INIT
       else
-        puts <<USAGE
-# Load emsdk_env automatically by appending
-# the following to #{shell_rc_path}
+        puts <<~USAGE
+          # Load emsdk_env automatically by appending
+          # the following to #{shell_rc_path}
 
-eval "$(a2obrew init -)"
+          eval "$(a2obrew init -)"
 USAGE
       end
     end

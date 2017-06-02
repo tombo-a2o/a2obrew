@@ -19,7 +19,7 @@ module Tombo
     def self.recursive_zip_add(zip, input_dir_path, output_dir_path, use_zopfli)
       raise "#{input_dir_path} is not directory" unless File.directory?(input_dir_path)
       Dir.foreach(input_dir_path) do |file_name|
-        next if file_name == '.' || file_name == '..'
+        next if ['.', '..'].include?(file_name)
         input_path = File.join(input_dir_path, file_name)
         output_path = output_dir_path.empty? ? file_name : File.join(output_dir_path, file_name)
 

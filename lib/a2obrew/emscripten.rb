@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'git'
 require_relative 'cli_base'
 

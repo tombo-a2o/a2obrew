@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'git'
 require_relative 'util'
 require_relative 'cli_base'
@@ -154,9 +155,9 @@ module A2OBrew
     private
 
     def check_target(target)
-      error_exit(<<EOF) unless target.nil? || A2OCONF[:targets].key?(target.intern)
-Invalid target '#{target}'.
-You must specify #{A2OCONF[:targets].keys.join('/')}.
+      error_exit(<<~EOF) unless target.nil? || A2OCONF[:targets].key?(target.intern)
+        Invalid target '#{target}'.
+        You must specify #{A2OCONF[:targets].keys.join('/')}.
 EOF
     end
 

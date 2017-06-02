@@ -1,6 +1,9 @@
 # encoding: utf-8
 # frozen_string_literal: true
+
 # a2obrew settings
+
+# rubocop:disable Style/FormatStringToken
 
 A2O_PATH = File.expand_path(File.dirname(__FILE__))
 
@@ -71,28 +74,28 @@ A2OCONF = {
         path: 'icu',
         repository_uri: 'git@github.com:fchiba/icu.git',
         branch: 'prebuilt',
-        configure: <<CONFIGURE,
-emconfigure \
-  %{project_path}/source/configure \
-  --enable-static \
-  --disable-shared \
-  --disable-icuio \
-  --disable-layout \
-  --disable-tests \
-  --disable-samples \
-  --disable-extras \
-  --disable-tools \
-  --with-data-packaging=archive \
-  --prefix=%{emscripten_system_local_path} \
-  --with-cross-build=`pwd`/../#{ICU_NATIVE_DIR} \
-  CPPFLAGS="%{cppflags} -DUCONFIG_NO_LEGACY_CONVERSION=1 -DUCONFIG_NO_COLLATION=1"
+        configure: <<~CONFIGURE,
+          emconfigure \
+            %{project_path}/source/configure \
+            --enable-static \
+            --disable-shared \
+            --disable-icuio \
+            --disable-layout \
+            --disable-tests \
+            --disable-samples \
+            --disable-extras \
+            --disable-tools \
+            --with-data-packaging=archive \
+            --prefix=%{emscripten_system_local_path} \
+            --with-cross-build=`pwd`/../#{ICU_NATIVE_DIR} \
+            CPPFLAGS="%{cppflags} -DUCONFIG_NO_LEGACY_CONVERSION=1 -DUCONFIG_NO_COLLATION=1"
 CONFIGURE
         build_path: '%{project_path}/buildEmscripten%{target}',
         build_target_path: '%{project_path}/buildEmscripten%{target}',
-        build: <<BUILD,
-emmake make ARFLAGS=rv -j8
-opt-static-lib lib/libicui18n.a ../public_funcs.txt
-opt-static-lib lib/libicuuc.a
+        build: <<~BUILD,
+          emmake make ARFLAGS=rv -j8
+          opt-static-lib lib/libicui18n.a ../public_funcs.txt
+          opt-static-lib lib/libicuuc.a
 BUILD
         install: 'make install'
       },
@@ -150,11 +153,11 @@ BUILD
         build: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make -j8',
         install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
-        frameworks: %w(
+        frameworks: %w[
           System/CFNetwork
           System/CoreFoundation
           System/Foundation
-        )
+        ]
       },
       {
         name: 'A2OFrameworks',
@@ -166,7 +169,7 @@ BUILD
         build: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make -j8',
         install: 'STYLE_CPPFLAGS="%{cppflags}" STYLE_LFLAGS="%{lflags}" BUILD_DIR=%{build_target_path} make install',
         clean: 'BUILD_DIR=%{build_target_path} make clean',
-        frameworks: %w(
+        frameworks: %w[
           AVFoundation
           Accounts
           AdSupport
@@ -205,7 +208,7 @@ BUILD
           UIKit
           WebKit
           iAd
-        )
+        ]
       }
     ]
   },
@@ -215,14 +218,14 @@ BUILD
         separate_metadata: false
       }
     },
-    static_link_frameworks: %w(
+    static_link_frameworks: %w[
       UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
       CoreGraphics QuartzCore CFNetwork OpenGLES Onyx2D CoreText
       Social AVFoundation StoreKit CoreFoundation MapKit GameKit MultipeerConnectivity
       MobileCoreServices
-    ),
-    dynamic_link_frameworks: %w(
+    ],
+    dynamic_link_frameworks: %w[
       Foundation
-    )
+    ]
   }
 }.freeze

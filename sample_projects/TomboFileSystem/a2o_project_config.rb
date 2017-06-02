@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 cc_flags = '-s FULL_ES2=1 -DGL_GLEXT_PROTOTYPES=1'
 html_flags = '-s FULL_ES2=1 -s TOTAL_MEMORY=134217728'
 # html_flags += ' --pre-js mem_check.js'
