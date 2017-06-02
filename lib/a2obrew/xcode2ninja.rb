@@ -1352,7 +1352,7 @@ module A2OBrew
         when Xcodeproj::Project::Object::PBXFileReference
           # TODO: handle .a and .dylib
           name = file_ref.name
-          if name && name.end_with?('.framework')
+          if name && name.end_with?('.framework') && file_ref.source_tree == 'SDKROOT'
             @frameworks << File.basename(name, '.framework')
           end
         when Xcodeproj::Project::Object::PBXReferenceProxy
