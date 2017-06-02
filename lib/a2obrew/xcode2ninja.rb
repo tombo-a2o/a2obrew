@@ -982,6 +982,7 @@ module A2OBrew
       enable_objc_arc = build_setting(target, build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
       phase.files_references.each do |file|
+        next unless file
         source_build_phase(
           file, cc_flags, enable_objc_arc, c_std, cxx_std,
           builds, objects,
