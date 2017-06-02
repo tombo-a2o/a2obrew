@@ -904,7 +904,7 @@ module A2OBrew
         file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
       end
 
-      case file.last_known_file_type
+      case file.last_known_file_type || file.explicit_file_type
       when 'sourcecode.cpp.cpp', 'sourcecode.cpp.objcpp'
         rule_name = 'cc'
         file_cflags << "-std=#{cxx_std}" if cxx_std
