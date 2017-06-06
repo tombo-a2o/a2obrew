@@ -944,7 +944,8 @@ module A2OBrew
       builds = []
       objects = []
 
-      header_dirs = xcodeproj.main_group.recursive_children.select { |g| g.path && File.extname(g.path) == '.h' }.map do |g|
+      header_extensions = %w[.h .hpp]
+      header_dirs = xcodeproj.main_group.recursive_children.select { |g| g.path && header_extensions.include?(File.extname(g.path)) }.map do |g|
         full_path = g.real_path.relative_path_from(Pathname(xcodeproj_dir)).to_s
         File.dirname(full_path)
       end.to_a.uniq
