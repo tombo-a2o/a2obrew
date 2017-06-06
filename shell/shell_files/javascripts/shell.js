@@ -154,6 +154,7 @@ var A2OShell;
       return false;
     }
     try {
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
       new AudioContext();
     } catch (_e) {
       return false;
