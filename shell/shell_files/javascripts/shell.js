@@ -282,7 +282,7 @@ var A2OShell;
       };
       e.rotationRate = { alpha:null, beta:null, gamma:null };
       canvas.dispatchEvent(e);
-      canvas.style.transform = "rotate("+(fireRotate.degree-90)+"deg)";
+      canvas.style.transform = 'rotate('+(fireRotate.degree-90)+'deg)';
     };
     fireRotate.degree = 90;
 
