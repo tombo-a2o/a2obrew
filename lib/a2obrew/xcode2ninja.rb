@@ -869,18 +869,45 @@ module A2OBrew
       }
     end
 
-    def source_build_phase(file, cc_flags, enable_objc_arc, c_std, cxx_std, builds, objects, _xcodeproj, _target, _build_config, _phase, _active_project_config, a2o_target) # rubocop:disable Metrics/LineLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
-      if file.parent.isa != 'PBXGroup'
+    def dest_name(source_path)
+      basename = source_path.basename('.*').to_s
+      uid = Digest::SHA1.new.update(source_path.to_s).to_s[0, 7]
+      basename + '-' + uid + '.o'
+    end
+
+    def detect_language(file_type)
+      # returns [rule, lang, cpp]
+
+      case file_type
+      when 'sourcecode.c.c'
+        ['cc', 'c', false]
+      when 'sourcecode.c.objc'
+        ['cc', 'objective-c', false]
+      when 'sourcecode.cpp.cpp'
+        ['cc', 'c++', true]
+      when 'sourcecode.cpp.objcpp'
+        ['cc', 'objective-c++', true]
+      when 'sourcecode.swift'
+        ['swiftc', 'swift', false]
+      when 'sourcecode.c.h', 'sourcecode.glsl', 'sourcecode.javascript'
+        return [nil, nil, false]
+      else
+        raise Informative, "Unknown file type '#{file_type}'"
+      end
+    end
+
+    def source_build_phase(build_file, file_ref, cc_flags, enable_objc_arc, c_std, cxx_std, builds, objects, _xcodeproj, _target, _build_config, _phase, _active_project_config, a2o_target) # rubocop:disable Metrics/LineLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
+      if file_ref.parent.isa != 'PBXGroup'
         puts '[WARN] Orphan file: ' + file.name
         return
       end
-      case file
+      case file_ref
       when Xcodeproj::Project::Object::PBXFileReference # rubocop:disable Lint/EmptyWhen
         # pass through!
       when Xcodeproj::Project::Object::XCVersionGroup
-        file.files.each do |inner_file|
+        file_ref.files.each do |inner_file|
           source_build_phase(
-            inner_file, cc_flags, enable_objc_arc, c_std, cxx_std,
+            build_file, inner_file, cc_flags, enable_objc_arc, c_std, cxx_std,
             builds, objects,
             xcodeproj, target, build_config, phase, active_project_config, a2o_target
           )
@@ -890,12 +917,10 @@ module A2OBrew
         raise Informative, "Unsupported file class '#{file.class}' of #{file.path}"
       end
 
-      source_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
-      basename = source_path.basename('.*').to_s
-      uid = Digest::SHA1.new.update(source_path.to_s).to_s[0, 7]
-      object = File.join(objects_dir(a2o_target), basename + '-' + uid + '.o')
+      source_path = file_ref.real_path.relative_path_from(Pathname(xcodeproj_dir))
+      object = File.join(objects_dir(a2o_target), dest_name(source_path))
 
-      settings = file.build_files[0].settings
+      settings = build_file.settings
       file_cflags = []
       if settings && settings.key?('COMPILER_FLAGS')
         file_cflags += settings['COMPILER_FLAGS'].split
@@ -904,27 +929,13 @@ module A2OBrew
         file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
       end
 
-      case file.last_known_file_type || file.explicit_file_type
-      when 'sourcecode.cpp.cpp', 'sourcecode.cpp.objcpp'
-        rule_name = 'cc'
-        file_cflags << "-std=#{cxx_std}" if cxx_std
-      when 'sourcecode.c.c', 'sourcecode.c.objc'
-        rule_name = 'cc'
-        file_cflags << "-std=#{c_std}" if c_std
-      when 'sourcecode.swift'
-        rule_name = 'swiftc'
-      when 'sourcecode.c.h'
-        # ignore header file
-        return
-      when 'sourcecode.glsl'
-        # ignore GL SL source file
-        return
-      when 'sourcecode.javascript'
-        puts 'WARNING: currently not support for javascript source'
-        return
-      else
-        raise Informative, "Unsupported file type '#{file.last_known_file_type}' of #{file.path}"
-      end
+      rule_name, lang, cpp = detect_language(file_ref.last_known_file_type || file_ref.explicit_file_type)
+
+      return unless rule_name
+
+      std = cpp ? cxx_std : c_std
+      file_cflags << "-std=#{std}" if std
+      file_cflags << "-x #{lang}"
 
       objects << object
 
@@ -960,6 +971,8 @@ module A2OBrew
       c_std = build_setting(target, build_config, 'GCC_C_LANGUAGE_STANDARD', :string)
       preprocessor_definitions = (build_setting(target, build_config, 'GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
 
+      cxx_std = nil if cxx_std == 'compiler-default'
+
       lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
       header_options = (header_search_paths + user_header_search_paths.split + header_dirs).map { |dir| "-I\"#{dir}\"" }.join(' ')
@@ -982,10 +995,11 @@ module A2OBrew
 
       enable_objc_arc = build_setting(target, build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
-      phase.files_references.each do |file|
-        next unless file
+      phase.files.each do |build_file|
+        file_ref = build_file.file_ref
+        next unless file_ref
         source_build_phase(
-          file, cc_flags, enable_objc_arc, c_std, cxx_std,
+          build_file, file_ref, cc_flags, enable_objc_arc, c_std, cxx_std,
           builds, objects,
           xcodeproj, target, build_config, phase, active_project_config, a2o_target
         )
