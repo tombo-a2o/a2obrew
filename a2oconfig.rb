@@ -189,6 +189,7 @@ BUILD
           CoreVideo
           EventKit
           EventKitUI
+          GameController
           GameKit
           ImageIO
           MapKit
