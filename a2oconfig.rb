@@ -194,6 +194,7 @@ BUILD
           MessageUI
           MobileCoreServices
           MultipeerConnectivity
+          PassKit
           Onyx2D
           OpenAL
           OpenGLES
