@@ -180,11 +180,13 @@ BUILD
           CoreAudio
           CoreData
           CoreGraphics
+          CoreImage
           CoreLocation
           CoreMedia
           CoreMotion
           CoreTelephony
           CoreText
+          CoreVideo
           EventKit
           EventKitUI
           GameKit
@@ -200,6 +202,7 @@ BUILD
           OpenGLES
           QuartzCore
           QuickLook
+          SafariServices
           Security
           Social
           StoreKit
