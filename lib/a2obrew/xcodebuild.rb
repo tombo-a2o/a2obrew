@@ -93,7 +93,7 @@ module A2OBrew
     def generate_ninja_build(options)
       a2o_target = options[:target].intern
       proj_config_path, proj_config = load_project_config(options[:project_config])
-      xcodeproj_path = search_xcodeproj_path(options[:xcodeproj_path])
+      xcodeproj_path = search_xcodeproj_path(options[:xcodeproj_path] || proj_config[:xcodeproj_path])
       xcodeproj_target = options[:xcodeproj_target] ||
                          proj_config[:xcodeproj_target] ||
                          File.basename(xcodeproj_path, '.xcodeproj')
