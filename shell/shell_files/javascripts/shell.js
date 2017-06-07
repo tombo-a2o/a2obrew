@@ -359,7 +359,7 @@ var A2OShell;
     document.getElementById('preview-image').style.display = 'none';
     Module.setStatus('Downloading...');
 
-    if (typeof WebAssembly === 'object' && A2OShell.enableWebAssembly) {
+    if (typeof WebAssembly === 'object') {
       loadWasm();
     } else {
       document.body.appendChild(script);
