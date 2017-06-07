@@ -1404,13 +1404,6 @@ module A2OBrew
 
     # utils
     def build_setting(target, build_config, prop, type = nil)
-      # TODO: check xcconfig file
-      default_setting = nil # TODO set iOS default
-      project_setting = xcodeproj.build_settings(build_config.name)[prop]
-      project_setting = project_setting.clone if project_setting
-      target_setting = build_config.build_settings[prop]
-      target_setting = target_setting.clone if target_setting
-
       env = {
         'PROJECT_DIR' => xcodeproj_dir,
         'SRCROOT' => xcodeproj_dir,
@@ -1422,31 +1415,12 @@ module A2OBrew
         'TARGET_NAME' => target.name
       }
 
-      if target_setting
-        expand(replace_inherited(replace_inherited(target_setting, project_setting), default_setting), env, type)
-      elsif project_setting
-        expand(replace_inherited(project_setting, default_setting), env, type)
-      else
-        expand(default_setting, env, type)
-      end
-    end
-
-    def replace_inherited(lower, upper)
-      # replace '$(inherited)'
-      if lower.is_a?(Array)
-        # Array
-        idx = lower.index('$(inherited)')
-        lower[idx, 1] = upper || [] if idx
-      elsif lower.respond_to?(:gsub!)
-        # String
-        lower.gsub!(/\$\(inherited\)/, upper || '')
-      end
-
-      lower
+      expand(build_config.resolve_build_setting(prop), env, type)
     end
 
     def expand(value, env, type = nil)
       if value.is_a?(Array)
+        value.delete('$(inherited)')
         value.map do |v|
           expand(v, env)
         end
