@@ -39,7 +39,7 @@ module Tombo
 
     def self.add_gzip_compressed(zip, input_path, output_path, use_zopfli)
       case File.extname(input_path).intern
-      when :'.html', :'.js', :'.css', :'.mem'
+      when :'.html', :'.js', :'.css', :'.mem', :'.wasm', :'.dat', :'.symbols'
         unless File.exist?("#{input_path}.gz")
           zip.get_output_stream("#{output_path}.gz") do |f|
             Logger.logger.info "Compress #{output_path}.gz"
