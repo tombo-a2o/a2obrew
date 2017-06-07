@@ -206,7 +206,11 @@ var A2OShell;
       }
     }
     var launchTarget = select.value;
+    select.style.display = 'none';
     select.disabled = true;
+    var selectorText = document.body.getElementsByClassName('playground-text')[0];
+    selectorText.style.display = 'block';
+    selectorText.textContent = 'Running on ' + ((launchTarget === 'wasm')? 'WebAssembly': 'asm.js');
 
     var canvas = document.getElementById('app-canvas');
 
