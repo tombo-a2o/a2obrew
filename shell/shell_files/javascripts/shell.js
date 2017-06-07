@@ -33,6 +33,10 @@ var A2OShell;
       en: 'Application will be terminated.',
       ja: 'アプリが中断されます。'
     },
+    webAssemblyNotSupported: {
+      en: 'Your browser does not support WebAssembly.',
+      ja: 'お使いのブラウザでは WebAssembly をサポートしておりません。'
+    },
     appStoreBadgePath: {
       en: './shell_files/images/app_store_badge.en.svg',
       ja: './shell_files/images/app_store_badge.ja.svg'
@@ -186,6 +190,23 @@ var A2OShell;
         return;
       }
     }
+    var wasmContainer = document.body.getElementsByClassName("playground-select-container")[0];
+    var select = wasmContainer.getElementsByTagName("select")[0];
+    if (select.value == "auto") {
+      // detect WebAssembly
+      if (typeof WebAssembly === 'object') {
+        select.value = "wasm";
+      } else {
+        select.value = "asmjs";
+      }
+    } else {
+      if (select.value == "wasm" && typeof WebAssembly !== 'object') {
+        alert(messages.webAssemblyNotSupported[locale]);
+        return;
+      }
+    }
+    var launchTarget = select.value;
+    select.disabled = true;
 
     var canvas = document.getElementById('app-canvas');
 
@@ -359,7 +380,7 @@ var A2OShell;
     document.getElementById('preview-image').style.display = 'none';
     Module.setStatus('Downloading...');
 
-    if (typeof WebAssembly === 'object') {
+    if (launchTarget === 'wasm') {
       loadWasm();
     } else {
       document.body.appendChild(script);
@@ -574,6 +595,12 @@ var A2OShell;
       Module.CoreAudio.setGainRatio(rangeVolume.value / 100);
       return false;
     });
+
+    // wasm select
+    if (A2OShell.enableWebAssembly) {
+      var wasmContainer = document.body.getElementsByClassName("playground-select-container")[0];
+      wasmContainer.style.display = "block";
+    }
 
     window.addEventListener('error', function (_event) {
       // TODO: do not warn on ok events like simulating an infinite loop or exitStatus

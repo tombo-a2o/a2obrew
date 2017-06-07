@@ -155,6 +155,10 @@
   font-size: 50px;
   text-align: center;
 }
+.playground-select-container {
+  padding-bottom: 3px;
+  text-align: center;
+}
 .playground-main {
   height: 480px;
   margin: 0 auto;
