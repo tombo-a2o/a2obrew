@@ -47,7 +47,7 @@ var A2OShell;
     },
   };
 
-  var environment = window.location.hostname == 'app.tombo.io' ? 'production' : 'development';
+  var environment = window.location.hostname === 'app.tombo.io' ? 'production' : 'development';
   var afterLaunch = false;
   var rangeVolume = document.getElementById('range-volume');
 
@@ -123,7 +123,7 @@ var A2OShell;
   var current_url = (function () {
     var metas = document.getElementsByTagName('meta');
     for (var i = 0; i < metas.length; i++) {
-      if (metas[i].getAttribute('property') == 'og:url') {
+      if (metas[i].getAttribute('property') === 'og:url') {
         return metas[i].getAttribute('content')
       }
     }
@@ -190,17 +190,17 @@ var A2OShell;
         return;
       }
     }
-    var wasmContainer = document.body.getElementsByClassName("playground-select-container")[0];
-    var select = wasmContainer.getElementsByTagName("select")[0];
-    if (select.value == "auto") {
+    var wasmContainer = document.body.getElementsByClassName('playground-select-container')[0];
+    var select = wasmContainer.getElementsByTagName('select')[0];
+    if (select.value === 'auto') {
       // detect WebAssembly
       if (typeof WebAssembly === 'object') {
-        select.value = "wasm";
+        select.value = 'wasm';
       } else {
-        select.value = "asmjs";
+        select.value = 'asmjs';
       }
     } else {
-      if (select.value == "wasm" && typeof WebAssembly !== 'object') {
+      if (select.value === 'wasm' && typeof WebAssembly !== 'object') {
         alert(messages.webAssemblyNotSupported[locale]);
         return;
       }
@@ -238,7 +238,7 @@ var A2OShell;
       var y = canvas.height / 2;
       // 4 frames
       var n = 4;
-      if (dx == dy) {
+      if (dx === dy) {
         // not swipe, just tap
         n = 1;
       }
@@ -253,7 +253,7 @@ var A2OShell;
       var raf = function () {
         var event;
         var end = false;
-        if (frame == 0) {
+        if (frame === 0) {
           event = new Event('touchstart');
         } else if (frame >= n) {
           event = new Event('touchend');
@@ -505,7 +505,7 @@ var A2OShell;
     prepareErrorHandler();
 
     // initializing screen size
-    var isLandscape = Module.initialDeviceOrientation == 3;
+    var isLandscape = Module.initialDeviceOrientation === 3;
     var width;
     var height;
     var scale = Module.screenModes[0].scale;
@@ -598,8 +598,8 @@ var A2OShell;
 
     // wasm select
     if (A2OShell.enableWebAssembly) {
-      var wasmContainer = document.body.getElementsByClassName("playground-select-container")[0];
-      wasmContainer.style.display = "block";
+      var wasmContainer = document.body.getElementsByClassName('playground-select-container')[0];
+      wasmContainer.style.display = 'block';
     }
 
     window.addEventListener('error', function (_event) {
