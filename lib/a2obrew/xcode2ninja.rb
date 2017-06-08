@@ -1405,6 +1405,8 @@ module A2OBrew
     # utils
     def build_setting(target, build_config, prop, type = nil)
       env = {
+        'CONFIGURATION' => build_config.name,
+        'EFFECTIVE_PLATFORM_NAME' => 'emscripten',
         'PROJECT_DIR' => xcodeproj_dir,
         'SRCROOT' => xcodeproj_dir,
         'PLATFORM_NAME' => 'emscripten',
@@ -1415,14 +1417,18 @@ module A2OBrew
         'TARGET_NAME' => target.name
       }
 
-      expand(build_config.resolve_build_setting(prop), env, type)
+      if env.key?(prop)
+        env[prop]
+      else
+        expand(build_config.resolve_build_setting(prop), target, build_config, type)
+      end
     end
 
-    def expand(value, env, type = nil)
+    def expand(value, target, build_config, type = nil)
       if value.is_a?(Array)
         value.delete('$(inherited)')
         value.map do |v|
-          expand(v, env)
+          expand(v, target, build_config)
         end
       else
         case type
@@ -1432,25 +1438,27 @@ module A2OBrew
           if value.nil?
             []
           else
-            [expand(value, env)]
+            [expand(value, target, build_config)]
           end
         else
           if value.nil?
             nil
           else
-            resolve_macro(value, env)
+            resolve_macro(value, target, build_config)
           end
         end
       end
     end
 
-    def resolve_macro(value, env)
-      value.gsub(/\$\(([A-Za-z0-9_]+)\)/) do |m|
-        varname = Regexp.last_match(1)
+    def resolve_macro(value, target, build_config)
+      value.gsub(/\$(\{|\()?([A-Za-z0-9_]+)(\{|\))?/) do |m|
+        varname = Regexp.last_match(2)
 
-        raise Informative, "Not support for #{m}" unless env.key?(varname)
+        value = build_setting(target, build_config, varname)
 
-        env[varname]
+        raise Informative, "Not support for #{m}" unless value
+
+        value
       end
     end
 
