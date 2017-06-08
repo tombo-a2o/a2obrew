@@ -458,7 +458,7 @@ module A2OBrew
                         end
 
             # All resource files are stored in the same directory
-            f = file_recursive_copy(local_path, resources_dir(a2o_target), in_prefix)
+            f = Ninja.file_recursive_copy(local_path, resources_dir, in_prefix)
             builds += f[:builds]
             resources += f[:outputs]
           end
@@ -656,61 +656,6 @@ module A2OBrew
       end
 
       [icon, launch_image]
-    end
-
-    def file_copy(in_path, out_dir, in_prefix_path)
-      in_path = Pathname(in_path) unless in_path.instance_of?(Pathname)
-      in_prefix_path = Pathname(in_prefix_path) unless in_prefix_path.instance_of?(Pathname)
-      rel_path = in_path.relative_path_from(in_prefix_path)
-
-      output_path = File.join(out_dir, rel_path.to_s)
-
-      {
-        build: {
-          outputs: [output_path],
-          rule_name: 'cp_r',
-          inputs: [in_path.to_s]
-        },
-        output: output_path
-      }
-    end
-
-    def file_link(in_relative_path_from_out_path, out_path)
-      {
-        builds: [{
-          outputs: [out_path],
-          rule_name: 'ln_sf',
-          inputs: [],
-          build_variables: {
-            'source' => in_relative_path_from_out_path
-          }
-        }],
-        outputs: [out_path]
-      }
-    end
-
-    def file_recursive_copy(in_path, out_dir, in_prefix_dir = '.')
-      builds = []
-      outputs = []
-
-      in_prefix_path = Pathname(in_prefix_dir)
-      if File.directory?(in_path)
-        Pathname(in_path).find do |path|
-          next unless path.file?
-          e = file_copy(path, out_dir, in_prefix_path)
-          builds << e[:build]
-          outputs << e[:output]
-        end
-      else
-        e = file_copy(in_path, out_dir, in_prefix_path)
-        builds << e[:build]
-        outputs << e[:output]
-      end
-
-      {
-        builds: builds,
-        outputs: outputs
-      }
     end
 
     def dest_name(source_path)
@@ -1176,11 +1121,11 @@ module A2OBrew
 
       # copy shell.html resources
       out_dir = build_dir(a2o_target)
-      f = file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
+      f = Ninja.file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
       builds += f[:builds]
 
       # add a symbolic link
-      f = file_link('../../shell_files', shell_files_link_dir(a2o_target))
+      f = Ninja.file_link('../../shell_files', shell_files_link_dir)
       builds += f[:builds]
 
       builds
@@ -1332,7 +1277,7 @@ module A2OBrew
       out_dir = framework_bundle_dir(a2o_target)
 
       Dir.glob("#{frameworks_dir}/*.framework/Resources/") do |path|
-        f = file_recursive_copy(path, out_dir, frameworks_dir)
+        f = Ninja.file_recursive_copy(path, out_dir, frameworks_dir)
         builds += f[:builds]
         outputs += f[:outputs]
       end

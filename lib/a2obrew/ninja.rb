@@ -157,5 +157,60 @@ module A2OBrew
         }
       ]
     end
+
+    def self.file_link(in_relative_path_from_out_path, out_path)
+      {
+        builds: [{
+          outputs: [out_path],
+          rule_name: 'ln_sf',
+          inputs: [],
+          build_variables: {
+            'source' => in_relative_path_from_out_path
+          }
+        }],
+        outputs: [out_path]
+      }
+    end
+
+    def self.file_copy(in_path, out_dir, in_prefix_path)
+      in_path = Pathname(in_path) unless in_path.instance_of?(Pathname)
+      in_prefix_path = Pathname(in_prefix_path) unless in_prefix_path.instance_of?(Pathname)
+      rel_path = in_path.relative_path_from(in_prefix_path)
+
+      output_path = File.join(out_dir, rel_path.to_s)
+
+      {
+        build: {
+          outputs: [output_path],
+          rule_name: 'cp_r',
+          inputs: [in_path.to_s]
+        },
+        output: output_path
+      }
+    end
+
+    def self.file_recursive_copy(in_path, out_dir, in_prefix_dir = '.')
+      builds = []
+      outputs = []
+
+      in_prefix_path = Pathname(in_prefix_dir)
+      if File.directory?(in_path)
+        Pathname(in_path).find do |path|
+          next unless path.file?
+          e = file_copy(path, out_dir, in_prefix_path)
+          builds << e[:build]
+          outputs << e[:output]
+        end
+      else
+        e = file_copy(in_path, out_dir, in_prefix_path)
+        builds << e[:build]
+        outputs << e[:output]
+      end
+
+      {
+        builds: builds,
+        outputs: outputs
+      }
+    end
   end
 end
