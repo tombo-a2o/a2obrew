@@ -13,18 +13,18 @@ require_relative 'ninja'
 # rubocop:disable Metrics/ParameterLists
 
 module A2OBrew
-  class Xcode2Ninja
-    APPLE_APPICONS = [
-      [60, 3], # 60x60@3x 180x180 (main icon for iPhone retina iOS 8-)
-      [76, 2], # 76x76@2x 152x152 (main icon for iPad   retina iOS 7-)
-      [72, 2], # 72x72@2x 144x144 (main icon for iPad   retina iOS 6)
-      [60, 2], # 60x60@2x 120x120 (main icon for iPhone retina iOS 7)
-      [57, 2], # 57x57@2x 114x114 (main icon for iPhone retina iOS 6)
-      [76, 1], # 76x76            (main icon for iPad          iOS 7-)
-      [72, 1], # 72x72            (main icon for iPad          iOS 6)
-      [57, 1], # 57x57            (main icon for iPhone        iOS 6)
-    ].freeze
+  APPLE_APPICONS = [
+    [60, 3], # 60x60@3x 180x180 (main icon for iPhone retina iOS 8-)
+    [76, 2], # 76x76@2x 152x152 (main icon for iPad   retina iOS 7-)
+    [72, 2], # 72x72@2x 144x144 (main icon for iPad   retina iOS 6)
+    [60, 2], # 60x60@2x 120x120 (main icon for iPhone retina iOS 7)
+    [57, 2], # 57x57@2x 114x114 (main icon for iPhone retina iOS 6)
+    [76, 1], # 76x76            (main icon for iPad          iOS 7-)
+    [72, 1], # 72x72            (main icon for iPad          iOS 6)
+    [57, 1], # 57x57            (main icon for iPhone        iOS 6)
+  ].freeze
 
+  class Xcode2Ninja
     def initialize(xcodeproj_path, a2obrew_path)
       self.xcodeproj_path = xcodeproj_path
       @a2obrew_path = a2obrew_path
