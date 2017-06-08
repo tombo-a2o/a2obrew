@@ -1190,6 +1190,7 @@ module A2OBrew
     # utils
     def build_setting(prop, type = nil)
       env = {
+        'BUILD_DIR' => build_dir,
         'CONFIGURATION' => @build_config.name,
         'EFFECTIVE_PLATFORM_NAME' => 'emscripten',
         'PROJECT_DIR' => xcodeproj_dir,
