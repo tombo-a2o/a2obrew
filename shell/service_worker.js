@@ -22,9 +22,7 @@ self.addEventListener('fetch', (event) => {
         console.log(`Fetch from cache: ${response.url}`);
         return response;
       }
-      return fetch(event.request, {
-        credentials: 'same-origin'
-      });
+      return fetch(event.request);
     })
   );
 });
