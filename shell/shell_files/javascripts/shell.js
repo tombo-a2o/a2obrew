@@ -600,12 +600,6 @@ var A2OShell;
       return false;
     });
 
-    // wasm select
-    if (A2OShell.enableWebAssembly) {
-      var wasmContainer = document.body.getElementsByClassName('playground-select-container')[0];
-      wasmContainer.style.display = 'block';
-    }
-
     window.addEventListener('error', function (_event) {
       // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
       Module.setStatus(messages.exception[locale]);
