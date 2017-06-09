@@ -3,7 +3,7 @@ let params;
 self.addEventListener('install', (event) => {
   event.waitUntil(
     fetch('runtime_parameters.json', {
-      credentials: 'include'
+      credentials: 'same-origin'
     }).then((response) => {
       return response.json();
     }).then((json) => {
@@ -22,7 +22,9 @@ self.addEventListener('fetch', (event) => {
         console.log(`Fetch from cache: ${response.url}`);
         return response;
       }
-      return fetch(event.request);
+      return fetch(event.request, {
+        credentials: 'same-origin'
+      });
     })
   );
 });
