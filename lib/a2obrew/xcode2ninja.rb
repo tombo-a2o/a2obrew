@@ -8,44 +8,31 @@ require 'pathname'
 require 'rexml/document' # For parsing storyboard
 
 require_relative 'util'
+require_relative 'ninja'
 
 # rubocop:disable Metrics/ParameterLists
 
-class Object
-  def ninja_escape
-    to_s.gsub(/\$/, '$$').gsub(/ /, '$ ')
-  end
-
-  def shell_quote_escape
-    # escape single-quote within single-quoted string
-    # cf. http://stackoverflow.com/questions/1250079/how-to-escape-single-quotes-within-single-quoted-strings
-    gsub(/'/, %('"'"'))
-  end
-end
-
 module A2OBrew
-  class Xcode2Ninja
-    APPLE_APPICONS = [
-      [60, 3], # 60x60@3x 180x180 (main icon for iPhone retina iOS 8-)
-      [76, 2], # 76x76@2x 152x152 (main icon for iPad   retina iOS 7-)
-      [72, 2], # 72x72@2x 144x144 (main icon for iPad   retina iOS 6)
-      [60, 2], # 60x60@2x 120x120 (main icon for iPhone retina iOS 7)
-      [57, 2], # 57x57@2x 114x114 (main icon for iPhone retina iOS 6)
-      [76, 1], # 76x76            (main icon for iPad          iOS 7-)
-      [72, 1], # 72x72            (main icon for iPad          iOS 6)
-      [57, 1], # 57x57            (main icon for iPhone        iOS 6)
-    ].freeze
+  APPLE_APPICONS = [
+    [60, 3], # 60x60@3x 180x180 (main icon for iPhone retina iOS 8-)
+    [76, 2], # 76x76@2x 152x152 (main icon for iPad   retina iOS 7-)
+    [72, 2], # 72x72@2x 144x144 (main icon for iPad   retina iOS 6)
+    [60, 2], # 60x60@2x 120x120 (main icon for iPhone retina iOS 7)
+    [57, 2], # 57x57@2x 114x114 (main icon for iPhone retina iOS 6)
+    [76, 1], # 76x76            (main icon for iPad          iOS 7-)
+    [72, 1], # 72x72            (main icon for iPad          iOS 6)
+    [57, 1], # 57x57            (main icon for iPhone        iOS 6)
+  ].freeze
 
+  class Xcode2Ninja
     def initialize(xcodeproj_path, a2obrew_path)
       self.xcodeproj_path = xcodeproj_path
-      @frameworks = []
-      @static_libraries_from_other_projects = []
       @a2obrew_path = a2obrew_path
     end
 
     def xcode2ninja(output_dir,
                     xcodeproj_target = nil, build_config_name = nil,
-                    active_project_config = {}, a2o_target = nil)
+                    active_project_config = {}, a2o_target_name = nil)
       raise Informative, 'Please specify Xcode project.' unless @xcodeproj_path
 
       gen_paths = []
@@ -54,11 +41,8 @@ module A2OBrew
         next if xcodeproj_target && target.name != xcodeproj_target
         target.build_configurations.each do |build_config|
           next if build_config_name && build_config.name != build_config_name
-          gen_path = generate_ninja_build(
-            output_dir,
-            xcodeproj, target, build_config,
-            active_project_config, a2o_target
-          )
+          a2o_target = A2OTarget.new(xcodeproj, xcodeproj_path, target, build_config, active_project_config, a2o_target_name, @a2obrew_path)
+          gen_path = a2o_target.generate_ninja_build(output_dir)
           gen_paths << gen_path
         end
       end
@@ -73,376 +57,243 @@ module A2OBrew
       @xcodeproj_path
     end
 
-    def xcodeproj_dir
-      raise Informative, 'Please specify Xcode project.' unless @xcodeproj_dir
-      @xcodeproj_dir
-    end
-
     def xcodeproj_path=(path)
       @xcodeproj_path = path && Pathname.new(path).expand_path
-      @xcodeproj_dir = File.dirname(@xcodeproj_path)
     end
 
     def xcodeproj
       @xcodeproj ||= Xcodeproj::Project.open(xcodeproj_path)
     end
+  end
 
-    def generate_ninja_build(output_dir, xcodeproj, target, build_config, active_project_config, a2o_target)
-      builds = generate_build_statements(xcodeproj, target, build_config, active_project_config, a2o_target)
-      rules = generate_rules
-      write_ninja_build(output_dir, target, build_config, a2o_target, builds, rules)
+  class A2OTarget
+    def initialize(xcodeproj, xcodeproj_path, target, build_config, active_project_config, a2o_target_name, a2obrew_path)
+      @xcodeproj = xcodeproj
+      @xcodeproj_path = xcodeproj_path
+      @target = target
+      @build_config = build_config
+      @active_project_config = active_project_config
+      @a2o_target_name = a2o_target_name
+      @a2obrew_path = a2obrew_path
+      @frameworks = []
+      @static_libraries_from_other_projects = []
     end
 
-    def generate_build_statements(xcodeproj, target, build_config, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,CyclomaticComplexity
+    def generate_ninja_build(output_dir)
+      builds = generate_build_statements
+      Ninja.write_ninja_build(output_dir, @a2o_target_name, builds)
+    end
+
+    def generate_build_statements # rubocop:disable Metrics/AbcSize,CyclomaticComplexity
       builds = []
-      target.build_phases.each do |phase|
+      @target.build_phases.each do |phase|
         builds += case phase
                   when Xcodeproj::Project::Object::PBXResourcesBuildPhase
-                    resources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                    resources_build_phase(phase)
                   when Xcodeproj::Project::Object::PBXSourcesBuildPhase
-                    sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                    sources_build_phase(phase)
                   when Xcodeproj::Project::Object::PBXFrameworksBuildPhase
-                    frameworks_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                    frameworks_build_phase(phase)
                   when Xcodeproj::Project::Object::PBXShellScriptBuildPhase
-                    shell_script_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                    shell_script_build_phase(phase)
                   when Xcodeproj::Project::Object::PBXHeadersBuildPhase
-                    header_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                    header_build_phase(phase)
                   when Xcodeproj::Project::Object::PBXCopyFilesBuildPhase
-                    copy_files_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target)
+                    copy_files_phase(phase)
                   else
                     raise Informative, "Don't support the phase #{phase.class.name}."
                   end
       end
 
-      if target.isa == 'PBXNativeTarget'
-        builds += case target.product_type
+      if @target.isa == 'PBXNativeTarget'
+        builds += case @target.product_type
                   when 'com.apple.product-type.library.static'
-                    static_library_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+                    static_library_build_phase
                   when 'com.apple.product-type.application'
-                    application_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+                    application_build_phase
                   else
                     raise Informative, "Don't support productType #{target.product_type}."
                   end
       end
 
-      builds += after_build_phase(xcodeproj, target, build_config, nil, active_project_config, a2o_target)
+      builds += after_build_phase
 
-      target.dependencies.each do |dependency|
+      @target.dependencies.each do |dependency|
         proxy = dependency.target_proxy
         if proxy.remote?
-          remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
+          remote_object_file = @xcodeproj.objects_by_uuid[proxy.container_portal]
           remote_project_path = File.dirname(remote_object_file.path)
           remote_target = proxy.proxied_object
           remote_product = remote_target.product_reference
-          remote_lib_path = File.join(remote_project_path, pre_products_dir(a2o_target), remote_product.path)
+          remote_lib_path = File.join(remote_project_path, pre_products_dir, remote_product.path)
           builds << {
             outputs: [remote_lib_path],
             rule_name: 'xcodebuild',
             inputs: [remote_project_path],
             build_variables: {
-              a2o_target: a2o_target,
+              a2o_target: @a2o_target_name,
               xcodeproj_target: remote_target.name.ninja_escape
             }
           }
         else
-          builds += generate_build_statements(xcodeproj, dependency.target,
-                                              build_config, active_project_config, a2o_target)
+          dependenet = A2OTarget.new(@xcodeproj, dependency.target, @build_config, @active_project_config, @a2o_target_name, @a2obrew_path)
+          builds += dependenet.generate_build_statements
         end
       end
 
       builds
     end
 
-    def write_ninja_build(output_dir, _target, _build_config, a2o_target, builds, rules) # rubocop:disable Metrics/AbcSize
-      Util.mkdir_p(output_dir)
-
-      path = File.join(output_dir, "#{a2o_target}.ninja.build")
-      File.open(path, 'w:UTF-8') do |f|
-        rules.each do |r|
-          f.puts "rule #{r[:rule_name]}"
-          f.puts "  description = #{r[:description]}" if r[:description]
-          f.puts "  deps = #{r[:deps]}" if r[:deps]
-          f.puts "  depfile = #{r[:depfile]}" if r[:depfile]
-          f.puts "  command = #{r[:command]}"
-          f.puts ''
-        end
-
-        builds.each do |b|
-          # escape inputs and outpus here
-          inputs = b[:inputs].map(&:ninja_escape).join(' ')
-          outputs = b[:outputs].map(&:ninja_escape).join(' ')
-          f.puts "build #{outputs}: #{b[:rule_name]} #{inputs}"
-
-          # build_variables should be escaped at caller
-          build_variables = b[:build_variables] || []
-          build_variables.each do |k, v|
-            f.puts "  #{k} = #{v}"
-          end
-          f.puts ''
-        end
-      end
-
-      path
-    end
-
-    def generate_rules # rubocop:disable Metrics/MethodLength
-      swiftc_path = `xcrun --sdk iphoneos --find swiftc`.chomp
-      iphone_sdk_path = `xcrun --sdk iphoneos --show-sdk-path`.chomp
-
-      [
-        {
-          rule_name: 'cp_r',
-          description: 'cp -r from ${in} to ${out}',
-          command: 'cp -r ${in} ${out}'
-        },
-        {
-          rule_name: 'ln_sf',
-          description: 'ln -sf ${source} ${out} # ref. ${in}',
-          command: 'ln -sf ${source} ${out}'
-        },
-        {
-          rule_name: 'sed',
-          description: 'sed from ${in} to ${out}',
-          command: 'sed ${options} ${in} > ${out}'
-        },
-        {
-          rule_name: 'rm',
-          description: 'remove ${out}',
-          command: 'rm ${out}'
-        },
-        {
-          rule_name: 'xcodebuild',
-          description: 'a2obrew xcodebuild at ${in}',
-          command: 'cd ${in} && a2obrew xcodebuild -t ${a2o_target} --xcodeproj-target "${xcodeproj_target}"'
-        },
-        {
-          rule_name: 'ibtool',
-          description: 'ibtool ${in}',
-          command: 'ibtool --errors --warnings --notices --module ${module_name} '\
-                   '--target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text '\
-                   '--compilation-directory `dirname ${temp_dir}` ${in} && '\
-                   'ibtool --errors --warnings --notices --module ${module_name} '\
-                   '--target-device iphone --minimum-deployment-target 9.0 --output-format human-readable-text '\
-                   '--link ${resources_dir} ${temp_dir}'
-        },
-        {
-          rule_name: 'ibtool2',
-          description: 'ibtool ${in}',
-          command: 'ibtool --errors --warnings --notices --module ${module_name} --target-device iphone '\
-                   '--minimum-deployment-target 9.0 --output-format human-readable-text --compile ${out} ${in}'
-        },
-        {
-          rule_name: 'image-convert',
-          description: 'image convert ${in}',
-          command: 'convert -resize ${width}x${height} ${in} ${out}'
-        },
-        {
-          rule_name: 'audio-convert',
-          description: 'audio convert ${in}',
-          command: 'afconvert -f mp4f -d aac ${in} -o ${out}'
-        },
-        {
-          rule_name: 'file_packager',
-          description: 'execute file packager to ${target}',
-          command: "python #{emscripten_dir}/tools/file_packager.py ${target} --lz4 --preload ${packager_target_dir}@/ "\
-                   '--js-output=${js_output} --no-heap-copy ${options} --use-preload-plugins'
-        },
-        # NOTE: A2O_LIBBSD_HEADERS indicates <stdlib.h> loads <bsd/stdlib.h> too.
-        {
-          rule_name: 'cc',
-          description: 'c/c++/obj-c compile ${source} to ${out}',
-          deps: 'gcc',
-          depfile: '${out}.d',
-          command: 'a2o -MMD -MF ${out}.d -Wno-absolute-value ${cc_flags} ${file_cflags} '\
-                   '-DA2O_LIBBSD_HEADERS -c ${source} -o ${out}'
-        },
-        {
-          rule_name: 'swiftc',
-          description: 'swift compile ${source} to ${out}',
-          # FIXME: target should be changed
-          command: "#{swiftc_path} -sdk #{iphone_sdk_path} -target armv7-apple-ios8.0 -emit-bc ${source} -o ${out}"
-        },
-        {
-          rule_name: 'link',
-          description: 'link to ${out}',
-          command: 'llvm-link -o ${out} ${in} ${link_flags}'
-        },
-        {
-          rule_name: 'extract_symbol_arrays',
-          description: 'Extract symbol names from `externals` file (one symbol per one line)',
-          command: "ruby -ryaml -e 'puts (ARGV.map{|file| YAML.load_file(file).values_at(*%w|${keys}|)}.flatten + %w|${extra}|).to_s' ${in} > ${out}"
-        },
-        {
-          rule_name: 'compose',
-          description: 'generate executables: ${out}',
-          command: 'EMCC_DEBUG=1 EMCC_DEBUG_SAVE=1 a2o ${options} -o ${js_path} ${linked_objects}'
-        },
-        {
-          rule_name: 'generate_products',
-          description: 'generate products',
-          command: 'cp -a ${pre_products_dir}/ ${products_dir} && '\
-                   'cp ${shell_html_path} ${products_application_dir} && '\
-                   'cp ${service_worker_js_path} ${products_application_dir}'
-        },
-        {
-          rule_name: 'archive',
-          description: 'make static link library',
-          command: 'rm -f ${out}; llvm-ar rcs ${out} ${in}'
-        },
-        {
-          rule_name: 'echo',
-          description: 'echo text',
-          command: 'echo \'${contents}\' > ${out}'
-        }
-      ]
-    end
-
     # paths
 
-    def build_dir(a2o_target)
-      "a2o/build/#{a2o_target}"
+    def xcodeproj_dir
+      File.dirname(@xcodeproj_path)
+    end
+
+    def build_dir
+      "a2o/build/#{@a2o_target_name}"
     end
 
     # paths for file packager
 
-    def packager_target_dir(a2o_target)
-      "#{build_dir(a2o_target)}/files"
+    def packager_target_dir
+      "#{build_dir}/files"
     end
 
-    def bundle_dir(a2o_target)
-      "#{packager_target_dir(a2o_target)}/a2o_application.app"
+    def bundle_dir
+      "#{packager_target_dir}/a2o_application.app"
     end
 
-    def framework_bundle_dir(a2o_target)
-      "#{packager_target_dir(a2o_target)}/frameworks"
+    def framework_bundle_dir
+      "#{packager_target_dir}/frameworks"
     end
 
-    def resources_dir(a2o_target)
-      bundle_dir(a2o_target)
+    def resources_dir
+      bundle_dir
     end
 
-    def application_icon_dir(a2o_target)
-      "#{pre_products_application_dir(a2o_target)}/icon"
+    def application_icon_dir
+      "#{pre_products_application_dir}/icon"
     end
 
-    def application_launch_image_dir(a2o_target)
-      "#{pre_products_application_dir(a2o_target)}/launch-image"
+    def application_launch_image_dir
+      "#{pre_products_application_dir}/launch-image"
     end
 
-    def tombo_icon_dir(a2o_target)
-      "#{pre_products_tombo_dir(a2o_target)}/icon"
+    def tombo_icon_dir
+      "#{pre_products_tombo_dir}/icon"
     end
 
-    def tombo_ogp_dir(a2o_target)
-      "#{pre_products_tombo_dir(a2o_target)}/ogp"
+    def tombo_ogp_dir
+      "#{pre_products_tombo_dir}/ogp"
     end
 
-    def objects_dir(a2o_target)
-      "#{build_dir(a2o_target)}/objects"
+    def objects_dir
+      "#{build_dir}/objects"
     end
 
     # pre_products' paths to be coped to products
 
-    def pre_products_dir(a2o_target)
-      "#{build_dir(a2o_target)}/pre_products"
+    def pre_products_dir
+      "#{build_dir}/pre_products"
     end
 
-    def pre_products_application_dir(a2o_target)
-      "#{pre_products_dir(a2o_target)}/application"
+    def pre_products_application_dir
+      "#{pre_products_dir}/application"
     end
 
-    def pre_products_tombo_dir(a2o_target)
-      "#{pre_products_dir(a2o_target)}/tombo"
+    def pre_products_tombo_dir
+      "#{pre_products_dir}/tombo"
     end
 
-    def pre_products_path_prefix(a2o_target)
-      "#{pre_products_application_dir(a2o_target)}/application"
+    def pre_products_path_prefix
+      "#{pre_products_application_dir}/application"
     end
 
-    def shell_files_link_dir(a2o_target)
-      "#{products_application_dir(a2o_target)}/shell_files"
+    def shell_files_link_dir
+      "#{products_application_dir}/shell_files"
     end
 
-    def data_path(a2o_target)
-      "#{pre_products_path_prefix(a2o_target)}.dat"
+    def data_path
+      "#{pre_products_path_prefix}.dat"
     end
 
-    def js_path(a2o_target)
-      "#{pre_products_path_prefix(a2o_target)}.js"
+    def js_path
+      "#{pre_products_path_prefix}.js"
     end
 
-    def asm_js_path(a2o_target)
-      "#{pre_products_path_prefix(a2o_target)}.asm.js"
+    def asm_js_path
+      "#{pre_products_path_prefix}.asm.js"
     end
 
-    def wasm_js_path(a2o_target)
-      "#{pre_products_path_prefix(a2o_target)}-wasm.js"
+    def wasm_js_path
+      "#{pre_products_path_prefix}-wasm.js"
     end
 
-    def wasm_asm_js_path(a2o_target)
-      "#{pre_products_path_prefix(a2o_target)}-wasm.asm.js"
+    def wasm_asm_js_path
+      "#{pre_products_path_prefix}-wasm.asm.js"
     end
 
-    def wasm_path(a2o_target)
-      "#{pre_products_path_prefix(a2o_target)}-wasm.wasm"
+    def wasm_path
+      "#{pre_products_path_prefix}-wasm.wasm"
     end
 
-    def html_path(a2o_target)
-      "#{pre_products_path_prefix(a2o_target)}.html"
+    def html_path
+      "#{pre_products_path_prefix}.html"
     end
 
-    def js_mem_path(a2o_target)
-      "#{js_path(a2o_target)}.mem"
+    def js_mem_path
+      "#{js_path}.mem"
     end
 
-    def js_symbols_path(a2o_target)
-      "#{js_path(a2o_target)}.symbols"
+    def js_symbols_path
+      "#{js_path}.symbols"
     end
 
-    def wasm_js_symbols_path(a2o_target)
-      "#{wasm_js_path(a2o_target)}.symbols"
+    def wasm_js_symbols_path
+      "#{wasm_js_path}.symbols"
     end
 
-    def platform_parameters_json_path(a2o_target)
-      "#{pre_products_tombo_dir(a2o_target)}/parameters.json"
+    def platform_parameters_json_path
+      "#{pre_products_tombo_dir}/parameters.json"
     end
 
-    def runtime_parameters_json_path(a2o_target)
-      "#{pre_products_application_dir(a2o_target)}/runtime_parameters.json"
+    def runtime_parameters_json_path
+      "#{pre_products_application_dir}/runtime_parameters.json"
     end
 
-    def application_icon_output_path(a2o_target)
-      "#{application_icon_dir(a2o_target)}/icon-60.png"
+    def application_icon_output_path
+      "#{application_icon_dir}/icon-60.png"
     end
 
-    def application_launch_image_output_path(a2o_target)
-      "#{application_launch_image_dir(a2o_target)}/launch-image-320x480.png"
+    def application_launch_image_output_path
+      "#{application_launch_image_dir}/launch-image-320x480.png"
     end
 
-    def tombo_icon_output_path(a2o_target)
-      "#{tombo_icon_dir(a2o_target)}/icon-60.png"
+    def tombo_icon_output_path
+      "#{tombo_icon_dir}/icon-60.png"
     end
 
-    def tombo_ogp_image_output_path(a2o_target, lang)
-      "#{tombo_ogp_dir(a2o_target)}/#{lang}.png"
+    def tombo_ogp_image_output_path(lang)
+      "#{tombo_ogp_dir}/#{lang}.png"
     end
 
     # products dir is packaged
 
-    def products_dir(a2o_target)
-      "#{build_dir(a2o_target)}/products"
+    def products_dir
+      "#{build_dir}/products"
     end
 
-    def products_application_dir(a2o_target)
-      "#{products_dir(a2o_target)}/application"
+    def products_application_dir
+      "#{products_dir}/application"
     end
 
-    def products_html_path(a2o_target)
-      "#{products_application_dir(a2o_target)}/application.html"
+    def products_html_path
+      "#{products_application_dir}/application.html"
     end
 
-    def products_service_worker_js_path(a2o_target)
-      "#{products_application_dir(a2o_target)}/service_worker.js"
+    def products_service_worker_js_path
+      "#{products_application_dir}/service_worker.js"
     end
 
     # a2obrew paths
@@ -479,49 +330,49 @@ module A2OBrew
 
     # emscripten work paths
 
-    def emscripten_work_dir(a2o_target)
-      "#{build_dir(a2o_target)}/emscripten"
+    def emscripten_work_dir
+      "#{build_dir}/emscripten"
     end
 
-    def bitcode_path(a2o_target, target)
-      "#{emscripten_work_dir(a2o_target)}/application.#{target.name.tr(' ', '_')}.bc"
+    def bitcode_path
+      "#{emscripten_work_dir}/application.#{@target.name.tr(' ', '_')}.bc"
     end
 
-    def data_js_path(a2o_target)
-      "#{emscripten_work_dir(a2o_target)}/data.js"
+    def data_js_path
+      "#{emscripten_work_dir}/data.js"
     end
 
-    def data_js_metadata_path(a2o_target)
-      "#{data_js_path(a2o_target)}.metadata"
+    def data_js_metadata_path
+      "#{data_js_path}.metadata"
     end
 
-    def shared_library_js_path(a2o_target, extension)
-      "#{emscripten_work_dir(a2o_target)}/shared.#{extension}.js"
+    def shared_library_js_path(extension)
+      "#{emscripten_work_dir}/shared.#{extension}.js"
     end
 
-    def exported_functions_js_path(a2o_target, extension)
-      "#{emscripten_work_dir(a2o_target)}/exported_functions.#{extension}.js"
+    def exported_functions_js_path(extension)
+      "#{emscripten_work_dir}/exported_functions.#{extension}.js"
     end
 
-    def exported_variables_js_path(a2o_target, extension)
-      "#{emscripten_work_dir(a2o_target)}/exported_variables.#{extension}.js"
+    def exported_variables_js_path(extension)
+      "#{emscripten_work_dir}/exported_variables.#{extension}.js"
     end
 
-    def library_functions_js_path(a2o_target, extension)
-      "#{emscripten_work_dir(a2o_target)}/lib_funcs.#{extension}.js"
+    def library_functions_js_path(extension)
+      "#{emscripten_work_dir}/lib_funcs.#{extension}.js"
     end
 
-    def a2o_project_flags(active_project_config, rule)
-      active_project_config.dig(:flags, rule)
+    def a2o_project_flags(rule)
+      @active_project_config.dig(:flags, rule)
     end
 
     # phases
 
-    def resources_build_phase(_xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,AbcSize,LineLength,CyclomaticComplexity,PerceivedComplexity
+    def resources_build_phase(phase) # rubocop:disable Metrics/MethodLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
       builds = []
       resources = []
 
-      resource_filter = active_project_config[:resource_filter]
+      resource_filter = @active_project_config[:resource_filter]
 
       icon_asset_catalog = nil
       icon2x = nil
@@ -540,13 +391,13 @@ module A2OBrew
           raise Informative, "Don't support the file #{files_ref.class.name}."
         end
 
-        files.each do |file| # rubocop:disable Metrics/BlockLength
+        files.each do |file|
           local_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
 
           next if resource_filter && !resource_filter.call(local_path.to_s)
 
           if File.extname(file.path) == '.storyboard'
-            remote_path = File.join(resources_dir(a2o_target), File.basename(file.path))
+            remote_path = File.join(resources_dir, File.basename(file.path))
             remote_path += 'c'
             tmp_path = File.join('tmp', remote_path)
 
@@ -560,26 +411,26 @@ module A2OBrew
               inputs: [local_path],
               build_variables: {
                 'temp_dir' => tmp_path,
-                'module_name' => target.product_name,
-                'resources_dir' => resources_dir(a2o_target)
+                'module_name' => @target.product_name,
+                'resources_dir' => resources_dir
               }
             }
             resources += nib_paths
           elsif File.extname(file.path) == '.xib'
-            remote_path = File.join(resources_dir(a2o_target), File.basename(file.path, '.xib') + '.nib')
+            remote_path = File.join(resources_dir, File.basename(file.path, '.xib') + '.nib')
 
             builds << {
               outputs: [remote_path],
               rule_name: 'ibtool2',
               inputs: [local_path],
               build_variables: {
-                'module_name' => target.product_name
+                'module_name' => @target.product_name
               }
             }
             resources << remote_path
           elsif %w[.caf .aiff].include? File.extname(file.path)
             # convert caf file to mp4, but leave file name as is
-            remote_path = File.join(resources_dir(a2o_target), local_path.basename)
+            remote_path = File.join(resources_dir, local_path.basename)
 
             builds << {
               outputs: [remote_path],
@@ -590,9 +441,7 @@ module A2OBrew
           else
             if file.path == 'Images.xcassets' || file.path == 'Assets.xcassets'
               # Asset Catalog for icon and launch images
-              icon_asset_catalog, launch_image_asset_catalog = asset_catalog(
-                local_path, target, build_config
-              )
+              icon_asset_catalog, launch_image_asset_catalog = asset_catalog(local_path)
             elsif file.path == 'Icon@2x.png'
               # For an old iPhone application
               icon2x = [local_path, 2]
@@ -614,22 +463,22 @@ module A2OBrew
                         end
 
             # All resource files are stored in the same directory
-            f = file_recursive_copy(local_path, resources_dir(a2o_target), in_prefix)
+            f = Ninja.file_recursive_copy(local_path, resources_dir, in_prefix)
             builds += f[:builds]
             resources += f[:outputs]
           end
         end
       end
 
-      infoplist_path = build_setting(target, build_config, 'INFOPLIST_FILE')
+      infoplist_path = build_setting('INFOPLIST_FILE')
       if infoplist_path
-        infoplist = File.join(bundle_dir(a2o_target), 'Info.plist')
+        infoplist = File.join(bundle_dir, 'Info.plist')
         resources << infoplist
 
         # TODO: replace all variables
         variables = %w[PRODUCT_NAME PRODUCT_BUNDLE_IDENTIFIER]
         commands = variables.map do |key|
-          value = build_setting(target, build_config, key)
+          value = build_setting(key)
           "-e s/\\$\\(#{key}\\)/#{value}/g -e s/\\${#{key}}/#{value}/g "
         end.join(' ')
 
@@ -648,8 +497,8 @@ module A2OBrew
       app_icon = icon_asset_catalog || icon2x || icon
       if app_icon
         @icon_output_paths = [
-          application_icon_output_path(a2o_target),
-          tombo_icon_output_path(a2o_target)
+          application_icon_output_path,
+          tombo_icon_output_path
         ]
         @icon_output_paths.each do |icon_output_path|
           builds << {
@@ -666,8 +515,8 @@ module A2OBrew
 
       # Launch Image
       app_launch_image = launch_image_asset_catalog || launch_image2x || launch_image
-      if app_launch_image.nil? && active_project_config[:launch_image]
-        path = active_project_config[:launch_image]
+      if app_launch_image.nil? && @active_project_config[:launch_image]
+        path = @active_project_config[:launch_image]
         width, height = Util.image_width_and_height(path)
         # FIXME: Repair this dirty logic
         ratio = width >= 640 && height >= 960 ? 2 : 1
@@ -675,7 +524,7 @@ module A2OBrew
       end
 
       if app_launch_image
-        @launch_image_output_path = application_launch_image_output_path(a2o_target)
+        @launch_image_output_path = application_launch_image_output_path
         builds << {
           outputs: [@launch_image_output_path],
           rule_name: 'image-convert',
@@ -688,10 +537,10 @@ module A2OBrew
       end
 
       # OGP images
-      if active_project_config[:ogp_images]
+      if @active_project_config[:ogp_images]
         @ogp_image_output_paths = []
-        active_project_config[:ogp_images].each do |lang, img_path|
-          output_path = tombo_ogp_image_output_path(a2o_target, lang)
+        @active_project_config[:ogp_images].each do |lang, img_path|
+          output_path = tombo_ogp_image_output_path(lang)
           @ogp_image_output_paths << output_path
           builds << {
             outputs: [output_path],
@@ -702,13 +551,13 @@ module A2OBrew
       end
 
       # Framework resources
-      framework_resources = system_framework_resources(a2o_target)
+      framework_resources = system_framework_resources
       builds += framework_resources[:builds]
       resources += framework_resources[:outputs]
 
       # ICU data
       icu_data_in = "#{emscripten_dir}/system/local/share/icu/54.1/icudt54l.dat"
-      icu_data_out = "#{packager_target_dir(a2o_target)}/System/icu/icu.dat"
+      icu_data_out = "#{packager_target_dir}/System/icu/icu.dat"
       builds << {
         outputs: [icu_data_out],
         rule_name: 'cp_r',
@@ -720,13 +569,13 @@ module A2OBrew
       #
       # NOTE: Could we use --use-preload-cache ?
 
-      t = data_path(a2o_target)
-      j = data_js_path(a2o_target)
+      t = data_path
+      j = data_js_path
       data_outputs = [t, j]
       options = ''
       # FIXME: --separate-metadata is not tested and supported
       if A2OCONF[:xcodebuild][:emscripten][:file_packager][:separate_metadata]
-        data_outputs << data_js_metadata_path(a2o_target)
+        data_outputs << data_js_metadata_path
         options += ' --separate-metadata'
       end
 
@@ -738,7 +587,7 @@ module A2OBrew
           'target' => t,
           'js_output' => j,
           'options' => options,
-          'packager_target_dir' => packager_target_dir(a2o_target)
+          'packager_target_dir' => packager_target_dir
         }
       }
 
@@ -788,15 +637,9 @@ module A2OBrew
       nil
     end
 
-    def asset_catalog(local_path, target, build_config)
-      appicon_name = build_setting(
-        target, build_config,
-        'ASSETCATALOG_COMPILER_APPICON_NAME'
-      ) + '.appiconset'
-      launchimage_name = build_setting(
-        target, build_config,
-        'ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME'
-      )
+    def asset_catalog(local_path)
+      appicon_name = build_setting('ASSETCATALOG_COMPILER_APPICON_NAME') + '.appiconset'
+      launchimage_name = build_setting('ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME')
       launchimage_name += '.launchimage' if launchimage_name
 
       icon = nil
@@ -812,61 +655,6 @@ module A2OBrew
       end
 
       [icon, launch_image]
-    end
-
-    def file_copy(in_path, out_dir, in_prefix_path)
-      in_path = Pathname(in_path) unless in_path.instance_of?(Pathname)
-      in_prefix_path = Pathname(in_prefix_path) unless in_prefix_path.instance_of?(Pathname)
-      rel_path = in_path.relative_path_from(in_prefix_path)
-
-      output_path = File.join(out_dir, rel_path.to_s)
-
-      {
-        build: {
-          outputs: [output_path],
-          rule_name: 'cp_r',
-          inputs: [in_path.to_s]
-        },
-        output: output_path
-      }
-    end
-
-    def file_link(in_relative_path_from_out_path, out_path)
-      {
-        builds: [{
-          outputs: [out_path],
-          rule_name: 'ln_sf',
-          inputs: [],
-          build_variables: {
-            'source' => in_relative_path_from_out_path
-          }
-        }],
-        outputs: [out_path]
-      }
-    end
-
-    def file_recursive_copy(in_path, out_dir, in_prefix_dir = '.')
-      builds = []
-      outputs = []
-
-      in_prefix_path = Pathname(in_prefix_dir)
-      if File.directory?(in_path)
-        Pathname(in_path).find do |path|
-          next unless path.file?
-          e = file_copy(path, out_dir, in_prefix_path)
-          builds << e[:build]
-          outputs << e[:output]
-        end
-      else
-        e = file_copy(in_path, out_dir, in_prefix_path)
-        builds << e[:build]
-        outputs << e[:output]
-      end
-
-      {
-        builds: builds,
-        outputs: outputs
-      }
     end
 
     def dest_name(source_path)
@@ -896,7 +684,7 @@ module A2OBrew
       end
     end
 
-    def source_build_phase(build_file, file_ref, cc_flags, enable_objc_arc, c_std, cxx_std, builds, objects, _xcodeproj, _target, _build_config, _phase, _active_project_config, a2o_target) # rubocop:disable Metrics/LineLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
+    def source_build_phase(build_file, file_ref, cc_flags, enable_objc_arc, c_std, cxx_std, builds, objects) # rubocop:disable Metrics/LineLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
       if file_ref.parent.isa != 'PBXGroup'
         puts '[WARN] Orphan file: ' + file.name
         return
@@ -908,8 +696,7 @@ module A2OBrew
         file_ref.files.each do |inner_file|
           source_build_phase(
             build_file, inner_file, cc_flags, enable_objc_arc, c_std, cxx_std,
-            builds, objects,
-            xcodeproj, target, build_config, phase, active_project_config, a2o_target
+            builds, objects
           )
         end
         return
@@ -918,7 +705,7 @@ module A2OBrew
       end
 
       source_path = file_ref.real_path.relative_path_from(Pathname(xcodeproj_dir))
-      object = File.join(objects_dir(a2o_target), dest_name(source_path))
+      object = File.join(objects_dir, dest_name(source_path))
 
       settings = build_file.settings
       file_cflags = []
@@ -951,25 +738,25 @@ module A2OBrew
       }
     end
 
-    def sources_build_phase(xcodeproj, target, build_config, phase, active_project_config, a2o_target) # rubocop:disable Metrics/MethodLength,LineLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
+    def sources_build_phase(phase) # rubocop:disable Metrics/MethodLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
       builds = []
       objects = []
 
       header_extensions = %w[.h .hpp]
-      header_dirs = xcodeproj.main_group.recursive_children.select { |g| g.path && header_extensions.include?(File.extname(g.path)) }.map do |g|
+      header_dirs = @xcodeproj.main_group.recursive_children.select { |g| g.path && header_extensions.include?(File.extname(g.path)) }.map do |g|
         full_path = g.real_path.relative_path_from(Pathname(xcodeproj_dir)).to_s
         File.dirname(full_path)
       end.to_a.uniq
 
       # build settings
-      lib_dirs = build_setting(target, build_config, 'LIBRARY_SEARCH_PATHS', :array)
-      framework_search_paths = build_setting(target, build_config, 'FRAMEWORK_SEARCH_PATHS', :array)
-      header_search_paths = build_setting(target, build_config, 'HEADER_SEARCH_PATHS', :array).reject { |value| value == '' }
-      user_header_search_paths = build_setting(target, build_config, 'USER_HEADER_SEARCH_PATHS', :string) || ''
-      other_cflags = (build_setting(target, build_config, 'OTHER_CFLAGS', :array) || []).join(' ')
-      cxx_std = build_setting(target, build_config, 'CLANG_CXX_LANGUAGE_STANDARD', :string)
-      c_std = build_setting(target, build_config, 'GCC_C_LANGUAGE_STANDARD', :string)
-      preprocessor_definitions = (build_setting(target, build_config, 'GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
+      lib_dirs = build_setting('LIBRARY_SEARCH_PATHS', :array)
+      framework_search_paths = build_setting('FRAMEWORK_SEARCH_PATHS', :array)
+      header_search_paths = build_setting('HEADER_SEARCH_PATHS', :array).reject { |value| value == '' }
+      user_header_search_paths = build_setting('USER_HEADER_SEARCH_PATHS', :string) || ''
+      other_cflags = (build_setting('OTHER_CFLAGS', :array) || []).join(' ')
+      cxx_std = build_setting('CLANG_CXX_LANGUAGE_STANDARD', :string)
+      c_std = build_setting('GCC_C_LANGUAGE_STANDARD', :string)
+      preprocessor_definitions = (build_setting('GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
 
       cxx_std = nil if cxx_std == 'compiler-default'
 
@@ -977,8 +764,8 @@ module A2OBrew
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
       header_options = (header_search_paths + user_header_search_paths.split + header_dirs).map { |dir| "-I\"#{dir}\"" }.join(' ')
 
-      if build_setting(target, build_config, 'GCC_PRECOMPILE_PREFIX_HEADER', :bool)
-        prefix_pch = build_setting(target, build_config, 'GCC_PREFIX_HEADER')
+      if build_setting('GCC_PRECOMPILE_PREFIX_HEADER', :bool)
+        prefix_pch = build_setting('GCC_PREFIX_HEADER')
         prefix_pch_options = prefix_pch.empty? ? '' : "-include #{prefix_pch}"
       end
 
@@ -990,25 +777,23 @@ module A2OBrew
                   prefix_pch_options,
                   other_cflags,
                   preprocessor_definitions,
-                  a2o_project_flags(active_project_config,
-                                    :cc)].join(' ')
+                  a2o_project_flags(:cc)].join(' ')
 
-      enable_objc_arc = build_setting(target, build_config, 'CLANG_ENABLE_OBJC_ARC', :bool) # default NO
+      enable_objc_arc = build_setting('CLANG_ENABLE_OBJC_ARC', :bool) # default NO
 
       phase.files.each do |build_file|
         file_ref = build_file.file_ref
         next unless file_ref
         source_build_phase(
           build_file, file_ref, cc_flags, enable_objc_arc, c_std, cxx_std,
-          builds, objects,
-          xcodeproj, target, build_config, phase, active_project_config, a2o_target
+          builds, objects
         )
       end
 
       # stubs
       # FIXME: remove
       Dir.glob('*_dummy.*').each do |source_path|
-        object = File.join(objects_dir(a2o_target), source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
+        object = File.join(objects_dir, source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
         file_cflags = '-fobjc-arc '.dup
@@ -1035,10 +820,10 @@ module A2OBrew
       end
 
       # link
-      conf_link_flags = a2o_project_flags(active_project_config, :link)
+      conf_link_flags = a2o_project_flags(:link)
 
       builds << {
-        outputs: [bitcode_path(a2o_target, target)],
+        outputs: [bitcode_path],
         rule_name: 'link',
         inputs: objects,
         build_variables: {
@@ -1057,24 +842,24 @@ module A2OBrew
       ]
     end
 
-    def generate_platform_parameters_json(active_project_config)
+    def generate_platform_parameters_json
       {
         # Steal proxy urls from runtime_parameters
-        http_proxy_url_prefixes: active_project_config.dig(:runtime_parameters, :emscripten, :http_proxy_url_prefixes) || []
+        http_proxy_url_prefixes: @active_project_config.dig(:runtime_parameters, :emscripten, :http_proxy_url_prefixes) || []
       }.to_json
     end
 
-    def generate_runtime_parameters_json(active_project_config, target)
+    def generate_runtime_parameters_json
       # emscripten parameters should be set into the variable `Module`.
-      emscripten_parameters = active_project_config.dig(:runtime_parameters, :emscripten) || {}
+      emscripten_parameters = @active_project_config.dig(:runtime_parameters, :emscripten) || {}
       emscripten_parameters[:screen_modes] ||= [{
         width: 640, height: 1136, scale: 2.0
       }]
       emscripten_parameters = hash_key_to_camel(emscripten_parameters)
 
       # shell parameters should be set into the variable `A2OShell`
-      shell_parameters = active_project_config.dig(:runtime_parameters, :shell) || {}
-      shell_parameters[:service_worker_cache_name] = "tombo-#{target.product_name}-v#{Time.now.to_i}"
+      shell_parameters = @active_project_config.dig(:runtime_parameters, :shell) || {}
+      shell_parameters[:service_worker_cache_name] = "tombo-#{@target.product_name}-v#{Time.now.to_i}"
       shell_parameters[:paths_to_cache] = [
         'application.asm.js',
         'application.dat',
@@ -1092,7 +877,7 @@ module A2OBrew
                            A2OShell: shell_parameters).gsub("\n", '\n')
     end
 
-    def generate_share_library_build_params(a2o_target, dynamic_link_frameworks, extension) # rubocop:disable Metrics/AbcSize,MethodLength
+    def generate_share_library_build_params(dynamic_link_frameworks, extension) # rubocop:disable Metrics/AbcSize,MethodLength
       if dynamic_link_frameworks.empty?
         return {
           builds: [],
@@ -1109,7 +894,7 @@ module A2OBrew
 
       dynamic_link_frameworks.each do |f|
         source = "#{frameworks_dir}/#{f}.framework/#{f}.#{extension}"
-        dest = "#{pre_products_application_dir(a2o_target)}/#{f}.#{extension}"
+        dest = "#{pre_products_application_dir}/#{f}.#{extension}"
         builds << {
           outputs: [dest],
           rule_name: 'cp_r',
@@ -1119,7 +904,7 @@ module A2OBrew
       end
 
       builds << {
-        outputs: [shared_library_js_path(a2o_target, extension)],
+        outputs: [shared_library_js_path(extension)],
         rule_name: 'echo',
         inputs: [],
         build_variables: {
@@ -1130,7 +915,7 @@ module A2OBrew
       external_files = dynamic_link_frameworks.map { |f| "#{frameworks_dir}/#{f}.framework/#{f}.#{extension}.externals" }
 
       builds << {
-        outputs: [exported_functions_js_path(a2o_target, extension)],
+        outputs: [exported_functions_js_path(extension)],
         rule_name: 'extract_symbol_arrays',
         inputs: external_files,
         build_variables: {
@@ -1139,7 +924,7 @@ module A2OBrew
         }
       }
       builds << {
-        outputs: [exported_variables_js_path(a2o_target, extension)],
+        outputs: [exported_variables_js_path(extension)],
         rule_name: 'extract_symbol_arrays',
         inputs: external_files,
         build_variables: {
@@ -1147,7 +932,7 @@ module A2OBrew
         }
       }
       builds << {
-        outputs: [library_functions_js_path(a2o_target, extension)],
+        outputs: [library_functions_js_path(extension)],
         rule_name: 'extract_symbol_arrays',
         inputs: external_files,
         build_variables: {
@@ -1155,15 +940,15 @@ module A2OBrew
         }
       }
 
-      options << "--pre-js #{shared_library_js_path(a2o_target, extension)}"
-      options << "-s EXPORTED_FUNCTIONS=@#{exported_functions_js_path(a2o_target, extension)}"
-      options << "-s EXPORTED_VARIABLES=@#{exported_variables_js_path(a2o_target, extension)}"
-      options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(a2o_target, extension)}"
+      options << "--pre-js #{shared_library_js_path(extension)}"
+      options << "-s EXPORTED_FUNCTIONS=@#{exported_functions_js_path(extension)}"
+      options << "-s EXPORTED_VARIABLES=@#{exported_variables_js_path(extension)}"
+      options << "-s LIBRARY_IMPLEMENTED_FUNCTIONS=@#{library_functions_js_path(extension)}"
 
-      dep_paths << shared_library_js_path(a2o_target, extension)
-      dep_paths << exported_functions_js_path(a2o_target, extension)
-      dep_paths << exported_variables_js_path(a2o_target, extension)
-      dep_paths << library_functions_js_path(a2o_target, extension)
+      dep_paths << shared_library_js_path(extension)
+      dep_paths << exported_functions_js_path(extension)
+      dep_paths << exported_variables_js_path(extension)
+      dep_paths << library_functions_js_path(extension)
 
       {
         builds: builds,
@@ -1173,26 +958,26 @@ module A2OBrew
       }
     end
 
-    def application_build_phase(_xcodeproj, target, _build_config, _phase, active_project_config, a2o_target) # rubocop:disable Metrics/AbcSize,MethodLength,PerceivedComplexity,LineLength
+    def application_build_phase # rubocop:disable Metrics/AbcSize,MethodLength,PerceivedComplexity
       builds = []
 
       # platform parameter json
       builds << {
-        outputs: [platform_parameters_json_path(a2o_target)],
+        outputs: [platform_parameters_json_path],
         rule_name: 'echo',
         inputs: [],
         build_variables: {
-          contents: generate_platform_parameters_json(active_project_config).shell_quote_escape
+          contents: generate_platform_parameters_json.shell_quote_escape
         }
       }
 
       # runtime parameter json
       builds << {
-        outputs: [runtime_parameters_json_path(a2o_target)],
+        outputs: [runtime_parameters_json_path],
         rule_name: 'echo',
         inputs: [],
         build_variables: {
-          contents: generate_runtime_parameters_json(active_project_config, target).shell_quote_escape
+          contents: generate_runtime_parameters_json.shell_quote_escape
         }
       }
 
@@ -1206,18 +991,18 @@ module A2OBrew
         '--memory-init-file 1',
         '--separate-asm'
       ]
-      a2o_flags = (a2o_project_flags(active_project_config, :html) || '').split
+      a2o_flags = (a2o_project_flags(:html) || '').split
       a2o_options += a2o_flags
 
       pre_products_outputs_asm = [
-        js_mem_path(a2o_target),
-        js_path(a2o_target),
-        asm_js_path(a2o_target)
+        js_mem_path,
+        js_path,
+        asm_js_path
       ]
       pre_products_outputs_wasm = [
-        wasm_js_path(a2o_target),
-        wasm_asm_js_path(a2o_target),
-        wasm_path(a2o_target)
+        wasm_js_path,
+        wasm_asm_js_path,
+        wasm_path
       ]
 
       if !a2o_flags.include?('-g') && (
@@ -1227,16 +1012,16 @@ module A2OBrew
         a2o_flags.include?('-Oz')
       )
         a2o_options << '--emit-symbol-map'
-        pre_products_outputs_asm << js_symbols_path(a2o_target)
-        pre_products_outputs_wasm << wasm_js_symbols_path(a2o_target)
+        pre_products_outputs_asm << js_symbols_path
+        pre_products_outputs_wasm << wasm_js_symbols_path
       end
 
       # detect emscripten file changes
       dep_paths = file_list("#{emscripten_dir}/src/")
 
       # data file
-      a2o_options << "--pre-js #{data_js_path(a2o_target)}"
-      dep_paths << data_js_path(a2o_target)
+      a2o_options << "--pre-js #{data_js_path}"
+      dep_paths << data_js_path
 
       dynamic_link_frameworks = A2OCONF[:xcodebuild][:dynamic_link_frameworks]
       static_link_frameworks = (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - dynamic_link_frameworks)
@@ -1252,10 +1037,10 @@ module A2OBrew
       # TODO: dpe_paths += static_libs.map{ |lib| real path of lib }
 
       # objects
-      linked_objects = @static_libraries_from_other_projects + [bitcode_path(a2o_target, target)]
+      linked_objects = @static_libraries_from_other_projects + [bitcode_path]
 
       # asm
-      asm_shared_lib_params = generate_share_library_build_params(a2o_target, dynamic_link_frameworks, 'so.js')
+      asm_shared_lib_params = generate_share_library_build_params(dynamic_link_frameworks, 'so.js')
       asm_a2o_options = a2o_options + asm_shared_lib_params[:options]
       asm_dep_paths = dep_paths + asm_shared_lib_params[:dep_paths]
       builds += asm_shared_lib_params[:builds]
@@ -1267,12 +1052,12 @@ module A2OBrew
         build_variables: {
           'options' => asm_a2o_options.join(' '),
           'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
-          'js_path' => js_path(a2o_target)
+          'js_path' => js_path
         }
       }
 
       # wasm
-      wasm_shared_lib_params = generate_share_library_build_params(a2o_target, dynamic_link_frameworks, 'wasm')
+      wasm_shared_lib_params = generate_share_library_build_params(dynamic_link_frameworks, 'wasm')
       wasm_a2o_options = a2o_options + wasm_shared_lib_params[:options] + ['-s BINARYEN=1']
       wasm_dep_paths = dep_paths + wasm_shared_lib_params[:dep_paths]
       builds += wasm_shared_lib_params[:builds]
@@ -1284,7 +1069,7 @@ module A2OBrew
         build_variables: {
           'options' => wasm_a2o_options.join(' '),
           'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
-          'js_path' => wasm_js_path(a2o_target)
+          'js_path' => wasm_js_path
         }
       }
 
@@ -1300,9 +1085,9 @@ module A2OBrew
       #       But currently, just copy them as the original.
 
       products_inputs = pre_products_outputs_asm + pre_products_outputs_wasm + asm_shared_lib_params[:outputs] + wasm_shared_lib_params[:outputs] + [
-        data_path(a2o_target),
-        platform_parameters_json_path(a2o_target),
-        runtime_parameters_json_path(a2o_target)
+        data_path,
+        platform_parameters_json_path,
+        runtime_parameters_json_path
       ]
       products_inputs.concat(@icon_output_paths) if @icon_output_paths
       products_inputs << @launch_image_output_path if @launch_image_output_path
@@ -1311,8 +1096,8 @@ module A2OBrew
       products_outputs = products_inputs.map do |path|
         path.sub('pre_products', 'products')
       end
-      products_outputs << products_html_path(a2o_target)
-      products_outputs << products_service_worker_js_path(a2o_target)
+      products_outputs << products_html_path
+      products_outputs << products_service_worker_js_path
 
       builds << {
         outputs: products_outputs,
@@ -1322,41 +1107,41 @@ module A2OBrew
           service_worker_template_js_path
         ],
         build_variables: {
-          'pre_products_dir' => pre_products_dir(a2o_target),
-          'products_dir' => products_dir(a2o_target),
-          'products_application_dir' => products_application_dir(a2o_target),
+          'pre_products_dir' => pre_products_dir,
+          'products_dir' => products_dir,
+          'products_application_dir' => products_application_dir,
           'shell_html_path' => application_template_html_path,
           'service_worker_js_path' => service_worker_template_js_path
         }
       }
 
       # copy shell.html resources
-      out_dir = build_dir(a2o_target)
-      f = file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
+      out_dir = build_dir
+      f = Ninja.file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
       builds += f[:builds]
 
       # add a symbolic link
-      f = file_link('../../shell_files', shell_files_link_dir(a2o_target))
+      f = Ninja.file_link('../../shell_files', shell_files_link_dir)
       builds += f[:builds]
 
       builds
     end
 
-    def static_library_build_phase(_xcodeproj, target, _build_config, _phase, _active_project_config, a2o_target)
+    def static_library_build_phase(_phase)
       builds = []
 
-      library_path = "#{pre_products_dir(a2o_target)}/#{target.product_reference.path}"
+      library_path = "#{pre_products_dir}/#{@target.product_reference.path}"
 
       builds << {
         outputs: [library_path],
         rule_name: 'archive',
-        inputs: [bitcode_path(a2o_target, target)]
+        inputs: [bitcode_path]
       }
 
       builds
     end
 
-    def frameworks_build_phase(_xcodeproj, _target, _build_config, phase, _active_project_config, a2o_target)
+    def frameworks_build_phase(phase)
       builds = []
 
       @frameworks = []
@@ -1372,10 +1157,10 @@ module A2OBrew
           end
         when Xcodeproj::Project::Object::PBXReferenceProxy
           proxy = file_ref.remote_ref
-          remote_object_file = xcodeproj.objects_by_uuid[proxy.container_portal]
+          remote_object_file = @xcodeproj.objects_by_uuid[proxy.container_portal]
           # FIXME: determine remote target more appropriately
           library_path = File.join(File.dirname(remote_object_file.path),
-                                   pre_products_dir(a2o_target),
+                                   pre_products_dir,
                                    file_ref.path)
           @static_libraries_from_other_projects << library_path
         else
@@ -1386,26 +1171,27 @@ module A2OBrew
       builds
     end
 
-    def header_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
+    def header_build_phase(_phase)
       []
     end
 
-    def shell_script_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
+    def shell_script_build_phase(_phase)
       []
     end
 
-    def copy_files_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
+    def copy_files_phase(_phase)
       []
     end
 
-    def after_build_phase(_xcodeproj, _target, _build_config, _phase, _active_project_config, _a2o_target)
+    def after_build_phase
       []
     end
 
     # utils
-    def build_setting(target, build_config, prop, type = nil)
+    def build_setting(prop, type = nil)
       env = {
-        'CONFIGURATION' => build_config.name,
+        'BUILD_DIR' => build_dir,
+        'CONFIGURATION' => @build_config.name,
         'EFFECTIVE_PLATFORM_NAME' => 'emscripten',
         'PROJECT_DIR' => xcodeproj_dir,
         'SRCROOT' => xcodeproj_dir,
@@ -1414,21 +1200,21 @@ module A2OBrew
         'SDK_DIR' => '', # FIXME: currently ignores
         'DEVELOPER_FRAMEWORKS_DIR' => '', # FIXME: currently ignores
         'MYPROJ_HOME' => '', # FIXME: currently ignores
-        'TARGET_NAME' => target.name
+        'TARGET_NAME' => @target.name
       }
 
       if env.key?(prop)
         env[prop]
       else
-        expand(build_config.resolve_build_setting(prop), target, build_config, type)
+        expand(@build_config.resolve_build_setting(prop), type)
       end
     end
 
-    def expand(value, target, build_config, type = nil)
+    def expand(value, type = nil)
       if value.is_a?(Array)
         value.delete('$(inherited)')
         value.map do |v|
-          expand(v, target, build_config)
+          expand(v)
         end
       else
         case type
@@ -1438,23 +1224,23 @@ module A2OBrew
           if value.nil?
             []
           else
-            [expand(value, target, build_config)]
+            [expand(value)]
           end
         else
           if value.nil?
             nil
           else
-            resolve_macro(value, target, build_config)
+            resolve_macro(value)
           end
         end
       end
     end
 
-    def resolve_macro(value, target, build_config)
-      value.gsub(/\$(\{|\()?([A-Za-z0-9_]+)(\{|\))?/) do |m|
+    def resolve_macro(value)
+      value.gsub(/\$(\{|\()?([A-Za-z0-9_]+)(\}|\))?/) do |m|
         varname = Regexp.last_match(2)
 
-        value = build_setting(target, build_config, varname)
+        value = build_setting(varname)
 
         raise Informative, "Not support for #{m}" unless value
 
@@ -1482,13 +1268,13 @@ module A2OBrew
       end
     end
 
-    def system_framework_resources(a2o_target)
+    def system_framework_resources
       builds = []
       outputs = []
-      out_dir = framework_bundle_dir(a2o_target)
+      out_dir = framework_bundle_dir
 
       Dir.glob("#{frameworks_dir}/*.framework/Resources/") do |path|
-        f = file_recursive_copy(path, out_dir, frameworks_dir)
+        f = Ninja.file_recursive_copy(path, out_dir, frameworks_dir)
         builds += f[:builds]
         outputs += f[:outputs]
       end
