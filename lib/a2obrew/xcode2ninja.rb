@@ -1127,7 +1127,7 @@ module A2OBrew
       builds
     end
 
-    def static_library_build_phase(_phase)
+    def static_library_build_phase
       builds = []
 
       library_path = "#{pre_products_dir}/#{@target.product_reference.path}"
