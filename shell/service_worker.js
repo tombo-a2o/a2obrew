@@ -40,3 +40,24 @@ self.addEventListener('activate', (event) => {
     })
   );
 });
+
+self.addEventListener('message', (event) => {
+  switch (event.data.command) {
+    case 'delete-all-cache':
+      console.log('ServiceWorker: clear all caches');
+      event.waitUntil(
+        caches.keys().then((cacheNames) => {
+          return Promise.all(
+            cacheNames.map((cacheName) => {
+              return caches.delete(cacheName);
+            })
+          ).then((_successes) => {
+            event.ports[0].postMessage({
+              error: null
+            });
+          });
+        })
+      );
+      break;
+  }
+});

@@ -311,7 +311,6 @@ var A2OShell;
     };
     fireRotate.degree = 90;
 
-
     switch (A2OShell.keypad) {
       case 'tap':
         var button = document.getElementById('button-tap');
@@ -469,6 +468,7 @@ var A2OShell;
   };
 
   var prepareErrorHandler = function () {
+    // Airbrake
     if (environment === 'production') {
       var airbrake = new airbrakeJs.Client({
         projectId: 137659,
@@ -477,21 +477,40 @@ var A2OShell;
       });
 
       window.addEventListener('error', function (event) {
-        var error = event.error;
-        if (typeof error === 'object' && !(error instanceof Error)) error = JSON.stringify(error);
-        airbrake.notify({
-          error: error,
-          context: { environment: environment }
-        });
+        try {
+          var error = event.error;
+          if (typeof error === 'object' && !(error instanceof Error)) error = JSON.stringify(error);
+          airbrake.notify({
+            error: error,
+            context: { environment: environment }
+          });
+        } catch (_e) {
+          // do nothing
+        }
       });
     }
+
+    // Delete service worker cache
+    window.addEventListener('error', function (event) {
+      try {
+        sendMessageToServiceWorker({
+          command: 'delete-all-cache'
+        });
+      } catch (_e) {
+        // do nothing
+      }
+    });
   };
 
   var registerServiceWorker = function (callback) {
-    if ((environment === 'production' || A2OShell.useServiceWorker) &&
-        'serviceWorker' in navigator) {
+    if (A2OShell.useServiceWorker && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', function(event) {
+        // Message from ServiceWorker, currently do nothing
+      });
       navigator.serviceWorker.register('service_worker.js').then(function (registration) {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope)
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        return navigator.serviceWorker.ready;
+      }).then(() => {
         callback();
       }).catch(function (err) {
         console.log('ServiceWorker registration failed: ', err);
@@ -501,6 +520,25 @@ var A2OShell;
       console.log('No ServiceWorker');
       callback();
     }
+  };
+
+  var sendMessageToServiceWorker = function (message) {
+    return new Promise(function(resolve, reject) {
+      var messageChannel = new MessageChannel();
+      messageChannel.port1.onmessage = function(event) {
+        if (event.data.error) {
+          console.error(event.data.error);
+          reject(event.data.error);
+        } else {
+          resolve(event.data);
+        }
+      };
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage(message, [messageChannel.port2])
+      } else {
+        reject(new Error('No service worker controller.'));
+      }
+    });
   };
 
   var main = function () {
