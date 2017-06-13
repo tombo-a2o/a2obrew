@@ -25,7 +25,7 @@ module A2OBrew
     end
 
     # die unless emcc
-    def check_emsdk_env
+    def check_emscripten_env
       error_exit(<<~EOF) if find_executable('emcc').nil?
         Cannot find emcc. Execute the command below.
 
@@ -37,13 +37,16 @@ EOF
       File.expand_path('../../..', __FILE__)
     end
 
-    def emsdk_path
-      "#{a2obrew_path}/emsdk"
+    def emscripten_path
+      "#{a2obrew_path}/emscripten"
+    end
+
+    def lang_path
+      "#{a2obrew_path}/lang"
     end
 
     def emscripten_system_local_path
-      # FIXME: use $EMSCRIPTEN
-      "#{emsdk_path}/emscripten/a2o/system/local"
+      "#{emscripten_path}/emscripten/system/local"
     end
   end
 end

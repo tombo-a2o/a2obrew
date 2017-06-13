@@ -19,7 +19,7 @@ module A2OBrew
     method_option :keep, type: :numeric, aliases: '-k', desc: 'keep going until N jobs fail'
     method_option :xcodeproj_target, desc: 'Build target for xcodeproj'
     def build
-      check_emsdk_env
+      check_emscripten_env
 
       ninja_path = generate_ninja_build(options)
       execute_ninja_command(ninja_path, options)
