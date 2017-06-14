@@ -16,25 +16,14 @@ else
   exit 1
 fi
 
-# Install Ruby for a2obrew CLI
-./scripts/install_ruby.sh
+# Install Python2, Ruby and Node
+./scripts/install_langs.sh
 
-# Install LLs for emscripten
-./scripts/install_node.sh
-./scripts/install_python.sh
-
-# Load LLs
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
-export PATH="$HOME/.pyenv/bin:$PATH"
-eval "$(pyenv init -)" || true
-eval "$(pyenv virtualenv-init -)"
-export PATH="$HOME/.nodenv/bin:$PATH"
-eval "$(nodenv init -)"
+# Install Gems
+./lang/ruby/bin/bundle install
 
 # Install emscripten
 bin/a2obrew emscripten upgrade
-source emsdk/emsdk_env.sh > /dev/null
 eval "$(bin/a2obrew init -)"
 
 if [ $# == 1 ]; then

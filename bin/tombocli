@@ -1,13 +1,4 @@
-#!/usr/bin/env ruby
-# encoding: utf-8
-# frozen_string_literal: true
-
-Encoding.default_external = Encoding::UTF_8
-
-script_path = File.dirname(__FILE__)
-
-$LOAD_PATH << "#{script_path}/../lib"
-
-require 'tombo/cli'
-
-Tombo::CLI.start(ARGV)
+#!/bin/bash
+script_path="$(dirname "${BASH_SOURCE}")"
+export BUNDLE_GEMFILE=${script_path}/../Gemfile
+${script_path}/../lang/ruby/bin/ruby ${script_path}/tombocli.rb "$@"

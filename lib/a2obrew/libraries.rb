@@ -79,7 +79,7 @@ module A2OBrew
 
       # TODO: Refactor to rubocop compliant
       def build_main(command, proj_names, target = nil) # rubocop:disable Metrics/PerceivedComplexity,Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/LineLength
-        check_emsdk_env
+        check_emscripten_env
         check_target(target)
         depends = A2OCONF[:depends]
         depends[:projects].each do |proj|

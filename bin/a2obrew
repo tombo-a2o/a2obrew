@@ -1,28 +1,4 @@
-#!/usr/bin/env ruby
-# encoding: utf-8
-# frozen_string_literal: true
-
-Encoding.default_external = Encoding::UTF_8
-
-script_path = File.dirname(__FILE__)
-a2obrew_path = File.expand_path("#{script_path}/../")
-
-TARGET_RUBY_VERSION = File.read("#{a2obrew_path}/.ruby-version").chomp
-TARGET_GEMSET_NAME = File.read("#{a2obrew_path}/.rbenv-gemsets").chomp
-
-rbenv_root = ENV['RBENV_ROOT']
-gemset_root = "#{rbenv_root}/versions/#{TARGET_RUBY_VERSION}/gemsets/#{TARGET_GEMSET_NAME}"
-
-if RUBY_VERSION != TARGET_RUBY_VERSION || ENV['GEM_HOME'] != gemset_root
-  puts "You should install ruby #{TARGET_RUBY_VERSION} with rbenv and rbenv-gemset"
-  puts "Current ruby version is '#{RUBY_VERSION}' and gem home is #{ENV['GEM_HOME']}"
-  exit(1)
-end
-
-$LOAD_PATH << "#{a2obrew_path}/lib"
-require 'a2obrew/cli'
-
-config = "#{a2obrew_path}/a2oconfig.rb"
-require config
-
-A2OBrew::CLI.start(ARGV)
+#!/bin/bash
+script_path="$(dirname "${BASH_SOURCE}")"
+export BUNDLE_GEMFILE=${script_path}/../Gemfile
+${script_path}/../lang/ruby/bin/ruby ${script_path}/a2obrew.rb "$@"

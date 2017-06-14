@@ -31,11 +31,11 @@ module A2OBrew
 COMPLETIONS
         end
         puts <<~INIT
-          source "#{emsdk_path}/emsdk_env.sh"
+          source "#{emscripten_path}/emenv.sh"
 INIT
       else
         puts <<~USAGE
-          # Load emsdk_env automatically by appending
+          # Load a2o related environment variables automatically by appending
           # the following to #{shell_rc_path}
 
           eval "$(a2obrew init -)"

@@ -9,7 +9,10 @@ Thumbs.db
 .DS_Store
 
 # Emscripten
-emsdk/
+emscripten/
+
+# LL
+lang/
 
 # Depends
 depends/
