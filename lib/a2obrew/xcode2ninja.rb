@@ -136,7 +136,7 @@ module A2OBrew
             }
           }
         else
-          dependenet = A2OTarget.new(@xcodeproj, dependency.target, @build_config, @active_project_config, @a2o_target_name, @a2obrew_path)
+          dependenet = A2OTarget.new(@xcodeproj, @xcodeproj_path, dependency.target, @build_config, @active_project_config, @a2o_target_name, @a2obrew_path)
           builds += dependenet.generate_build_statements
         end
       end
