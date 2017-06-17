@@ -55,6 +55,7 @@ module A2OBrew
         <<~EOT
           export PATH=#{emscripten_path}/fastcomp/build/bin:#{emscripten_path}/emscripten:#{lang_path}/python2/bin:#{lang_path}/ruby/bin:#{lang_path}/node/bin:$PATH
           export EM_CONFIG=#{emscripten_path}/.emscripten
+          export EM_PORTS=#{emscripten_path}/.emscripten_ports
           export EM_CACHE=#{emscripten_path}/.emscripten_cache
           export EMSCRIPTEN=#{emscripten_path}/emscripten
 EOT
