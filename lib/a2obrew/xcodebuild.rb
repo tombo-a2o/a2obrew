@@ -135,12 +135,17 @@ EOF
 
     def execute_ninja_build(ninja_path, options)
       build_log = File.open(BUILD_LOG_PATH, 'w')
-      unresolved = []
       jobs = "-j #{options[:jobs]}" if options[:jobs]
       keep = "-k #{options[:keep]}" if options[:keep]
-      Util.cmd_exec("ninja -v -f #{ninja_path} #{jobs} #{keep}", 'ninja build error') do |line|
-        puts line
-        build_log.write Util.filter_ansi_esc(line)
+      output = []
+      Util.cmd_exec("ninja -v -f #{ninja_path} #{jobs} #{keep}", 'ninja build error') do |output_buffer|
+        print output_buffer
+        build_log.write Util.filter_ansi_esc(output_buffer)
+        output << output_buffer
+      end
+
+      unresolved = []
+      output.join('').each_line do |line|
         case line.chomp
         when / unresolved symbol: (.+)\z/
           unresolved << Regexp.last_match(1)

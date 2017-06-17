@@ -43,14 +43,15 @@ module A2OBrew
       PTY.spawn(cmd) do |stdout, stdin, pid|
         begin
           stdin.close
-          stdout.each do |line|
+          loop do
+            ptyout = stdout.readpartial(4096)
             if output_filter.nil?
-              puts line
+              print ptyout
             else
-              yield line
+              yield ptyout
             end
           end
-        rescue Errno::EIO # rubocop:disable Lint/HandleExceptions
+        rescue Errno::EIO, EOFError # rubocop:disable Lint/HandleExceptions
         rescue Interrupt
           raise CmdExecException.new('Interrupt', 1)
         end

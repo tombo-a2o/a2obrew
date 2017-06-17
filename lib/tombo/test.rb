@@ -45,11 +45,11 @@ module Tombo
       if dotfile.profile?(PROFILE)
         # Check https://developer.tombo.io/developer with profile
         begin
-          lines = []
-          A2OBrew::Util.cmd_exec("tombocli developers show -p #{PROFILE} 2>/dev/null") do |line|
-            lines << line
+          outputs = []
+          A2OBrew::Util.cmd_exec("tombocli developers show -p #{PROFILE} 2>/dev/null") do |output|
+            outputs << output
           end
-          JSON.parse(lines.join("\n"))
+          JSON.parse(outputs.join(''))
         rescue A2OBrew::CmdExecException, JSON::ParserError
           puts '`tombocli developers show` fails.'
           dotfile.delete_profile(PROFILE)
@@ -76,12 +76,12 @@ module Tombo
         currency_id = 392 # JPY
         time_zone_id = 280 # Asia/Tokyo
 
-        lines = []
+        outputs = []
         begin
-          A2OBrew::Util.cmd_exec("tombocli developers create -p #{PROFILE} --name '#{name}' --email '#{email}' --password '#{password}' --password-confirmation '#{password_confirmation}' --country-id #{country_id} --currency-id #{currency_id} --language-id #{LANGUAGE_ID} --time-zone-id #{time_zone_id} 2>/dev/null") do |line|
-            lines << line
+          A2OBrew::Util.cmd_exec("tombocli developers create -p #{PROFILE} --name '#{name}' --email '#{email}' --password '#{password}' --password-confirmation '#{password_confirmation}' --country-id #{country_id} --currency-id #{currency_id} --language-id #{LANGUAGE_ID} --time-zone-id #{time_zone_id} 2>/dev/null") do |output|
+            outputs << output
           end
-          created_developer = JSON.parse(lines.join("\n"))
+          created_developer = JSON.parse(outputs.join(''))
           developer_credential = created_developer['data']['attributes']['credential']
           # Create new profile on ~/.tombo/config with credential
           dotfile.set_profile(PROFILE, developer_portal_uri: DEV_PORTAL_URI,
@@ -89,7 +89,7 @@ module Tombo
                                        compress_with_zopfli: false,
                                        developer_credential: developer_credential)
         rescue A2OBrew::CmdExecException, JSON::ParserError => e
-          puts lines
+          puts outputs.join('')
           puts e
           error_exit "Cannot create developer: #{name}"
         end
@@ -99,14 +99,14 @@ module Tombo
 
       # Check we have already had a application which has the screen_name SCREEN_NAME
       # If exists, fetch the application_id.
-      lines = []
-      A2OBrew::Util.cmd_exec("tombocli applications index -p #{PROFILE} 2>/dev/null") do |line|
-        lines << line
+      outputs = []
+      A2OBrew::Util.cmd_exec("tombocli applications index -p #{PROFILE} 2>/dev/null") do |output|
+        outputs << output
       end
 
       application_id = nil
       begin
-        applications = JSON.parse(lines.join("\n"))['data']
+        applications = JSON.parse(outputs.join(''))['data']
         applications.each do |application|
           application_id = application['id'] if application['attributes']['screen_name'] == SCREEN_NAME
         end
@@ -116,47 +116,45 @@ module Tombo
 
       # If application_id is nil, create the application which has the screen_name SCREEN_NAME
       if application_id.nil?
-        lines = []
+        outputs = []
         begin
-          A2OBrew::Util.cmd_exec("tombocli applications create -p #{PROFILE} --default-language-id #{LANGUAGE_ID} --screen-name #{SCREEN_NAME} 2>/dev/null") do |line|
-            lines << line
+          A2OBrew::Util.cmd_exec("tombocli applications create -p #{PROFILE} --default-language-id #{LANGUAGE_ID} --screen-name #{SCREEN_NAME} 2>/dev/null") do |output|
+            outputs << output
           end
         rescue A2OBrew::CmdExecException => e
-          puts lines
+          puts outputs.join('')
           puts e
           error_exit "Cannot create an application. Maybe the screen name `#{SCREEN_NAME}` is already taken."
         end
 
         begin
-          application = JSON.parse(lines.join("\n"))['data']
+          application = JSON.parse(outputs.join(''))['data']
           application_id = application['id']
         rescue JSON::ParserError
           error_exit('Cannot create an application')
         end
 
         # Create application localize
-        A2OBrew::Util.cmd_exec("tombocli application_localizes create -p #{PROFILE} --application-id #{application_id} --language-id #{LANGUAGE_ID} --name #{SCREEN_NAME} 2>/dev/null") do |line|
-        end
+        A2OBrew::Util.cmd_exec("tombocli application_localizes create -p #{PROFILE} --application-id #{application_id} --language-id #{LANGUAGE_ID} --name #{SCREEN_NAME} 2>/dev/null")
       end
 
       # Create application version
       version = Time.now.strftime('%Y%m%d%H%M%S%3N') # msec
-      lines = []
-      A2OBrew::Util.cmd_exec("tombocli application_versions create -p #{PROFILE} --application-id #{application_id} --version #{version} --source-directory #{source_directory} 2>/dev/null") do |line|
-        lines << line
+      outputs = []
+      A2OBrew::Util.cmd_exec("tombocli application_versions create -p #{PROFILE} --application-id #{application_id} --version #{version} --source-directory #{source_directory} 2>/dev/null") do |output|
+        outputs << output
       end
 
       application_version_id = nil
       begin
-        application_version = JSON.parse(lines.join("\n"))['data']
+        application_version = JSON.parse(outputs.join(''))['data']
         application_version_id = application_version['id']
       rescue JSON::ParserError
         error_exit('Cannot create an application version')
       end
 
       # Set the application version latest
-      A2OBrew::Util.cmd_exec("tombocli applications update -p #{PROFILE} --application-id #{application_id} --active-version-id #{application_version_id} 2>/dev/null") do |line|
-      end
+      A2OBrew::Util.cmd_exec("tombocli applications update -p #{PROFILE} --application-id #{application_id} --active-version-id #{application_version_id} 2>/dev/null")
 
       # Open the default browser to show
       system("open #{PLATFORM_URI}/#{SCREEN_NAME}")
