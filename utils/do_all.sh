@@ -5,6 +5,6 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-for repo in emsdk/emscripten/a2o emsdk/clang/fastcomp/src emsdk/clang/fastcomp/src/tools/clang; do
+for repo in emscripten/emscripten emscripten/fastcomp/src emscripten/fastcomp/src/tools/clang; do
   (cd $repo; pwd; $*)
 done
