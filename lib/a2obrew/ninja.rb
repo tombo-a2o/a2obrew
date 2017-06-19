@@ -14,7 +14,7 @@ end
 
 module A2OBrew
   class Ninja
-    def self.write_ninja_build(output_dir, name, builds) # rubocop:disable Metrics/AbcSize
+    def self.write_ninja_build(output_dir, name, builds, default_targets) # rubocop:disable Metrics/AbcSize
       Util.mkdir_p(output_dir)
 
       path = File.join(output_dir, "#{name}.ninja.build")
@@ -41,6 +41,8 @@ module A2OBrew
           end
           f.puts ''
         end
+
+        f.puts "default #{default_targets.map(&:ninja_escape).join(' ')}"
       end
 
       path
