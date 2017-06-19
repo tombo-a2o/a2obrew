@@ -9,6 +9,7 @@ require 'rexml/document' # For parsing storyboard
 
 require_relative 'util'
 require_relative 'ninja'
+require_relative 'xcodeproj_ext'
 
 # rubocop:disable Metrics/ParameterLists
 
@@ -25,66 +26,57 @@ module A2OBrew
   ].freeze
 
   class Xcode2Ninja
-    def initialize(xcodeproj_path, a2obrew_path)
-      self.xcodeproj_path = xcodeproj_path
+    def initialize(xcodeproj_path, xcodeproj_name, a2obrew_path)
+      raise Informative, 'Please specify Xcode project.' unless xcodeproj_path
+
+      @xcodeproj_path = Pathname.new(xcodeproj_path).expand_path
+      @xcodeproj_name = xcodeproj_name
       @a2obrew_path = a2obrew_path
     end
 
     def xcode2ninja(output_dir,
                     xcodeproj_target = nil, build_config_name = nil,
                     active_project_config = {}, a2o_target_name = nil)
-      raise Informative, 'Please specify Xcode project.' unless @xcodeproj_path
 
-      gen_paths = []
+      builds = []
 
-      xcodeproj.targets.each do |target|
-        next if xcodeproj_target && target.name != xcodeproj_target
-        target.build_configurations.each do |build_config|
-          next if build_config_name && build_config.name != build_config_name
-          a2o_target = A2OTarget.new(xcodeproj, xcodeproj_path, target, build_config, active_project_config, a2o_target_name, @a2obrew_path)
-          gen_path = a2o_target.generate_ninja_build(output_dir)
-          gen_paths << gen_path
-        end
+      default_target = xcworkspace ? xcworkspace.find_target(@xcodeproj_name, xcodeproj_target) : xcodeproj.find_target(xcodeproj_target)
+      dependent_targets = default_target.dependent_targets(xcworkspace).to_a
+
+      targets = [default_target] + dependent_targets
+      a2o_targets = targets.map do |target|
+        A2OTarget.new(target, build_config_name, active_project_config, a2o_target_name, @a2obrew_path, File.dirname(@xcodeproj_path))
       end
 
-      gen_paths
+      a2o_targets.each do |a2o_target|
+        builds += a2o_target.generate_build_statements
+      end
+
+      [Ninja.write_ninja_build(output_dir, a2o_target_name, builds, [a2o_targets[0].phony_target_name])]
     end
 
     private
 
-    def xcodeproj_path
-      raise Informative, 'Please specify Xcode project.' unless @xcodeproj_path
-      @xcodeproj_path
-    end
-
-    def xcodeproj_path=(path)
-      @xcodeproj_path = path && Pathname.new(path).expand_path
+    def xcworkspace
+      @workspace ||= File.extname(@xcodeproj_path) == '.xcworkspace' ? Xcodeproj::Workspace.new_from_xcworkspace(@xcodeproj_path) : nil
     end
 
     def xcodeproj
-      @xcodeproj ||= Xcodeproj::Project.open(xcodeproj_path)
+      @xcodeproj ||= File.extname(@xcodeproj_path) != '.xcworkspace' ? Xcodeproj::Project.open(@xcodeproj_path) : nil
     end
   end
 
   class A2OTarget
-    def initialize(xcodeproj, xcodeproj_path, target, build_config, active_project_config, a2o_target_name, a2obrew_path)
-      @xcodeproj = xcodeproj
-      @xcodeproj_path = xcodeproj_path
+    def initialize(target, build_config_name, active_project_config, a2o_target_name, a2obrew_path, base_dir)
       @target = target
-      @build_config = build_config
+      @build_config = target.build_configurations.find { |build_config| build_config.name == build_config_name }
       @active_project_config = active_project_config
       @a2o_target_name = a2o_target_name
       @a2obrew_path = a2obrew_path
-      @frameworks = []
-      @static_libraries_from_other_projects = []
+      @base_dir = base_dir
     end
 
-    def generate_ninja_build(output_dir)
-      builds = generate_build_statements
-      Ninja.write_ninja_build(output_dir, @a2o_target_name, builds)
-    end
-
-    def generate_build_statements # rubocop:disable Metrics/AbcSize,CyclomaticComplexity
+    def generate_build_statements
       builds = []
       @target.build_phases.each do |phase|
         builds += case phase
@@ -118,36 +110,13 @@ module A2OBrew
 
       builds += after_build_phase
 
-      @target.dependencies.each do |dependency|
-        proxy = dependency.target_proxy
-        if proxy.remote?
-          remote_object_file = @xcodeproj.objects_by_uuid[proxy.container_portal]
-          remote_project_path = File.dirname(remote_object_file.path)
-          remote_target = proxy.proxied_object
-          remote_product = remote_target.product_reference
-          remote_lib_path = File.join(remote_project_path, pre_products_dir, remote_product.path)
-          builds << {
-            outputs: [remote_lib_path],
-            rule_name: 'xcodebuild',
-            inputs: [remote_project_path],
-            build_variables: {
-              a2o_target: @a2o_target_name,
-              xcodeproj_target: remote_target.name.ninja_escape
-            }
-          }
-        else
-          dependenet = A2OTarget.new(@xcodeproj, @xcodeproj_path, dependency.target, @build_config, @active_project_config, @a2o_target_name, @a2obrew_path)
-          builds += dependenet.generate_build_statements
-        end
-      end
-
       builds
     end
 
     # paths
 
     def xcodeproj_dir
-      File.dirname(@xcodeproj_path)
+      File.dirname(@target.project.path)
     end
 
     def build_dir
@@ -189,13 +158,13 @@ module A2OBrew
     end
 
     def objects_dir
-      "#{build_dir}/objects"
+      "#{build_dir}/#{@target.unique_name}/objects"
     end
 
     # pre_products' paths to be coped to products
 
     def pre_products_dir
-      "#{build_dir}/pre_products"
+      "#{build_dir}/#{@target.unique_name}/pre_products"
     end
 
     def pre_products_application_dir
@@ -366,6 +335,18 @@ module A2OBrew
       @active_project_config.dig(:flags, rule)
     end
 
+    def phony_target_name
+      @target.unique_name
+    end
+
+    def dependent_target_names
+      @target.dependencies.map do |dependency|
+        proxy = dependency.target_proxy
+        target = proxy.proxied_object
+        target.unique_name
+      end
+    end
+
     # phases
 
     def resources_build_phase(phase) # rubocop:disable Metrics/MethodLength,AbcSize,CyclomaticComplexity,PerceivedComplexity
@@ -392,7 +373,7 @@ module A2OBrew
         end
 
         files.each do |file|
-          local_path = file.real_path.relative_path_from(Pathname(xcodeproj_dir))
+          local_path = file.real_path.relative_path_from(Pathname(@base_dir))
 
           next if resource_filter && !resource_filter.call(local_path.to_s)
 
@@ -704,7 +685,7 @@ module A2OBrew
         raise Informative, "Unsupported file class '#{file.class}' of #{file.path}"
       end
 
-      source_path = file_ref.real_path.relative_path_from(Pathname(xcodeproj_dir))
+      source_path = file_ref.real_path.relative_path_from(Pathname(@base_dir))
       object = File.join(objects_dir, dest_name(source_path))
 
       settings = build_file.settings
@@ -742,9 +723,8 @@ module A2OBrew
       builds = []
       objects = []
 
-      header_extensions = %w[.h .hpp]
-      header_dirs = @xcodeproj.main_group.recursive_children.select { |g| g.path && header_extensions.include?(File.extname(g.path)) }.map do |g|
-        full_path = g.real_path.relative_path_from(Pathname(xcodeproj_dir)).to_s
+      header_dirs = @target.project.header_files.map do |g|
+        full_path = g.real_path.relative_path_from(Pathname(@base_dir)).to_s
         File.dirname(full_path)
       end.to_a.uniq
 
@@ -754,6 +734,7 @@ module A2OBrew
       header_search_paths = build_setting('HEADER_SEARCH_PATHS', :array).reject { |value| value == '' }
       user_header_search_paths = build_setting('USER_HEADER_SEARCH_PATHS', :string) || ''
       other_cflags = (build_setting('OTHER_CFLAGS', :array) || []).join(' ')
+      # other_ldflags = (build_setting('OTHER_LDFLAGS', :array) || []).join(' ')
       cxx_std = build_setting('CLANG_CXX_LANGUAGE_STANDARD', :string)
       c_std = build_setting('GCC_C_LANGUAGE_STANDARD', :string)
       preprocessor_definitions = (build_setting('GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
@@ -1024,7 +1005,7 @@ module A2OBrew
       dep_paths << data_js_path
 
       dynamic_link_frameworks = A2OCONF[:xcodebuild][:dynamic_link_frameworks]
-      static_link_frameworks = (Set.new(@frameworks) + A2OCONF[:xcodebuild][:static_link_frameworks] - dynamic_link_frameworks)
+      static_link_frameworks = (Set.new(linked_framework_names) + A2OCONF[:xcodebuild][:static_link_frameworks] - dynamic_link_frameworks)
 
       # static link frameworks
       a2o_options += static_link_frameworks.map { |f| "-framework #{f.ninja_escape}" }
@@ -1037,7 +1018,7 @@ module A2OBrew
       # TODO: dpe_paths += static_libs.map{ |lib| real path of lib }
 
       # objects
-      linked_objects = @static_libraries_from_other_projects + [bitcode_path]
+      linked_objects = static_libraries_from_other_projects + [bitcode_path]
 
       # asm
       asm_shared_lib_params = generate_share_library_build_params(dynamic_link_frameworks, 'so.js')
@@ -1124,6 +1105,12 @@ module A2OBrew
       f = Ninja.file_link('../../shell_files', shell_files_link_dir)
       builds += f[:builds]
 
+      builds << {
+        outputs: [phony_target_name],
+        rule_name: 'phony',
+        inputs: products_outputs + dependent_target_names
+      }
+
       builds
     end
 
@@ -1135,40 +1122,60 @@ module A2OBrew
       builds << {
         outputs: [library_path],
         rule_name: 'archive',
-        inputs: [bitcode_path]
+        inputs: [bitcode_path] + dependent_target_names
+      }
+
+      builds << {
+        outputs: [phony_target_name],
+        rule_name: 'phony',
+        inputs: [library_path]
       }
 
       builds
     end
 
-    def frameworks_build_phase(phase)
-      builds = []
-
-      @frameworks = []
-      @static_libraries_from_other_projects = []
-      phase.files.each do |file|
+    def linked_framework_names
+      framework_names = []
+      @target.frameworks_build_phase.files.each do |file|
         file_ref = file.file_ref
-        case file_ref
-        when Xcodeproj::Project::Object::PBXFileReference
-          # TODO: handle .a and .dylib
-          name = file_ref.name
-          if name && name.end_with?('.framework') && file_ref.source_tree == 'SDKROOT'
-            @frameworks << File.basename(name, '.framework')
-          end
-        when Xcodeproj::Project::Object::PBXReferenceProxy
-          proxy = file_ref.remote_ref
-          remote_object_file = @xcodeproj.objects_by_uuid[proxy.container_portal]
-          # FIXME: determine remote target more appropriately
-          library_path = File.join(File.dirname(remote_object_file.path),
-                                   pre_products_dir,
-                                   file_ref.path)
-          @static_libraries_from_other_projects << library_path
-        else
-          raise Informative, "Unsupported file_ref #{file_ref}"
+        next unless file_ref.is_a?(Xcodeproj::Project::Object::PBXFileReference)
+
+        # TODO: handle .dylib
+        name = file_ref.name
+        if name && name.end_with?('.framework') && file_ref.source_tree == 'SDKROOT'
+          framework_names << File.basename(name, '.framework')
         end
       end
 
-      builds
+      framework_names
+    end
+
+    def static_libraries_from_other_projects
+      libs = []
+
+      @target.frameworks_build_phase.files.each do |file|
+        file_ref = file.file_ref
+        remote_target = case file_ref
+                        when Xcodeproj::Project::Object::PBXFileReference
+                          if file_ref.source_tree == 'BUILT_PRODUCTS_DIR'
+                            @target.project.workspace.library_to_targert_map[file_ref.path]
+                          end
+                        when Xcodeproj::Project::Object::PBXReferenceProxy
+                          proxy = file_ref.remote_ref
+                          proxy.remote_target
+                        end
+
+        if remote_target
+          remote_a2o_target = A2OTarget.new(remote_target, @build_config.name, @active_project_config, @a2o_target_name, @a2obrew_path, @base_dir)
+          libs << "#{remote_a2o_target.pre_products_dir}/#{file_ref.path}"
+        end
+      end
+
+      libs
+    end
+
+    def frameworks_build_phase(_phase)
+      []
     end
 
     def header_build_phase(_phase)
