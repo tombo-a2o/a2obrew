@@ -192,6 +192,7 @@ BUILD
           GameController
           GameKit
           ImageIO
+          IOKit
           MapKit
           MediaPlayer
           MessageUI
