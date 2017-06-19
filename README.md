@@ -30,7 +30,7 @@ echo 'export PATH="$HOME/a2obrew/bin:$PATH"' >> ~/.bash_profile
 echo 'export PATH="$HOME/a2obrew/bin:$PATH"' >> ~/.zshrc
 ```
 
-4. Add `a2obrew init` to your shell to enable autocompletion and emsdk environment variables. After that, you can use a2obrew and emscripten commands (ex. emcc).
+4. Add `a2obrew init` to your shell to enable a2obrew autocompletion, add `PATH` for python2/ruby/node and set emsripten environment variables. After that, you can use a2obrew and emscripten commands (ex. emcc).
 
 ```sh
 # bash
