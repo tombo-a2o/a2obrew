@@ -5,6 +5,10 @@ class Object
     to_s.gsub(/\$/, '$$').gsub(/ /, '$ ')
   end
 
+  def quote
+    "'#{self}'"
+  end
+
   def shell_quote_escape
     # escape single-quote within single-quoted string
     # cf. http://stackoverflow.com/questions/1250079/how-to-escape-single-quotes-within-single-quoted-strings

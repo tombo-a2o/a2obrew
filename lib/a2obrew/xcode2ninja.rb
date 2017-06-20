@@ -565,7 +565,7 @@ module A2OBrew
         rule_name: 'file_packager',
         inputs: resources,
         build_variables: {
-          'target' => t,
+          'target' => t.quote.ninja_escape,
           'js_output' => j,
           'options' => options,
           'packager_target_dir' => packager_target_dir
@@ -713,7 +713,7 @@ module A2OBrew
         inputs: [source_path],
         build_variables: {
           'file_cflags' => file_cflags.join(' '),
-          'source' => source_path,
+          'source' => source_path.quote.ninja_escape,
           'cc_flags' => cc_flags
         }
       }
@@ -794,7 +794,7 @@ module A2OBrew
           inputs: [source_path, prefix_pch],
           build_variables: {
             'file_cflags' => file_cflags,
-            'source' => source_path,
+            'source' => source_path.quote.ninja_escape,
             'cc_flags' => cc_flags
           }
         }
