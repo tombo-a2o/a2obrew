@@ -729,19 +729,16 @@ module A2OBrew
       end.to_a.uniq
 
       # build settings
-      lib_dirs = build_setting('LIBRARY_SEARCH_PATHS', :array)
       framework_search_paths = build_setting('FRAMEWORK_SEARCH_PATHS', :array)
       header_search_paths = build_setting('HEADER_SEARCH_PATHS', :array).reject { |value| value == '' }
       user_header_search_paths = build_setting('USER_HEADER_SEARCH_PATHS', :string) || ''
       other_cflags = (build_setting('OTHER_CFLAGS', :array) || []).join(' ')
-      # other_ldflags = (build_setting('OTHER_LDFLAGS', :array) || []).join(' ')
       cxx_std = build_setting('CLANG_CXX_LANGUAGE_STANDARD', :string)
       c_std = build_setting('GCC_C_LANGUAGE_STANDARD', :string)
       preprocessor_definitions = (build_setting('GCC_PREPROCESSOR_DEFINITIONS', :array) || []).map { |var| "-D#{var}" }.join(' ')
 
       cxx_std = nil if cxx_std == 'compiler-default'
 
-      lib_options = lib_dirs.map { |dir| "-L#{dir}" }.join(' ')
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
       header_options = (header_search_paths + user_header_search_paths.split + header_dirs).map { |dir| "-I\"#{dir}\"" }.join(' ')
 
@@ -754,7 +751,6 @@ module A2OBrew
 
       cc_flags = [framework_dir_options,
                   header_options,
-                  lib_options,
                   prefix_pch_options,
                   other_cflags,
                   preprocessor_definitions,
@@ -996,6 +992,10 @@ module A2OBrew
         pre_products_outputs_asm << js_symbols_path
         pre_products_outputs_wasm << wasm_js_symbols_path
       end
+
+      lib_dirs = build_setting('LIBRARY_SEARCH_PATHS', :array)
+      # other_ldflags = (build_setting('OTHER_LDFLAGS', :array) || []).join(' ')
+      a2o_options += lib_dirs.map { |dir| "-L#{dir}" }
 
       # detect emscripten file changes
       dep_paths = file_list("#{emscripten_dir}/src/")
