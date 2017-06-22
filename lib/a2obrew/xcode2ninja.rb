@@ -1033,7 +1033,7 @@ module A2OBrew
         build_variables: {
           'options' => asm_a2o_options.join(' '),
           'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
-          'js_path' => js_path
+          'js_path' => js_path.ninja_escape.quote
         }
       }
 
@@ -1050,7 +1050,7 @@ module A2OBrew
         build_variables: {
           'options' => wasm_a2o_options.join(' '),
           'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
-          'js_path' => wasm_js_path
+          'js_path' => wasm_js_path.ninja_escape.quote
         }
       }
 
@@ -1088,11 +1088,11 @@ module A2OBrew
           service_worker_template_js_path
         ],
         build_variables: {
-          'pre_products_dir' => pre_products_dir,
-          'products_dir' => products_dir,
-          'products_application_dir' => products_application_dir,
-          'shell_html_path' => application_template_html_path,
-          'service_worker_js_path' => service_worker_template_js_path
+          'pre_products_dir' => pre_products_dir.ninja_escape.quote,
+          'products_dir' => products_dir.ninja_escape.quote,
+          'products_application_dir' => products_application_dir.ninja_escape.quote,
+          'shell_html_path' => application_template_html_path.ninja_escape.quote,
+          'service_worker_js_path' => service_worker_template_js_path.ninja_escape.quote
         }
       }
 
