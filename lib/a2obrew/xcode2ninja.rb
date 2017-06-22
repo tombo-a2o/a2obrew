@@ -1075,7 +1075,7 @@ module A2OBrew
       products_inputs.concat(@ogp_image_output_paths) if @ogp_image_output_paths
 
       products_outputs = products_inputs.map do |path|
-        path.sub('pre_products', 'products')
+        path.sub("#{@target.unique_name}/pre_products", 'products')
       end
       products_outputs << products_html_path
       products_outputs << products_service_worker_js_path
