@@ -154,7 +154,7 @@ module A2OBrew
         {
           rule_name: 'archive',
           description: 'make static link library',
-          command: 'rm -f ${out}; llvm-ar rcs ${out} ${in}'
+          command: 'rm -f ${out}; llvm-ar rcs ${out} ${objects}'
         },
         {
           rule_name: 'echo',

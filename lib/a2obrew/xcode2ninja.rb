@@ -1122,7 +1122,10 @@ module A2OBrew
       builds << {
         outputs: [library_path],
         rule_name: 'archive',
-        inputs: [bitcode_path] + dependent_target_names
+        inputs: [bitcode_path] + dependent_target_names,
+        build_variables: {
+          objects: bitcode_path.ninja_escape
+        }
       }
 
       builds << {
