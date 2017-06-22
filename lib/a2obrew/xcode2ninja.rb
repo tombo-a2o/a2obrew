@@ -1098,17 +1098,17 @@ module A2OBrew
 
       # copy shell.html resources
       out_dir = build_dir
-      f = Ninja.file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
-      builds += f[:builds]
+      shell_files = Ninja.file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
+      builds += shell_files[:builds]
 
       # add a symbolic link
-      f = Ninja.file_link('../../shell_files', shell_files_link_dir)
-      builds += f[:builds]
+      shell_symlink = Ninja.file_link('../../shell_files', shell_files_link_dir)
+      builds += shell_symlink[:builds]
 
       builds << {
         outputs: [phony_target_name],
         rule_name: 'phony',
-        inputs: products_outputs + dependent_target_names
+        inputs: products_outputs + dependent_target_names + shell_files[:outputs] + shell_symlink[:outputs]
       }
 
       builds
