@@ -769,7 +769,7 @@ module A2OBrew
 
       # stubs
       # FIXME: remove
-      Dir.glob('*_dummy.*').each do |source_path|
+      Dir.glob("#{xcodeproj_dir}/*_dummy.*").each do |source_path|
         object = File.join(objects_dir, source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
