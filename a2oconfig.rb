@@ -173,6 +173,7 @@ BUILD
           AVFoundation
           Accounts
           AdSupport
+          AddressBook
           AssetsLibrary
           AudioToolbox
           CommonCrypto
