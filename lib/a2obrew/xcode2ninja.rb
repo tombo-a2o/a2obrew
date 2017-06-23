@@ -1145,7 +1145,7 @@ module A2OBrew
 
         # TODO: handle .dylib
         name = file_ref.name
-        if name && name.end_with?('.framework') && file_ref.source_tree == 'SDKROOT'
+        if name && name.end_with?('.framework') && (file_ref.source_tree == 'SDKROOT' || file_ref.source_tree == 'DEVELOPER_DIR')
           framework_names << File.basename(name, '.framework')
         end
       end
