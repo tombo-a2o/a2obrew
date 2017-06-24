@@ -83,6 +83,13 @@ else
   brew install zopfli
 fi
 
+# Install zlib
+if brew list zlib > /dev/null; then
+  echo "* zlib is installed"
+else
+  brew install zlib
+fi
+
 # Install imagemagick
 if brew list imagemagick > /dev/null; then
   echo "* imagemagick is installed"
