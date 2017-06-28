@@ -41,6 +41,18 @@ A2OCONF = {
         clean: 'make clean'
       },
       {
+        name: 'libtiff',
+        path: 'libtiff',
+        repository_uri: 'git@github.com:tomboinc/libtiff.git',
+        branch: 'emscripten',
+        configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags}"',
+        build_path: '%{project_path}/buildEmscripten-%{target}',
+        build_target_path: '%{project_path}/buildEmscripten-%{target}',
+        build: 'make -j8',
+        install: 'make install',
+        clean: 'make clean'
+      },
+      {
         name: 'sqlite3',
         path: 'sqlite3',
         repository_uri: 'git@github.com:tomboinc/sqlite3.git',
