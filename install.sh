@@ -67,6 +67,10 @@ bin/a2obrew libraries install freetype
 bin/a2obrew libraries configure sqlite3
 bin/a2obrew libraries build sqlite3
 bin/a2obrew libraries install sqlite3
+# libtiff
+bin/a2obrew libraries configure libtiff
+bin/a2obrew libraries build libtiff
+bin/a2obrew libraries install libtiff
 # Foundation
 bin/a2obrew libraries configure Foundation
 bin/a2obrew libraries build Foundation
