@@ -510,7 +510,7 @@ var A2OShell;
       navigator.serviceWorker.register('service_worker.js').then(function (registration) {
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
         return navigator.serviceWorker.ready;
-      }).then(() => {
+      }).then(function () {
         callback();
       }).catch(function (err) {
         console.log('ServiceWorker registration failed: ', err);
