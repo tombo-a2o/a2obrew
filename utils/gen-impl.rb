@@ -26,6 +26,12 @@ def default_value(type)
     'IMOBILESDKADS_STATUS_RETRY_WAIT'
   when 'NetworkStatus'
     'ReachableViaWWAN'
+  when 'CGPoint'
+    'CGPointZero'
+  when 'CGSize'
+    'CGSizeZero'
+  when 'CGRect'
+    'CGRectZero'
   else
     throw "unknown type: #{type}"
   end
