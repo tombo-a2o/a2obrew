@@ -1283,7 +1283,7 @@ module A2OBrew
       outputs = []
       out_dir = framework_bundle_dir
 
-      Dir.glob("#{frameworks_dir}/*.framework/Resources/") do |path|
+      Dir.glob("#{frameworks_dir}/*.framework/Resources/*") do |path|
         f = Ninja.file_recursive_copy(path, out_dir, frameworks_dir)
         builds += f[:builds]
         outputs += f[:outputs]
