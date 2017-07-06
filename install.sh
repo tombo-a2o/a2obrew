@@ -20,7 +20,7 @@ fi
 ./scripts/install_langs.sh
 
 # Install node_modules
-./lang/node/bin/node ./lang/node/bin/npm install
+./lang/node/bin/node ./lang/node/bin/npm install -g
 
 # Install Gems
 ./lang/ruby/bin/bundle install
