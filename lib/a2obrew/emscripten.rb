@@ -53,7 +53,7 @@ module A2OBrew
 
       def emenv_sh
         <<~EOT
-          export PATH=#{emscripten_path}/fastcomp/build/bin:#{emscripten_path}/emscripten:#{lang_path}/python2/bin:#{lang_path}/ruby/bin:#{lang_path}/node/bin:$PATH
+          export PATH=#{emscripten_path}/fastcomp/build/bin:#{emscripten_path}/emscripten:#{lang_path}/python2/bin:#{lang_path}/ruby/bin:#{lang_path}/node/bin:#{lang_path}/node/lib/node_modules/a2obrew/node_modules/.bin:$PATH
           export EM_CONFIG=#{emscripten_path}/.emscripten
           export EM_PORTS=#{emscripten_path}/.emscripten_ports
           export EM_CACHE=#{emscripten_path}/.emscripten_cache

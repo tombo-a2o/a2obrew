@@ -19,6 +19,9 @@ fi
 # Install Python2, Ruby and Node
 ./scripts/install_langs.sh
 
+# Install node_modules
+./lang/node/bin/node ./lang/node/bin/npm install
+
 # Install Gems
 ./lang/ruby/bin/bundle install
 
