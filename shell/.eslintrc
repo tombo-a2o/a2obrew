@@ -9,7 +9,8 @@
     "Module": true,
     "A2OShell": true,
     "ENV": true,
-    "airbrakeJs": true
+    "airbrakeJs": true,
+    "Promise": true
   },
   "rules": {
     "no-console": 0,

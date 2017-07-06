@@ -491,7 +491,7 @@ var A2OShell;
     }
 
     // Delete service worker cache
-    window.addEventListener('error', function (event) {
+    window.addEventListener('error', function (_event) {
       try {
         sendMessageToServiceWorker({
           command: 'delete-all-cache'
@@ -504,7 +504,7 @@ var A2OShell;
 
   var registerServiceWorker = function (callback) {
     if (A2OShell.useServiceWorker && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', function(event) {
+      navigator.serviceWorker.addEventListener('message', function (_event) {
         // Message from ServiceWorker, currently do nothing
       });
       navigator.serviceWorker.register('service_worker.js').then(function (registration) {
@@ -523,9 +523,9 @@ var A2OShell;
   };
 
   var sendMessageToServiceWorker = function (message) {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       var messageChannel = new MessageChannel();
-      messageChannel.port1.onmessage = function(event) {
+      messageChannel.port1.onmessage = function (event) {
         if (event.data.error) {
           console.error(event.data.error);
           reject(event.data.error);
