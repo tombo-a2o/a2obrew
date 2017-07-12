@@ -372,7 +372,7 @@ module A2OBrew
           raise Informative, "Don't support the file #{files_ref.class.name}."
         end
 
-        files.each do |file|
+        files.each do |file| # rubocop:disable Metrics/BlockLength
           local_path = file.real_path.relative_path_from(Pathname(@base_dir))
 
           next if resource_filter && !resource_filter.call(local_path.to_s)
@@ -409,16 +409,6 @@ module A2OBrew
               }
             }
             resources << remote_path
-          elsif %w[.caf .aiff].include? File.extname(file.path)
-            # convert caf file to mp4, but leave file name as is
-            remote_path = File.join(resources_dir, local_path.basename)
-
-            builds << {
-              outputs: [remote_path],
-              rule_name: 'audio-convert',
-              inputs: [local_path]
-            }
-            resources << remote_path
           else
             if file.path == 'Images.xcassets' || file.path == 'Assets.xcassets'
               # Asset Catalog for icon and launch images
@@ -444,7 +434,24 @@ module A2OBrew
                         end
 
             # All resource files are stored in the same directory
-            f = Ninja.file_recursive_copy(local_path, resources_dir, in_prefix)
+            f = Ninja.file_recursive_exec(local_path, resources_dir, in_prefix) do |in_path, out_dir, in_prefix_dir|
+              if %w[.caf .aiff].include? File.extname(in_path)
+                # convert caf file to mp4, but leave file name as is
+
+                rel_path = in_path.relative_path_from(in_prefix_dir)
+                remote_path = File.join(resources_dir, rel_path)
+                {
+                  build: {
+                    outputs: [remote_path],
+                    rule_name: 'audio-convert',
+                    inputs: [in_path]
+                  },
+                  output: remote_path
+                }
+              else
+                Ninja.file_copy(in_path, out_dir, in_prefix_dir)
+              end
+            end
             builds += f[:builds]
             resources += f[:outputs]
           end
