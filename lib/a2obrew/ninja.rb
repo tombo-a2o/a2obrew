@@ -34,7 +34,7 @@ module A2OBrew
 
         builds.each do |b|
           # escape inputs and outpus here
-          inputs = b[:inputs].map(&:ninja_escape).join(' ')
+          inputs = b[:inputs].map(&:ninja_escape).join(" $\n    ")
           outputs = b[:outputs].map(&:ninja_escape).join(' ')
           f.puts "build #{outputs}: #{b[:rule_name]} #{inputs}"
 
