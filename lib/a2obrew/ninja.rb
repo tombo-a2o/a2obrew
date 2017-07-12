@@ -195,7 +195,7 @@ module A2OBrew
       }
     end
 
-    def self.file_recursive_copy(in_path, out_dir, in_prefix_dir = '.')
+    def self.file_recursive_exec(in_path, out_dir, in_prefix_dir, &block)
       builds = []
       outputs = []
 
@@ -203,12 +203,12 @@ module A2OBrew
       if File.directory?(in_path)
         Pathname(in_path).find do |path|
           next unless path.file?
-          e = file_copy(path, out_dir, in_prefix_path)
-          builds << e[:build]
-          outputs << e[:output]
+          e = file_recursive_exec(path, out_dir, in_prefix_path, &block)
+          builds += e[:builds]
+          outputs += e[:outputs]
         end
       else
-        e = file_copy(in_path, out_dir, in_prefix_path)
+        e = yield(in_path, out_dir, in_prefix_path)
         builds << e[:build]
         outputs << e[:output]
       end
@@ -217,6 +217,12 @@ module A2OBrew
         builds: builds,
         outputs: outputs
       }
+    end
+
+    def self.file_recursive_copy(in_path, out_dir, in_prefix_dir = '.')
+      file_recursive_exec(in_path, out_dir, in_prefix_dir) do |in_path2, out_dir2, in_prefix_dir2|
+        file_copy(in_path2, out_dir2, in_prefix_dir2)
+      end
     end
   end
 end
