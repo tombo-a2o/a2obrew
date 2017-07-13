@@ -194,7 +194,7 @@ var A2OShell;
     var select = wasmContainer.getElementsByTagName('select')[0];
     if (select.value === 'auto') {
       // detect WebAssembly
-      if (typeof WebAssembly === 'object') {
+      if (typeof WebAssembly === 'object' && (!A2OShell.autoLaunch || A2OShell.autoLaunch !== "asmjs")) {
         select.value = 'wasm';
       } else {
         select.value = 'asmjs';
