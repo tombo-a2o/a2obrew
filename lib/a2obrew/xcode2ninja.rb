@@ -467,7 +467,7 @@ module A2OBrew
         variables = %w[PRODUCT_NAME PRODUCT_BUNDLE_IDENTIFIER]
         commands = variables.map do |key|
           value = build_setting(key)
-          "-e s/\\$\\(#{key}\\)/#{value}/g -e s/\\${#{key}}/#{value}/g "
+          %!-e "s/\\$\\(#{key}\\)/#{value}/g" -e "s/\\${#{key}}/#{value}/g"!
         end.join(' ')
 
         # NOTE: Should we use file_recursive_copy here?
