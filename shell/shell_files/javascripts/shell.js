@@ -109,6 +109,14 @@ var A2OShell;
         var statusMessageElement = document.getElementById('status-message');
         statusMessageElement.textContent = text;
       };
+      Module.halt = function () {
+        Module['_emscripten_pause_main_loop']();
+        Module['_audioPlayer_stopAll']();
+      };
+      Module.setStatusAndHalt = function (text) {
+        Module.setStatus(text);
+        Module.halt();
+      };
       Module.totalDependencies = 0;
       Module.monitorRunDependencies = function (left) {
         this.totalDependencies = Math.max(this.totalDependencies, left);
@@ -644,8 +652,7 @@ var A2OShell;
       Module.setStatus = function (text) {
         if (text) Module.printErr('[post-exception status] ' + text);
       };
-      Module['_emscripten_pause_main_loop']();
-      Module['_audioPlayer_stopAll']();
+      Module.halt();
     });
 
     if (environment !== 'production') {
