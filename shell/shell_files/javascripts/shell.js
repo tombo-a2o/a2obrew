@@ -110,11 +110,21 @@ var A2OShell;
         statusMessageElement.textContent = text;
       };
       Module.halt = function () {
-        Module['_emscripten_pause_main_loop']();
-        Module['_audioPlayer_stopAll']();
+        if (afterLaunch) {
+          Module['_emscripten_pause_main_loop']();
+          Module['_audioPlayer_stopAll']();
+        } else {
+          Module.postRun.push(function () {
+            Module['_emscripten_pause_main_loop']();
+            Module['_audioPlayer_stopAll']();
+          });
+        }
       };
       Module.setStatusAndHalt = function (text) {
         Module.setStatus(text);
+        Module.setStatus = function (text) {
+          if (text) Module.printErr('[post-exception status] ' + text);
+        };
         Module.halt();
       };
       Module.totalDependencies = 0;
@@ -648,11 +658,7 @@ var A2OShell;
 
     window.addEventListener('error', function (_event) {
       // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
-      Module.setStatus(messages.exception[locale]);
-      Module.setStatus = function (text) {
-        if (text) Module.printErr('[post-exception status] ' + text);
-      };
-      Module.halt();
+      Module.setStatusAndHalt(messages.exception[locale]);
     });
 
     if (environment !== 'production') {
