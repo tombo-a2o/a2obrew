@@ -443,6 +443,7 @@ var A2OShell;
     }
     Module.preRun.push(function () {
       ENV.LANGUAGES = '(' + languages.join(',') + ')';
+      ENV.LOCALE = languages[0];
     });
   };
 
