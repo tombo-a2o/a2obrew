@@ -48,20 +48,30 @@ end
 
 in_protocol = false
 in_method_decl = false
+in_comment = false
 return_type = nil
 
 ARGF.each do |line|
   line.strip!
 
   case line
+  when %r{//}
+    # skip one line comment
+    next
+  when %r{/\*}
+    in_comment = true
+  when %r{\*/}
+    in_comment = false if in_comment
   when /@interface +(\w+) *:/
+    next if in_comment
     interface_name = Regexp.last_match(1)
     puts ''
     puts "@implementation #{interface_name}"
   when /@protocol/
+    next if in_comment
     in_protocol = true unless line.match?(/;/)
   when /(\+|-) *\(.+/
-    next if in_protocol
+    next if in_protocol || in_comment
     trim(line)
     return_type = line.match(/\(([^)]+)\)/)[1].strip
     if line.match?(/;/)
@@ -72,7 +82,7 @@ ARGF.each do |line|
       in_method_decl = true
     end
   when /;/
-    next if in_protocol
+    next if in_protocol || in_comment
     if in_method_decl
       trim(line)
       puts line.delete(';')
@@ -80,12 +90,14 @@ ARGF.each do |line|
       in_method_decl = false
     end
   when /@end/
+    next if in_comment
     if in_protocol
       in_protocol = false
     else
       puts '@end'
     end
   else
+    next if in_comment
     if in_method_decl
       trim(line)
       print line + ' '
