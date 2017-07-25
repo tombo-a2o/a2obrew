@@ -226,6 +226,7 @@ BUILD
           TomboKit
           UIKit
           WebKit
+          XCTest
           iAd
         ]
       }
