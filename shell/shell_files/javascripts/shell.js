@@ -69,6 +69,7 @@ var A2OShell;
         } else {
           gainRatio = rangeVolume.value / 100;
         }
+        if(!Module.CoreAudio) Module.CoreAudio = { setGainRatio: function() {} };
         Module.CoreAudio.setGainRatio(gainRatio);
 
         // launch check flag
