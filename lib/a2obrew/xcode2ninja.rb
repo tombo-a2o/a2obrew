@@ -97,18 +97,35 @@ module A2OBrew
                   end
       end
 
+      builds += generate_target_specific_build_statements
+
+      builds += after_build_phase
+
+      builds
+    end
+
+    def generate_target_specific_build_statements
+      builds = []
+
       if @target.isa == 'PBXNativeTarget'
         builds += case @target.product_type
                   when 'com.apple.product-type.library.static'
                     static_library_build_phase
                   when 'com.apple.product-type.application'
                     application_build_phase
+                  when 'com.apple.product-type.bundle.unit-test'
+                    unit_test_build_phase
                   else
-                    raise Informative, "Don't support productType #{target.product_type}."
+                    raise Informative, "Don't support productType #{@target.product_type}."
                   end
+      elsif @target.isa == 'PBXAggregateTarget'
+        # TODO: implement this
+        builds << {
+          outputs: [phony_target_name],
+          rule_name: 'phony',
+          inputs: dependent_target_names
+        }
       end
-
-      builds += after_build_phase
 
       builds
     end
@@ -177,10 +194,6 @@ module A2OBrew
 
     def pre_products_path_prefix
       "#{pre_products_application_dir}/application"
-    end
-
-    def shell_files_link_dir
-      "#{products_application_dir}/shell_files"
     end
 
     def data_path
@@ -263,6 +276,32 @@ module A2OBrew
 
     def products_service_worker_js_path
       "#{products_application_dir}/service_worker.js"
+    end
+
+    def products_shell_files_link_dir
+      "#{products_application_dir}/shell_files"
+    end
+
+    # unit test
+
+    def unit_test_dir
+      "#{build_dir}/unit_test"
+    end
+
+    def unit_test_application_dir
+      "#{unit_test_dir}/application"
+    end
+
+    def unit_test_html_path
+      "#{unit_test_application_dir}/application.html"
+    end
+
+    def unit_test_service_worker_js_path
+      "#{unit_test_application_dir}/service_worker.js"
+    end
+
+    def unit_test_shell_files_link_dir
+      "#{unit_test_application_dir}/shell_files"
     end
 
     # a2obrew paths
@@ -942,7 +981,7 @@ module A2OBrew
       }
     end
 
-    def application_build_phase # rubocop:disable Metrics/AbcSize,MethodLength,PerceivedComplexity
+    def application_build_phase # rubocop:disable Metrics/AbcSize,MethodLength
       builds = []
 
       # platform parameter json
@@ -989,12 +1028,7 @@ module A2OBrew
         wasm_path
       ]
 
-      if !a2o_flags.include?('-g') && (
-        a2o_flags.include?('-O2') ||
-        a2o_flags.include?('-O3') ||
-        a2o_flags.include?('-Os') ||
-        a2o_flags.include?('-Oz')
-      )
+      if optimized_build?(a2o_flags)
         a2o_options << '--emit-symbol-map'
         pre_products_outputs_asm << js_symbols_path
         pre_products_outputs_wasm << wasm_js_symbols_path
@@ -1053,7 +1087,7 @@ module A2OBrew
       builds << {
         outputs: pre_products_outputs_wasm,
         rule_name: 'compose',
-        inputs: linked_objects + wasm_dep_paths,
+        inputs: linked_objects + wasm_dep_paths + dependent_target_names,
         build_variables: {
           'options' => wasm_a2o_options.join(' '),
           'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
@@ -1109,13 +1143,13 @@ module A2OBrew
       builds += shell_files[:builds]
 
       # add a symbolic link
-      shell_symlink = Ninja.file_link('../../shell_files', shell_files_link_dir)
+      shell_symlink = Ninja.file_link('../../shell_files', products_shell_files_link_dir)
       builds += shell_symlink[:builds]
 
       builds << {
         outputs: [phony_target_name],
         rule_name: 'phony',
-        inputs: products_outputs + dependent_target_names + shell_files[:outputs] + shell_symlink[:outputs]
+        inputs: products_outputs + shell_files[:outputs] + shell_symlink[:outputs]
       }
 
       builds
@@ -1202,6 +1236,125 @@ module A2OBrew
 
     def after_build_phase
       []
+    end
+
+    def unit_test_build_phase # rubocop:disable Metrics/AbcSize,MethodLength
+      builds = []
+
+      # runtime parameter json
+      builds << {
+        outputs: [runtime_parameters_json_path],
+        rule_name: 'echo',
+        inputs: [],
+        build_variables: {
+          contents: generate_runtime_parameters_json.shell_quote_escape
+        }
+      }
+
+      # executable
+
+      # generate js compiler flags
+      a2o_options = [
+        '-v',
+        '-s VERBOSE=1',
+        '-s LZ4=1',
+        '--memory-init-file 1',
+        '--separate-asm'
+      ]
+      a2o_flags = (a2o_project_flags(:html) || '').split
+      a2o_options += a2o_flags
+
+      pre_products_outputs_asm = [
+        js_mem_path,
+        js_path,
+        asm_js_path
+      ]
+
+      lib_dirs = build_setting('LIBRARY_SEARCH_PATHS', :array)
+      # other_ldflags = (build_setting('OTHER_LDFLAGS', :array) || []).join(' ')
+      a2o_options += lib_dirs.map { |dir| "-L#{dir}" }
+
+      # detect emscripten file changes
+      dep_paths = file_list("#{emscripten_dir}/src/")
+
+      # data file
+      a2o_options << "--pre-js #{data_js_path}"
+      dep_paths << data_js_path
+
+      # NO dynamic link!!!!
+      static_link_frameworks = Set.new(linked_framework_names) + A2OCONF[:xcodebuild][:static_link_frameworks] + A2OCONF[:xcodebuild][:dynamic_link_frameworks]
+      static_link_frameworks << 'XCTest'
+
+      # static link frameworks
+      a2o_options += static_link_frameworks.map { |f| "-framework #{f.ninja_escape}" }
+      dep_paths += static_link_frameworks.map { |f| "#{frameworks_dir}/#{f}.framework" }
+
+      # other static libraries
+      static_libs = %w[icuuc icui18n icudata crypto]
+      a2o_options += static_libs.map { |lib| "-l#{lib}" }
+      a2o_options << `PKG_CONFIG_LIBDIR=#{emscripten_dir}/system/lib/pkgconfig:#{emscripten_dir}/system/local/lib/pkgconfig pkg-config freetype2 --libs`.strip
+      # TODO: dpe_paths += static_libs.map{ |lib| real path of lib }
+
+      # objects
+      linked_objects = static_libraries_from_other_projects + [bitcode_path]
+
+      # asm
+      builds << {
+        outputs: pre_products_outputs_asm,
+        rule_name: 'compose',
+        inputs: linked_objects + dep_paths + dependent_target_names,
+        build_variables: {
+          'options' => a2o_options.join(' '),
+          'linked_objects' => linked_objects.map { |o| '"' + o.ninja_escape + '"' }.join(' '),
+          'js_path' => js_path.ninja_escape.quote
+        }
+      }
+
+      # copy pre_products to products
+
+      unit_test_inputs = pre_products_outputs_asm + [
+        data_path,
+        runtime_parameters_json_path
+      ]
+
+      unit_test_outputs = unit_test_inputs.map do |path|
+        path.sub("#{@target.unique_name}/pre_products", 'unit_test')
+      end
+      unit_test_outputs << unit_test_html_path
+      unit_test_outputs << unit_test_service_worker_js_path
+
+      builds << {
+        outputs: unit_test_outputs,
+        rule_name: 'generate_products',
+        inputs: unit_test_inputs + [
+          application_template_html_path,
+          service_worker_template_js_path
+        ],
+        build_variables: {
+          'pre_products_dir' => pre_products_dir.ninja_escape.quote,
+          'products_dir' => unit_test_dir.ninja_escape.quote,
+          'products_application_dir' => unit_test_application_dir.ninja_escape.quote,
+          'shell_html_path' => application_template_html_path.ninja_escape.quote,
+          'service_worker_js_path' => service_worker_template_js_path.ninja_escape.quote
+        }
+      }
+
+      # copy shell.html resources
+      out_dir = build_dir
+      shell_files = Ninja.file_recursive_copy(shell_files_source_dir, out_dir, shell_template_dir)
+      builds += shell_files[:builds]
+
+      # add a symbolic link
+      shell_symlink = Ninja.file_link('../../shell_files', unit_test_shell_files_link_dir)
+      builds += shell_symlink[:builds]
+
+      builds << {
+        outputs: [phony_target_name],
+        rule_name: 'phony',
+        inputs: unit_test_outputs + shell_files[:outputs] + shell_symlink[:outputs]
+      }
+
+      builds
     end
 
     # utils
@@ -1297,6 +1450,14 @@ module A2OBrew
       end
 
       { builds: builds, outputs: outputs }
+    end
+
+    def optimized_build?(flags)
+      !flags.include?('-g') && (
+        flags.include?('-O2') ||
+        flags.include?('-O3') ||
+        flags.include?('-Os') ||
+        flags.include?('-Oz'))
     end
 
     def file_list(dir)

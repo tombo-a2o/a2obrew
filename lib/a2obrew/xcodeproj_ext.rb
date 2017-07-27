@@ -97,6 +97,12 @@ module Xcodeproj
         end
       end
 
+      class PBXAggregateTarget
+        def unique_name
+          "#{project.root_object.name}-#{name}"
+        end
+      end
+
       class PBXContainerItemProxy
         def remote_target
           container_portal_object.targets.find { |target| target.product_reference == proxied_object }
