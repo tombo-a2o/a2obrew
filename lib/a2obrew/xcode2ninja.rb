@@ -1296,7 +1296,7 @@ module A2OBrew
       # TODO: dpe_paths += static_libs.map{ |lib| real path of lib }
 
       # objects
-      linked_objects = static_libraries_from_other_projects + [bitcode_path]
+      linked_objects = static_libraries_from_other_projects + [bitcode_path] + ["#{a2obrew_dir}/unit_test/test_main.m"]
 
       # asm
       builds << {
