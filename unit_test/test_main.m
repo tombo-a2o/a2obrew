@@ -38,6 +38,8 @@ NSArray *ClassGetSubclasses(Class parentClass)
 - (void)invokeTestAsyncWithCallback:(void (^)(void))callback;
 @end
 
+int executed = 0, failed = 0;
+
 void runTestCaseMethod(Class clazz, NSInvocation* invocation, void (^callback)(void))
 {
   // NSLog(@"%s %@ %@", __FUNCTION__, clazz, invocation);
@@ -48,9 +50,10 @@ void runTestCaseMethod(Class clazz, NSInvocation* invocation, void (^callback)(v
   [testCase setUp];
   [testCase invokeTestAsyncWithCallback:^{
     [testCase tearDown];
-    // if([testCase isFailed]) {
-    //   failed++;
-    // }
+    executed++;
+    if([testCase isFailed]) {
+      failed++;
+    }
     callback();
   }];
 }
@@ -101,6 +104,7 @@ int main(int argc, char* argv[]) {
   runTestCaseAndNext(enumerator, ^{
     [enumerator release];
     NSLog(@"all test finished");
+    NSLog(@"executed: %d, failed: %d", executed, failed);
   });
 
   dispatch_main();
