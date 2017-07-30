@@ -204,7 +204,7 @@ var A2OShell;
   var launch = function () {
     // show warning if this is mobile
     var ua = navigator.userAgent || navigator.vendor || window.opera;
-    if (ua.match(/iPad|iPhone|iPod|Android|(IE| )Mobile[;\/ ]| Tablet;/i)) {
+    if (ua.match(/iPad|iPhone|iPod|Android|(IE| )Mobile[;/ ]| Tablet;/i)) {
       if (!confirm(messages.warningOnMobile[locale])) {
         return;
       }
@@ -213,7 +213,7 @@ var A2OShell;
     var select = wasmContainer.getElementsByTagName('select')[0];
     if (select.value === 'auto') {
       // detect WebAssembly
-      if (typeof WebAssembly === 'object' && (!A2OShell.autoLaunch || A2OShell.autoLaunch !== "asmjs")) {
+      if (typeof WebAssembly === 'object' && (!A2OShell.autoLaunch || A2OShell.autoLaunch !== 'asmjs')) {
         select.value = 'wasm';
       } else {
         select.value = 'asmjs';
