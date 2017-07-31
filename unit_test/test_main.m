@@ -2,6 +2,7 @@
 #import <XCTest/XCTest.h>
 #import <objc/runtime.h>
 #import <dispatch/dispatch.h>
+#import <emscripten.h>
 
 // https://stackoverflow.com/questions/7923586/objective-c-get-list-of-subclasses-from-superclass
 NSArray *ClassGetSubclasses(Class parentClass)
@@ -36,6 +37,7 @@ NSArray *ClassGetSubclasses(Class parentClass)
 
 @interface XCTestCase (async)
 - (void)invokeTestAsyncWithCallback:(void (^)(void))callback;
+@property(getter=isFailed) BOOL failed;
 @end
 
 int executed = 0, failed = 0;
@@ -105,6 +107,8 @@ int main(int argc, char* argv[]) {
     [enumerator release];
     NSLog(@"all test finished");
     NSLog(@"executed: %d, failed: %d", executed, failed);
+    emscripten_cancel_main_loop();
+    emscripten_force_exit(failed > 127 ? 127 : failed);
   });
 
   dispatch_main();
