@@ -76,9 +76,14 @@ void runTestCase(Class clazz, void (^callback)(void))
 {
   NSLog(@"%@ start", clazz);
   [clazz setUp];
-  NSEnumerator *enumerator = [[[clazz testInvocations] objectEnumerator] retain];
+  NSEnumerator *enumerator = [[clazz testInvocations] objectEnumerator];
+#if !__has_feature(objc_arc)
+  [enumerator retain];
+#endif
   runTestCaseMethodAndNext(clazz, enumerator, ^{
+#if !__has_feature(objc_arc)
     [enumerator release];
+#endif
     [clazz tearDown];
     NSLog(@"%@ finished", clazz);
     callback();
@@ -102,9 +107,14 @@ int main(int argc, char* argv[]) {
   // NSLog(@"%@", testCaseClasses);
 
   NSLog(@"test start");
-  NSEnumerator *enumerator = [[testCaseClasses objectEnumerator] retain];
+  NSEnumerator *enumerator = [testCaseClasses objectEnumerator];
+#if !__has_feature(objc_arc)
+  [enumerator retain];
+#endif
   runTestCaseAndNext(enumerator, ^{
+#if !__has_feature(objc_arc)
     [enumerator release];
+#endif
     NSLog(@"all test finished");
     NSLog(@"executed: %d, failed: %d", executed, failed);
     emscripten_cancel_main_loop();
