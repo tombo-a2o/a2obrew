@@ -49,7 +49,7 @@ var A2OShell;
 
   var environment = window.location.hostname === 'app.tombo.io' ? 'production' : 'development';
   var afterLaunch = false;
-  var rangeVolume = document.getElementById('range-volume');
+  var rangeVolume;
 
   // Getting runtime_paramters.json
   var loadRuntimeParameters = function (callback) {
@@ -675,7 +675,86 @@ var A2OShell;
     }
   };
 
+  var preparePlayground = function () {
+    var playgroundHTML = (function() {/*
+<section class="playground">
+  <section class="playground-select-container">
+    <span class="playground-text" style="display:none"></span>
+    <select id="playground-select">
+      <option value="auto">Auto Detect(wasm/asm.js)</option>
+      <option value="wasm">WebAssembly(wasm)</option>
+      <option value="asmjs">asm.js</option>
+    </select>
+  </section>
+  <section class="playground-main">
+    <section id="preview-image">
+      <img src="./launch-image/launch-image-320x480.png" id="launch-image" alt="Application launch image">
+      <div class="playground-image-filter"></div>
+      <section class="playground-play-button">
+        <a href="javascript:void(0)" id="button-launch"><i class="fa fa-play-circle" aria-hidden="true"></i></a>
+      <section class="playground-download-size">
+      </section>
+      </section>
+    </section>
+    <section id="status">
+      <section id="status-message"></section>
+    </section>
+    <canvas width="320" height="480" id="app-canvas" oncontextmenu="event.preventDefault()"></canvas>
+  </section>
+  <section class="playground-volume" id="volume-panel">
+    <a class="tooltip" href="javascript:void(0)" id="button-volume-off">
+      <i class="fa fa-volume-off" aria-hidden="true"></i>
+      <i class="fa fa-times mute-status" aria-hidden="true"></i>
+    </a>
+    <span class="playground-volume-pinch">
+      <a class="tooltip" href="javascript:void(0)" id="button-volume-down"><i class="fa fa-volume-down" aria-hidden="true"></i></a>
+      <input type="range" min="0" max="100" value="100" id="range-volume">
+      <a class="tooltip" href="javascript:void(0)" id="button-volume-up"><i class="fa fa-volume-up" aria-hidden="true"></i></a>
+    </span>
+  </section>
+  <section class="playground-keypad" id="keypad-tap">
+    <a class="tooltip" href="javascript:void(0)" id="button-tap"><i class="fa fa-hand-pointer-o" aria-hidden="true"></i>
+    <span class="tooltip-text tooltip-text-center">Tap</span> </a>&nbsp;
+  </section>
+  <section class="playground-keypad" id="keypad-3way-down">
+    <a class="tooltip" href="javascript:void(0)" id="button-swipe-left"><i class="fa fa-arrow-left" aria-hidden="true"></i>
+    <span class="tooltip-text tooltip-text-center">Swipe Left</span> </a>&nbsp;
+    <a class="tooltip" href="javascript:void(0)" id="button-swipe-down"><i class="fa fa-arrow-down" aria-hidden="true"></i>
+    <span class="tooltip-text tooltip-text-center">Swipe Down</span> </a>&nbsp;
+    <a class="tooltip" href="javascript:void(0)" id="button-swipe-right"><i class="fa fa-arrow-right" aria-hidden="true"></i>
+    <span class="tooltip-text tooltip-text-center">Swipe Right</span> </a>&nbsp;
+  </section>
+  <section class="playground-keypad" id="keypad-tilt">
+    <a class="tooltip" href="javascript:void(0)" id="button-rotate-left"><i class="fa fa-undo" aria-hidden="true"></i>
+    <span class="tooltip-text tooltip-text-center">Rotate Left</span> </a>&nbsp;
+    <a class="tooltip" href="javascript:void(0)" id="button-rotate-right"><i class="fa fa-repeat" aria-hidden="true"></i>
+    <span class="tooltip-text tooltip-text-center">Rotate Right</span> </a>&nbsp;
+  </section>
+  <section class="app-markets">
+    <a href="javascript:void(0)" id="app-store-link" class="link-to-other-platforms" target="_blank">
+      <img src="./shell_files/images/app_store_badge.en.svg" alt="App Store" id="app-store-link-image">
+    </a>
+    <a href="javascript:void(0)" id="google-play-link" class="link-to-other-platforms" target="_blank">
+      <img src="./shell_files/images/google_play_badge.en.svg" alt="Google Play" id="google-play-link-image">
+    </a>
+  </section>
+</section>
+*/}).toString().match(/\/\*([^]*)\*\//)[1];
+
+    document.getElementById('playground-base').innerHTML = playgroundHTML;
+
+    var css_link = document.createElement('link');
+
+    css_link.href = './shell_files/stylesheets/playground.css';
+    css_link.type = 'text/css';
+    css_link.rel = 'stylesheet';
+
+    document.getElementsByTagName('head')[0].appendChild(css_link);
+  };
+
   document.addEventListener('DOMContentLoaded', function () {
+    preparePlayground();
+    rangeVolume = document.getElementById('range-volume');
     loadRuntimeParameters(function () {
       main();
     });
