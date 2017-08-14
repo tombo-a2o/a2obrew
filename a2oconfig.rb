@@ -223,7 +223,6 @@ BUILD
           StoreKit
           SystemConfiguration
           TomboAFNetworking
-          TomboKit
           UIKit
           WebKit
           XCTest
@@ -242,7 +241,7 @@ BUILD
       UIKit Security ImageIO AudioToolbox CommonCrypto SystemConfiguration
       CoreGraphics QuartzCore CFNetwork OpenGLES Onyx2D CoreText
       Social AVFoundation StoreKit CoreFoundation MapKit GameKit MultipeerConnectivity
-      MobileCoreServices TomboKit TomboAFNetworking
+      MobileCoreServices TomboAFNetworking
     ],
     dynamic_link_frameworks: %w[
       Foundation
