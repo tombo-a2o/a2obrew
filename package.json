@@ -18,6 +18,6 @@
   "dependencies": {
     "csslint": "^1.0.5",
     "eslint": "^4.1.1",
-    "htmllint": "^0.6.0"
+    "htmlhint": "^0.9.13"
   }
 }
