@@ -1,9 +1,53 @@
-.playground-volume a, .playground-keypad a {
-  color: #333;
+#app-canvas {
+  cursor: pointer;
+  display: none;
+}
+#launch-image {
+  bottom: 0;
+  height: 480px;
+  left: 0;
+  margin: auto;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 320px;
+}
+#preview-image a {
+  color: #fff;
   text-decoration: none;
 }
-.playground-volume a:hover, .playground-keypad a:hover {
-  color: #666;
+#preview-image a:hover {
+  color: #ccc;
+}
+#status {
+  background-color: black;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  display: none;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  text-align: center;
+  top: 0;
+  width: 100%;
+}
+#status-message {
+  display: table-cell;
+  vertical-align: middle;
+}
+#button-volume-off {
+  margin: 0 74px 0 0;
+  padding: 0 16px 0 0;
+}
+#range-volume {
+  margin: 0 10px;
+}
+.mute-status {
+  font-size: 16px;
+  line-height: 32px;
+  margin: -1px 0 0 1px;
+  padding: 0;
+  vertical-align: top;
 }
 .playground {
   padding: 5px;
@@ -27,13 +71,31 @@
   top: 0;
   width: 100%;
 }
-.playground-volume {
+.volume-icon {
   font-size: 32px;
+}
+.playground-volume {
+  font-size: 0;
   height: 32px;
+  line-height: 32px;
+  margin: 0;
+  padding: 0;
   text-align: center;
+}
+.playground-volume a, .playground-keypad a {
+  color: #333;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+.playground-volume a:hover, .playground-keypad a:hover {
+  color: #666;
 }
 .playground-volume-pinch input {
   height: 24px;
+  margin: 0;
+  padding: 0;
 }
 .playground-keypad {
   display: none;

@@ -69,7 +69,7 @@ var A2OShell;
         } else {
           gainRatio = rangeVolume.value / 100;
         }
-        if(!Module.CoreAudio) Module.CoreAudio = { setGainRatio: function() {} };
+        if (!Module.CoreAudio) Module.CoreAudio = { setGainRatio: function () {} };
         Module.CoreAudio.setGainRatio(gainRatio);
 
         // launch check flag
@@ -604,17 +604,29 @@ var A2OShell;
       launchWithServiceWorker();
       return false;
     });
-    document.getElementById('button-tweet').addEventListener('click', function (_e) {
-      window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(current_url) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
-      return false;
-    });
-    document.getElementById('button-share-on-facebook').addEventListener('click', function (_e) {
-      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(current_url));
-      return false;
-    });
 
-    document.getElementById('app-store-link').href = A2OShell.appStoreURL || '#';
-    document.getElementById('google-play-link').href = A2OShell.googlePlayURL || '#';
+    var button_tweet = document.getElementById('button-tweet');
+    if (button_tweet) {
+      button_tweet.addEventListener('click', function (_e) {
+        window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(current_url) + '&hashtags=' + encodeURIComponent('tomboapp') + '&via=tomboinc');
+        return false;
+      });
+    }
+    var button_share_on_facebook = document.getElementById('button-share-on-facebook');
+    if (button_share_on_facebook) {
+      button_share_on_facebook.addEventListener('click', function (_e) {
+        window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(current_url));
+        return false;
+      });
+    }
+    var app_store_link = document.getElementById('app-store-link');
+    if (app_store_link) {
+      app_store_link.href = A2OShell.appStoreURL || '#';
+    }
+    var google_play_link = document.getElementById('google-play-link');
+    if (google_play_link) {
+      google_play_link.href = A2OShell.googlePlayURL || '#';
+    }
 
     if (environment === 'production') {
       window.addEventListener('beforeunload', function (e) {
@@ -676,7 +688,7 @@ var A2OShell;
   };
 
   var preparePlayground = function () {
-    var playgroundHTML = (function() {/*
+    var playgroundHTML = (function () {/*
 <section class="playground">
   <section class="playground-select-container">
     <span class="playground-text" style="display:none"></span>
@@ -703,13 +715,13 @@ var A2OShell;
   </section>
   <section class="playground-volume" id="volume-panel">
     <a class="tooltip" href="javascript:void(0)" id="button-volume-off">
-      <i class="fa fa-volume-off" aria-hidden="true"></i>
+      <i class="fa fa-volume-off volume-icon" aria-hidden="true"></i>
       <i class="fa fa-times mute-status" aria-hidden="true"></i>
     </a>
     <span class="playground-volume-pinch">
-      <a class="tooltip" href="javascript:void(0)" id="button-volume-down"><i class="fa fa-volume-down" aria-hidden="true"></i></a>
+      <a class="tooltip" href="javascript:void(0)" id="button-volume-down"><i class="fa fa-volume-down volume-icon" aria-hidden="true"></i></a>
       <input type="range" min="0" max="100" value="100" id="range-volume">
-      <a class="tooltip" href="javascript:void(0)" id="button-volume-up"><i class="fa fa-volume-up" aria-hidden="true"></i></a>
+      <a class="tooltip" href="javascript:void(0)" id="button-volume-up"><i class="fa fa-volume-up volume-icon" aria-hidden="true"></i></a>
     </span>
   </section>
   <section class="playground-keypad" id="keypad-tap">
@@ -730,26 +742,23 @@ var A2OShell;
     <a class="tooltip" href="javascript:void(0)" id="button-rotate-right"><i class="fa fa-repeat" aria-hidden="true"></i>
     <span class="tooltip-text tooltip-text-center">Rotate Right</span> </a>&nbsp;
   </section>
-  <section class="app-markets">
-    <a href="javascript:void(0)" id="app-store-link" class="link-to-other-platforms" target="_blank">
-      <img src="./shell_files/images/app_store_badge.en.svg" alt="App Store" id="app-store-link-image">
-    </a>
-    <a href="javascript:void(0)" id="google-play-link" class="link-to-other-platforms" target="_blank">
-      <img src="./shell_files/images/google_play_badge.en.svg" alt="Google Play" id="google-play-link-image">
-    </a>
-  </section>
 </section>
 */}).toString().match(/\/\*([^]*)\*\//)[1];
 
-    document.getElementById('playground-base').innerHTML = playgroundHTML;
+    // FIXME: avoid double loading of font-awesome
+    var fa_link = document.createElement('link');
+    fa_link.href = './shell_files/stylesheets/font-awesome.min.css';
+    fa_link.type = 'text/css';
+    fa_link.rel = 'stylesheet';
+    document.getElementsByTagName('head')[0].appendChild(fa_link);
 
     var css_link = document.createElement('link');
-
     css_link.href = './shell_files/stylesheets/playground.css';
     css_link.type = 'text/css';
     css_link.rel = 'stylesheet';
-
     document.getElementsByTagName('head')[0].appendChild(css_link);
+
+    document.getElementById('playground-base').innerHTML = playgroundHTML;
   };
 
   document.addEventListener('DOMContentLoaded', function () {
