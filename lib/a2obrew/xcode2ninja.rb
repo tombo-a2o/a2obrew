@@ -449,7 +449,7 @@ module A2OBrew
             }
             resources << remote_path
           else
-            if file.path == 'Images.xcassets' || file.path == 'Assets.xcassets'
+            if file.path.end_with?('Images.xcassets', 'Assets.xcassets')
               # Asset Catalog for icon and launch images
               icon_asset_catalog, launch_image_asset_catalog = asset_catalog(local_path)
             elsif file.path == 'Icon@2x.png'
