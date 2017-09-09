@@ -5,6 +5,7 @@ require_relative 'cli_base'
 require_relative '../a2obrew/util'
 
 require 'httpclient'
+require 'fileutils'
 
 module Tombo
   class Test < CLIBase
@@ -138,12 +139,22 @@ module Tombo
         A2OBrew::Util.cmd_exec("tombocli application_localizes create -p #{PROFILE} --application-id #{application_id} --language-id #{LANGUAGE_ID} --name #{SCREEN_NAME} 2>/dev/null")
       end
 
+      # Create application package
+      package_path = 'test-package.zip'
+      outputs = []
+      A2OBrew::Util.cmd_exec("tombocli application_versions package --source-directory #{source_directory} --package-path #{package_path} 2>/dev/null") do |output|
+        outputs << output
+      end
+
       # Create application version
       version = Time.now.strftime('%Y%m%d%H%M%S%3N') # msec
       outputs = []
-      A2OBrew::Util.cmd_exec("tombocli application_versions create -p #{PROFILE} --application-id #{application_id} --version #{version} --source-directory #{source_directory} 2>/dev/null") do |output|
+      A2OBrew::Util.cmd_exec("tombocli application_versions create -p #{PROFILE} --application-id #{application_id} --version #{version} --package-path #{package_path} 2>/dev/null") do |output|
         outputs << output
       end
+
+      # remove temporary path
+      FileUtils.rm(package_path)
 
       application_version_id = nil
       begin

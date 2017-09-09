@@ -23,12 +23,24 @@ module Tombo
     desc 'create', 'deploy application stored in a directory'
     method_option :application_id, desc: 'Target application ID', required: true
     method_option :version, desc: 'Version string', required: true
-    method_option :source_directory, desc: 'Source directory', required: true
+    method_option :package_path, desc: 'Package path', required: true
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     def create
       application_id = options[:application_id]
       version = options[:version]
+      package_path = options[:package_path]
+
+      uploaded_file_id = create_uploaded_file(package_path)
+
+      create_application_version(application_id, version, uploaded_file_id)
+    end
+
+    desc 'package', 'create application package to deploy'
+    method_option :source_directory, desc: 'Source directory', required: true
+    method_option :package_path, desc: 'Output package path', required: true
+    def package
       input_dir = options[:source_directory]
+      package_path = options[:package_path]
 
       file_exists?(input_dir, 'application/application.html')
       file_exists?(input_dir, 'application/icon/icon-60.png')
@@ -38,9 +50,7 @@ module Tombo
       Dir.mktmpdir do |tmp_dir|
         zip_path = File.join(tmp_dir, 'deploy.zip')
         ZipCreator.create_zip(zip_path, input_dir, @dotfile.compress_with_zopfli?)
-        uploaded_file_id = create_uploaded_file(zip_path)
-
-        create_application_version(application_id, version, uploaded_file_id)
+        FileUtils.move(zip_path, package_path)
       end
     end
 
