@@ -41,7 +41,9 @@ module Tombo
     def request(method, path, query = nil, body = nil, extheader = {}) # rubocop:disable Metrics/AbcSize
       cl = HTTPClient.new
       cl.ssl_config.verify_mode = nil unless @dotfile.ssl_certificate_verify?
-      # cl.connect_timeout = 120.0
+      cl.connect_timeout = 300
+      cl.send_timeout    = 300
+      cl.receive_timeout = 300
       # cl.debug_dev = STDOUT
 
       header_with_credential = credential_headers(extheader)
