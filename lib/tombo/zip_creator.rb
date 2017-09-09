@@ -14,7 +14,7 @@ module Tombo
         recursive_zip_add(zip, input_directory_path, '', use_zopfli)
       end
       Logger.logger.info "Finish creation of #{output_zip_path}"
-      Logger.logger.info "#{output_zip_path} size: #{File.size(input_path)}"
+      Logger.logger.info "#{output_zip_path} size: #{File.size(output_zip_path)}"
     end
 
     def self.recursive_zip_add(zip, input_dir_path, output_dir_path, use_zopfli)
