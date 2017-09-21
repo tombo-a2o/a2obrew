@@ -321,7 +321,7 @@ module Tombo
       A2OBrew::Util.cmd_exec("tombocli gp_applications update -p #{PROFILE} --gp_application-id #{gp_application_id} --active-version-id #{gp_application_version_id} 2>/dev/null")
 
       # Open the default browser to show
-      system("open #{PLATFORM_URI}/gameplus/#{GAMEPLUS_SCREEN_NAME}")
+      system("open #{PLATFORM_URI}/_gameplus/#{GAMEPLUS_SCREEN_NAME}")
     end
   end
 end

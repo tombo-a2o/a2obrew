@@ -21,7 +21,7 @@ module Tombo
     desc 'create', 'gp_applications create'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     method_option :gp_contents_code, desc: 'Gameplus contents code provided by Yahoo!', required: true
-    method_option :gp_screen_name, desc: 'Gameplus screen name for URL ex.) https://app.tombo.io/gameplus/[gp_screen_name]', required: true
+    method_option :gp_screen_name, desc: 'Gameplus screen name for URL ex.) https://app.tombo.io/_gameplus/[gp_screen_name]', required: true
     def create
       body = {
         'gp_application[gp_contents_code]' => options[:gp_contents_code],
