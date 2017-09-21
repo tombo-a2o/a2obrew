@@ -42,12 +42,12 @@ module Tombo
     desc 'update', 'gp_applications update'
     method_option :profile, aliases: '-p', desc: 'Profile name for Tombo Platform'
     method_option :gp_application_id, desc: 'The ID of the gp_application to be updated', required: true
-    method_option :active_version_id, desc: 'Active Version ID to be updated'
+    method_option :gp_active_version_id, desc: 'Active Version ID to be updated'
     def update
       body = {}
 
-      if options[:active_version_id]
-        body['gp_application[active_version_id]'] = options[:active_version_id]
+      if options[:gp_active_version_id]
+        body['gp_application[gp_active_version_id]'] = options[:gp_active_version_id]
       end
 
       raise 'No column are specified to be updated' if body.empty?

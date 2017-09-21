@@ -302,7 +302,7 @@ module Tombo
       # Create gp_application version
       version = Time.now.strftime('%Y%m%d%H%M%S%3N') # msec
       outputs = []
-      A2OBrew::Util.cmd_exec("tombocli gp_application_versions create -p #{PROFILE} --gp_application-id #{gp_application_id} --version #{version} --package-path #{package_path} 2>/dev/null") do |output|
+      A2OBrew::Util.cmd_exec("tombocli gp_application_versions create -p #{PROFILE} --gp-application-id #{gp_application_id} --version #{version} --package-path #{package_path} 2>/dev/null") do |output|
         outputs << output
       end
 
@@ -318,7 +318,7 @@ module Tombo
       end
 
       # Set the gp_application version latest
-      A2OBrew::Util.cmd_exec("tombocli gp_applications update -p #{PROFILE} --gp_application-id #{gp_application_id} --active-version-id #{gp_application_version_id} 2>/dev/null")
+      A2OBrew::Util.cmd_exec("tombocli gp_applications update -p #{PROFILE} --gp-application-id #{gp_application_id} --gp-active-version-id #{gp_application_version_id} 2>/dev/null")
 
       # Open the default browser to show
       system("open #{PLATFORM_URI}/_gameplus/#{GAMEPLUS_SCREEN_NAME}")
