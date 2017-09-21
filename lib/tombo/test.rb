@@ -170,5 +170,158 @@ module Tombo
       # Open the default browser to show
       system("open #{PLATFORM_URI}/#{SCREEN_NAME}")
     end
+
+    GAMEPLUS_CONTENTS_CODE = 'GAMEPLUS_CONTENTS_CODE'
+    GAMEPLUS_SCREEN_NAME = 'gptest'
+
+    desc 'upload_gameplus', 'upload gameplus application into Tombo platform'
+    def upload_gameplus(*source_directories) # rubocop:disable Metrics/AbcSize,PerceivedComplexity,MethodLength,CyclomaticComplexity
+      # Check source_directory
+      error_exit('Specify source directory to be uploaded') if source_directories.length != 1
+      source_directory = source_directories[0]
+      application_html_path = File.join(source_directory, 'application', 'application.html')
+      unless File.file?(application_html_path)
+        error_exit('Cannot find application.html')
+      end
+
+      # Check https connection
+      begin
+        Timeout.timeout(1) do
+          cl = HTTPClient.new
+          cl.ssl_config.verify_mode = nil
+          r = cl.get(DEV_PORTAL_URI)
+          raise unless HTTP::Status.successful?(r.status)
+        end
+      rescue
+        error_exit("Cannot connect to #{DEV_PORTAL_URI}")
+      end
+
+      # Check profile
+      dotfile = Dotfile.new
+      create_developer = false
+      if dotfile.profile?(PROFILE)
+        # Check https://developer.tombo.io/developer with profile
+        begin
+          outputs = []
+          A2OBrew::Util.cmd_exec("tombocli developers show -p #{PROFILE} 2>/dev/null") do |output|
+            outputs << output
+          end
+          JSON.parse(outputs.join(''))
+        rescue A2OBrew::CmdExecException, JSON::ParserError
+          puts '`tombocli developers show` fails.'
+          dotfile.delete_profile(PROFILE)
+          create_developer = true
+        end
+      else
+        create_developer = true
+      end
+
+      if create_developer
+        # Create new developer, get tokens and set it into ~/.tombo/config
+
+        # Create new profile on ~/.tombo/config
+        dotfile.set_profile(PROFILE, developer_portal_uri: DEV_PORTAL_URI,
+                                     ssl_certificate_verify: false,
+                                     compress_with_zopfli: false)
+
+        # Create new developer
+        name = 'a2obrew/tombocli integrated test'
+        email = "#{Time.now.to_i}@tombo.io"
+        password = 'testtest'
+        password_confirmation = password
+        country_id = 392 # JP
+        currency_id = 392 # JPY
+        time_zone_id = 280 # Asia/Tokyo
+
+        outputs = []
+        begin
+          A2OBrew::Util.cmd_exec("tombocli developers create -p #{PROFILE} --name '#{name}' --email '#{email}' --password '#{password}' --password-confirmation '#{password_confirmation}' --country-id #{country_id} --currency-id #{currency_id} --language-id #{LANGUAGE_ID} --time-zone-id #{time_zone_id} 2>/dev/null") do |output|
+            outputs << output
+          end
+          created_developer = JSON.parse(outputs.join(''))
+          developer_credential = created_developer['data']['attributes']['credential']
+          # Create new profile on ~/.tombo/config with credential
+          dotfile.set_profile(PROFILE, developer_portal_uri: DEV_PORTAL_URI,
+                                       ssl_certificate_verify: false,
+                                       compress_with_zopfli: false,
+                                       developer_credential: developer_credential)
+        rescue A2OBrew::CmdExecException, JSON::ParserError => e
+          puts outputs.join('')
+          puts e
+          error_exit "Cannot create developer: #{name}"
+        end
+      end
+
+      # Now we can access the platform server
+
+      # Check we have already had a gameplus application which has the gp_screen_name GAMEPLUS_SCREEN_NAME
+      # If exists, fetch the application_id.
+      outputs = []
+      A2OBrew::Util.cmd_exec("tombocli gp_applications index -p #{PROFILE} 2>/dev/null") do |output|
+        outputs << output
+      end
+
+      gp_application_id = nil
+      begin
+        gp_applications = JSON.parse(outputs.join(''))['data']
+        gp_applications.each do |gp_application|
+          gp_application_id = gp_application['id'] if gp_application['attributes']['gp_screen_name'] == GAMEPLUS_SCREEN_NAME
+        end
+      rescue JSON::ParserError
+        puts "Cannot find gp_application `#{GAMEPLUS_SCREEN_NAME}`"
+      end
+
+      # If gp_application_id is nil, create the gp_application which has the gp_screen_name GAMEPLUS_SCREEN_NAME
+      if gp_application_id.nil?
+        outputs = []
+        begin
+          A2OBrew::Util.cmd_exec("tombocli gp_applications create -p #{PROFILE} --gp-contents-code #{GAMEPLUS_CONTENTS_CODE} --gp-screen-name #{GAMEPLUS_SCREEN_NAME} 2>/dev/null") do |output|
+            outputs << output
+          end
+        rescue A2OBrew::CmdExecException => e
+          puts outputs.join('')
+          puts e
+          error_exit "Cannot create an gp_application. Maybe the gameplus screen name `#{GAMEPLUS_SCREEN_NAME}` is already taken."
+        end
+
+        begin
+          gp_application = JSON.parse(outputs.join(''))['data']
+          gp_application_id = gp_application['id']
+        rescue JSON::ParserError
+          error_exit('Cannot create an gp_application')
+        end
+      end
+
+      # Create gp_application package
+      package_path = 'test-package.zip'
+      outputs = []
+      A2OBrew::Util.cmd_exec("tombocli gp_application_versions package --source-directory #{source_directory} --package-path #{package_path} 2>/dev/null") do |output|
+        outputs << output
+      end
+
+      # Create gp_application version
+      version = Time.now.strftime('%Y%m%d%H%M%S%3N') # msec
+      outputs = []
+      A2OBrew::Util.cmd_exec("tombocli gp_application_versions create -p #{PROFILE} --gp_application-id #{gp_application_id} --version #{version} --package-path #{package_path} 2>/dev/null") do |output|
+        outputs << output
+      end
+
+      # remove temporary path
+      FileUtils.rm(package_path)
+
+      gp_application_version_id = nil
+      begin
+        gp_application_version = JSON.parse(outputs.join(''))['data']
+        gp_application_version_id = gp_application_version['id']
+      rescue JSON::ParserError
+        error_exit('Cannot create an gp_application version')
+      end
+
+      # Set the gp_application version latest
+      A2OBrew::Util.cmd_exec("tombocli gp_applications update -p #{PROFILE} --gp_application-id #{gp_application_id} --active-version-id #{gp_application_version_id} 2>/dev/null")
+
+      # Open the default browser to show
+      system("open #{PLATFORM_URI}/gameplus/#{GAMEPLUS_SCREEN_NAME}")
+    end
   end
 end
