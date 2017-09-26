@@ -510,16 +510,18 @@ var A2OShell;
       });
     }
 
-    // Delete service worker cache
-    window.addEventListener('error', function (_event) {
-      try {
-        sendMessageToServiceWorker({
-          command: 'delete-all-cache'
-        });
-      } catch (_e) {
-        // do nothing
-      }
-    });
+    if (A2OShell.useServiceWorker && 'serviceWorker' in navigator) {
+      // Delete service worker cache
+      window.addEventListener('error', function (_event) {
+        try {
+          sendMessageToServiceWorker({
+            command: 'delete-all-cache'
+          });
+        } catch (_e) {
+          // do nothing
+        }
+      });
+    }
   };
 
   var registerServiceWorker = function (callback) {
