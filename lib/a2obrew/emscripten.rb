@@ -52,13 +52,13 @@ module A2OBrew
       end
 
       def emenv_sh
-        <<~EOT
+        <<~EMENV_SH
           export PATH=#{emscripten_path}/fastcomp/build/bin:#{emscripten_path}/emscripten:#{lang_path}/python2/bin:#{lang_path}/ruby/bin:#{lang_path}/node/bin:#{lang_path}/node/lib/node_modules/a2obrew/node_modules/.bin:$PATH
           export EM_CONFIG=#{emscripten_path}/.emscripten
           export EM_PORTS=#{emscripten_path}/.emscripten_ports
           export EM_CACHE=#{emscripten_path}/.emscripten_cache
           export EMSCRIPTEN=#{emscripten_path}/emscripten
-EOT
+EMENV_SH
       end
 
       def dot_emscripten
@@ -69,7 +69,7 @@ EOT
         node = "#{lang_path}/node/bin/node"
         temp_dir = "#{emscripten_path}/temp"
         Util.mkdir_p(temp_dir)
-        <<~EOT
+        <<~DOT_EMSCRIPTEN
           LLVM_ROOT = '#{llvm_root}'
           EMSCRIPTEN_ROOT = '#{emscripten_root}'
           EMSCRIPTEN_NATIVE_OPTIMIZER = '#{optimizer}'
@@ -79,7 +79,7 @@ EOT
           TEMP_DIR = '#{temp_dir}'
           COMPILER_ENGINE = NODE_JS
           JS_ENGINES = [NODE_JS]
-EOT
+DOT_EMSCRIPTEN
       end
 
       def build_main

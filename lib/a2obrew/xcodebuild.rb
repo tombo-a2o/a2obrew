@@ -33,7 +33,7 @@ module A2OBrew
       if File.exist?(path)
         config = eval File.read(path) # rubocop:disable Security/Eval
         unless config[:version] == 1
-          raise Informative, '#{BUILD_CONFIG_RB_PATH} version should be 1'
+          raise Informative, "#{BUILD_CONFIG_RB_PATH} version should be 1"
         end
         config
       else
@@ -103,18 +103,18 @@ module A2OBrew
       ninja_path = "a2o/ninja/#{a2o_target}.ninja.build"
 
       Util.puts_delimiter("# Generate #{ninja_path}")
-      puts <<~EOF
+      puts <<~NINJA_A2O
         a2o:
           target: #{a2o_target}
           proj_config_path: #{proj_config_path}
-EOF
-      puts <<~EOF
+NINJA_A2O
+      puts <<~NINJA_XCODEPROJ
         xcodeproj:
           xcodeproj_path: #{xcodeproj_path}
           xcodeproj_name: #{xcodeproj_name}
           xcodeproj_target: #{xcodeproj_target}
           xocdeproj_build_config: #{xcodeproj_build_config}
-EOF
+NINJA_XCODEPROJ
       xn = Xcode2Ninja.new(xcodeproj_path, xcodeproj_name, a2obrew_path)
       gen_paths = xn.xcode2ninja('a2o/ninja', xcodeproj_target,
                                  xcodeproj_build_config, active_project_config, a2o_target)
@@ -128,7 +128,7 @@ EOF
     def fetch_active_project_config(proj_config, a2o_target)
       begin
         active_project_config = proj_config[:a2o_targets][a2o_target]
-      rescue
+      rescue StandardError
         active_project_config = {}
       end
       active_project_config

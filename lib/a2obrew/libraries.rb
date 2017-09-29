@@ -142,7 +142,7 @@ module A2OBrew
 
     def self.puts_build_completion(with_target = true)
       if with_target
-        A2OCONF[:targets].keys.each do |target|
+        A2OCONF[:targets].each_key do |target|
           puts "--target=#{target}"
         end
       end
@@ -155,10 +155,10 @@ module A2OBrew
     private
 
     def check_target(target)
-      error_exit(<<~EOF) unless target.nil? || A2OCONF[:targets].key?(target.intern)
+      error_exit(<<~INVALID_TARGET) unless target.nil? || A2OCONF[:targets].key?(target.intern)
         Invalid target '#{target}'.
         You must specify #{A2OCONF[:targets].keys.join('/')}.
-EOF
+INVALID_TARGET
     end
 
     def build_path(project_path, target, project_conf)

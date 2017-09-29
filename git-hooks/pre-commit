@@ -3,5 +3,5 @@
 # If bin directory is modified
 git diff --cached --name-only | if grep --quiet \\.rb$; then
   changed_files=`git diff --cached --name-only --diff-filter=ACMR | grep -e "\.rb$" | paste -s -`
-  lang/ruby/bin/rubocop -D -E -S -P -a $changed_files
+  lang/ruby/bin/rubocop -D -E -S -P $changed_files
 fi

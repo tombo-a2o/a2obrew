@@ -414,7 +414,7 @@ module A2OBrew
         files.each do |file| # rubocop:disable Metrics/BlockLength
           local_path = file.real_path.relative_path_from(Pathname(@base_dir))
 
-          next if resource_filter && !resource_filter.call(local_path.to_s)
+          next unless resource_filter&.call(local_path.to_s)
 
           if File.extname(file.path) == '.storyboard'
             remote_path = File.join(resources_dir, File.basename(file.path))
@@ -736,7 +736,7 @@ module A2OBrew
 
       settings = build_file.settings
       file_cflags = []
-      if settings && settings.key?('COMPILER_FLAGS')
+      if settings&.key?('COMPILER_FLAGS')
         file_cflags += settings['COMPILER_FLAGS'].split
       end
       if enable_objc_arc
@@ -819,7 +819,7 @@ module A2OBrew
         object = File.join(objects_dir, source_path.gsub(/\.[A-Za-z0-9]+$/, '.o'))
         objects << object
 
-        file_cflags = '-fobjc-arc '.dup
+        file_cflags = +'-fobjc-arc '
 
         case File.extname(source_path)
         when '.mm', '.cpp', '.cxx', '.cc'
@@ -1186,7 +1186,7 @@ module A2OBrew
 
         # TODO: handle .dylib
         name = file_ref.name
-        if name && name.end_with?('.framework') && (file_ref.source_tree == 'SDKROOT' || file_ref.source_tree == 'DEVELOPER_DIR')
+        if name&.end_with?('.framework') && (file_ref.source_tree == 'SDKROOT' || file_ref.source_tree == 'DEVELOPER_DIR')
           framework_names << File.basename(name, '.framework')
         end
       end

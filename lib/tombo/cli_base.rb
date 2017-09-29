@@ -19,7 +19,7 @@ module Tombo
 
       begin
         @dotfile = Dotfile.new(options[:profile])
-      rescue => e
+      rescue StandardError => e
         error_exit(e.message)
       end
     end
@@ -57,7 +57,7 @@ module Tombo
         Logger.logger.error response.body
         error_exit('API failed')
       end
-      if (json['errors'] && !json['errors'].empty?) || !HTTP::Status.successful?(response.status)
+      if !json['errors']&.empty? || !HTTP::Status.successful?(response.status)
         # TODO: Handle response.status == 401 and tell what to do
         Logger.logger.error "API error status: #{response.status}"
         json['errors']&.each do |error|

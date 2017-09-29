@@ -26,11 +26,11 @@ module A2OBrew
 
     # die unless emcc
     def check_emscripten_env
-      error_exit(<<~EOF) if find_executable('emcc').nil?
+      error_exit(<<~SHOW_A2OBREW_INIT) if find_executable('emcc').nil?
         Cannot find emcc. Execute the command below.
 
         eval "$(a2obrew init -)"
-EOF
+SHOW_A2OBREW_INIT
     end
 
     def a2obrew_path

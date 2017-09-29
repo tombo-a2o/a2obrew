@@ -36,7 +36,7 @@ module Tombo
           r = cl.get(DEV_PORTAL_URI)
           raise unless HTTP::Status.successful?(r.status)
         end
-      rescue
+      rescue StandardError
         error_exit("Cannot connect to #{DEV_PORTAL_URI}")
       end
 
@@ -192,7 +192,7 @@ module Tombo
           r = cl.get(DEV_PORTAL_URI)
           raise unless HTTP::Status.successful?(r.status)
         end
-      rescue
+      rescue StandardError
         error_exit("Cannot connect to #{DEV_PORTAL_URI}")
       end
 

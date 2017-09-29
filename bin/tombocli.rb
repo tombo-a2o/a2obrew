@@ -1,4 +1,3 @@
-# encoding: utf-8
 # frozen_string_literal: true
 
 Encoding.default_external = Encoding::UTF_8
