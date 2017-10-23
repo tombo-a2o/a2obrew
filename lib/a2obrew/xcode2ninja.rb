@@ -414,7 +414,7 @@ module A2OBrew
         files.each do |file| # rubocop:disable Metrics/BlockLength
           local_path = file.real_path.relative_path_from(Pathname(@base_dir))
 
-          next if resource_filter.nil? && !resource_filter.call(local_path.to_s)
+          next if !resource_filter.nil? && !resource_filter.call(local_path.to_s)
 
           if File.extname(file.path) == '.storyboard'
             remote_path = File.join(resources_dir, File.basename(file.path))
