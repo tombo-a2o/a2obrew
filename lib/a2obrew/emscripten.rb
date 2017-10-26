@@ -20,6 +20,11 @@ module A2OBrew
         path: 'emscripten/fastcomp/src/tools/clang',
         branch: 'feature/objc',
         git_url: 'git@github.com:tomboinc/emscripten-fastcomp-clang.git'
+      },
+      {
+        path: 'emscripten/binaryen',
+        branch: 'master',
+        git_url: 'git@github.com:tomboinc/binaryen.git'
       }
     ].freeze
 
@@ -65,6 +70,7 @@ EMENV_SH
         # NOTE: .emscripten is a python script.
         llvm_root = "#{emscripten_path}/fastcomp/build/bin"
         emscripten_root = "#{emscripten_path}/emscripten"
+        binaryen_root = "#{emscripten_path}/binaryen"
         optimizer = "#{emscripten_path}/optimizer/optimizer"
         node = "#{lang_path}/node/bin/node"
         temp_dir = "#{emscripten_path}/temp"
@@ -79,6 +85,7 @@ EMENV_SH
           TEMP_DIR = '#{temp_dir}'
           COMPILER_ENGINE = NODE_JS
           JS_ENGINES = [NODE_JS]
+          BINARYEN_ROOT = '#{binaryen_root}'
 DOT_EMSCRIPTEN
       end
 
@@ -104,7 +111,10 @@ DOT_EMSCRIPTEN
           'make -j3 && '\
           'source ../emenv.sh && '\
           'emcc --clear-cache --clear-ports && '\
-          "emcc -O3 -s USE_LIBPNG=1 -s USE_ZLIB=1 '#{a2obrew_path}/scripts/install-emscripten-ports.c'"
+          "emcc -O3 -s USE_LIBPNG=1 -s USE_ZLIB=1 '#{a2obrew_path}/scripts/install-emscripten-ports.c' && "\
+          "cd #{emscripten_path}/binaryen && "\
+          'cmake . && '\
+          'make -j3'
         )
       rescue CmdExecException => e
         error_exit(e.message, e.exit_status)
