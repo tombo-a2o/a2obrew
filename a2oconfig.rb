@@ -84,7 +84,7 @@ A2OCONF = {
       {
         name: 'icu',
         path: 'icu',
-        repository_uri: 'git@github.com:fchiba/icu.git',
+        repository_uri: 'git@github.com:tomboinc/icu.git',
         branch: 'prebuilt',
         configure: <<~CONFIGURE,
           emconfigure \
