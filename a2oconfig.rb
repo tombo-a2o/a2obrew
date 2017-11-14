@@ -1,11 +1,10 @@
-# encoding: utf-8
 # frozen_string_literal: true
 
 # a2obrew settings
 
 # rubocop:disable Style/FormatStringToken
 
-A2O_PATH = File.expand_path(File.dirname(__FILE__))
+A2O_PATH = File.expand_path(__dir__)
 
 ICU_NATIVE_DIR = `uname`.start_with?('Darwin') ? 'buildMac' : 'buildLinux'
 
