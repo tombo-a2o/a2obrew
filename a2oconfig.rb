@@ -2,7 +2,7 @@
 
 # a2obrew settings
 
-# rubocop:disable Style/FormatStringToken,Metrics/LineLength
+# rubocop:disable Metrics/LineLength
 
 A2O_PATH = File.expand_path(__dir__)
 
@@ -99,14 +99,14 @@ A2OCONF = {
             --prefix=%{emscripten_system_local_path} \
             --with-cross-build=`pwd`/../#{ICU_NATIVE_DIR} \
             CPPFLAGS="%{cppflags} -DUCONFIG_NO_LEGACY_CONVERSION=1 -DUCONFIG_NO_COLLATION=1"
-CONFIGURE
+        CONFIGURE
         build_path: '%{project_path}/buildEmscripten%{target}',
         build_target_path: '%{project_path}/buildEmscripten%{target}',
         build: <<~BUILD,
           emmake make ARFLAGS=rv -j8
           opt-static-lib lib/libicui18n.a ../public_funcs.txt
           opt-static-lib lib/libicuuc.a
-BUILD
+        BUILD
         install: 'make install'
       },
       {
@@ -123,7 +123,7 @@ BUILD
         # NOTE: openssl doesn't support target
         name: 'openssl',
         path: 'openssl',
-        repository_uri: 'git@github.com:gunyarakun/openssl.git',
+        repository_uri: 'git@github.com:tombo-a2o/openssl.git',
         branch: 'feature/emscripten',
         configure: 'emconfigure sh %{project_path}/Configure -no-asm no-ssl3 no-comp no-hw no-engine enable-deprecated no-shared no-dso no-gmp --openssldir=%{emscripten_system_local_path} linux-generic32',
         build_path: '%{project_path}',
@@ -146,7 +146,7 @@ BUILD
       {
         name: 'freetype',
         path: 'freetype',
-        repository_uri: 'git@github.com:fchiba/freetype.git',
+        repository_uri: 'git@github.com:tombo-a2o/freetype.git',
         branch: 'master',
         configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared --with-zlib=no --with-png=no CPPFLAGS="%{cppflags}"',
         build: 'emmake make -j8',
@@ -247,4 +247,4 @@ BUILD
   }
 }.freeze
 
-# rubocop:enable Style/FormatStringToken,Metrics/LineLength
+# rubocop:enable Metrics/LineLength
