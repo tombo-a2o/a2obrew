@@ -2,13 +2,12 @@
 
 # a2obrew settings
 
-# rubocop:disable Style/FormatStringToken
+# rubocop:disable Style/FormatStringToken,Metrics/LineLength
 
 A2O_PATH = File.expand_path(__dir__)
 
 ICU_NATIVE_DIR = `uname`.start_with?('Darwin') ? 'buildMac' : 'buildLinux'
 
-# rubocop:disable Metrics/LineLength
 A2OCONF = {
   targets: {
     debug: {
@@ -31,7 +30,7 @@ A2OCONF = {
       {
         name: 'libbsd',
         path: 'libbsd',
-        repository_uri: 'git@github.com:tomboinc/libbsd.git',
+        repository_uri: 'git@github.com:tombo-a2o/libbsd.git',
         branch: 'feature/emscripten',
         autogen: './autogen',
         configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags}"',
@@ -42,7 +41,7 @@ A2OCONF = {
       {
         name: 'libtiff',
         path: 'libtiff',
-        repository_uri: 'git@github.com:tomboinc/libtiff.git',
+        repository_uri: 'git@github.com:tombo-a2o/libtiff.git',
         branch: 'emscripten',
         configure: 'emconfigure %{project_path}/configure --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags}"',
         build_path: '%{project_path}/buildEmscripten-%{target}',
@@ -54,7 +53,7 @@ A2OCONF = {
       {
         name: 'sqlite3',
         path: 'sqlite3',
-        repository_uri: 'git@github.com:tomboinc/sqlite3.git',
+        repository_uri: 'git@github.com:tombo-a2o/sqlite3.git',
         branch: 'master',
         build_path: '%{project_path}',
         build: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make',
@@ -64,7 +63,7 @@ A2OCONF = {
       {
         name: 'libclosure',
         path: 'libclosure',
-        repository_uri: 'git@github.com:tomboinc/libclosure.git',
+        repository_uri: 'git@github.com:tombo-a2o/libclosure.git',
         build_path: '%{project_path}',
         build: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make',
         install: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make install',
@@ -73,7 +72,7 @@ A2OCONF = {
       {
         name: 'objc4',
         path: 'objc4',
-        repository_uri: 'git@github.com:tomboinc/objc4.git',
+        repository_uri: 'git@github.com:tombo-a2o/objc4.git',
         branch: 'feature/emscripten',
         build_path: '%{project_path}',
         build: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make -j8',
@@ -83,7 +82,7 @@ A2OCONF = {
       {
         name: 'icu',
         path: 'icu',
-        repository_uri: 'git@github.com:tomboinc/icu.git',
+        repository_uri: 'git@github.com:tombo-a2o/icu.git',
         branch: 'prebuilt',
         configure: <<~CONFIGURE,
           emconfigure \
@@ -113,7 +112,7 @@ BUILD
       {
         name: 'libdispatch',
         path: 'libdispatch',
-        repository_uri: 'git@github.com:tomboinc/libdispatch.git',
+        repository_uri: 'git@github.com:tombo-a2o/libdispatch.git',
         branch: 'feature/emscripten',
         build_path: '%{project_path}',
         build: 'OPT_CFLAGS="%{cppflags}" BUILD=%{build_target_path} make -j8',
@@ -136,7 +135,7 @@ BUILD
       {
         name: 'libxml2',
         path: 'libxml2',
-        repository_uri: 'git@github.com:tomboinc/libxml2.git',
+        repository_uri: 'git@github.com:tombo-a2o/libxml2.git',
         branch: 'emscripten',
         autogen: 'mkdir -p m4 && autoreconf -i',
         configure: 'emconfigure %{project_path}/configure --with-http=no --with-ftp=no --with-python=no --with-threads=no --prefix=%{emscripten_system_local_path} --disable-shared CFLAGS="%{cppflags}"',
@@ -157,7 +156,7 @@ BUILD
       {
         name: 'Foundation',
         path: 'Foundation',
-        repository_uri: 'git@github.com:tomboinc/Foundation.git',
+        repository_uri: 'git@github.com:tombo-a2o/Foundation.git',
         branch: 'feature/emscripten',
         autogen: 'BUILD_DIR=%{build_target_path} make install_header_only',
         build_path: '%{project_path}',
@@ -247,3 +246,5 @@ BUILD
     ]
   }
 }.freeze
+
+# rubocop:enable Style/FormatStringToken,Metrics/LineLength
