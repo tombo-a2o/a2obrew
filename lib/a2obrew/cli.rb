@@ -27,18 +27,18 @@ module A2OBrew
         if %i[bash zsh].include?(shell)
           puts <<~COMPLETIONS
             source "#{a2obrew_path}/bin/completions/a2obrew.#{shell}"
-COMPLETIONS
+          COMPLETIONS
         end
         puts <<~INIT
           source "#{emscripten_path}/emenv.sh"
-INIT
+        INIT
       else
         puts <<~USAGE
           # Load a2o related environment variables automatically by appending
           # the following to #{shell_rc_path}
 
           eval "$(a2obrew init -)"
-USAGE
+        USAGE
       end
     end
 

@@ -63,7 +63,7 @@ module A2OBrew
           export EM_PORTS=#{emscripten_path}/.emscripten_ports
           export EM_CACHE=#{emscripten_path}/.emscripten_cache
           export EMSCRIPTEN=#{emscripten_path}/emscripten
-EMENV_SH
+        EMENV_SH
       end
 
       def dot_emscripten
@@ -86,20 +86,20 @@ EMENV_SH
           COMPILER_ENGINE = NODE_JS
           JS_ENGINES = [NODE_JS]
           BINARYEN_ROOT = '#{binaryen_root}'
-DOT_EMSCRIPTEN
+        DOT_EMSCRIPTEN
       end
 
       def build_main
-        open("#{emscripten_path}/.emscripten", 'w') do |f|
+        File.open("#{emscripten_path}/.emscripten", 'w') do |f|
           f.write dot_emscripten
         end
 
-        open("#{emscripten_path}/emenv.sh", 'w') do |f|
+        File.open("#{emscripten_path}/emenv.sh", 'w') do |f|
           f.write emenv_sh
         end
         FileUtils.chmod('+x', "#{emscripten_path}/emenv.sh")
 
-        # rubocop:disable Metrics/LineLength
+        # rubocop: disable Metrics/LineLength
         Util.cmd_exec(
           "mkdir -p #{emscripten_path}/fastcomp/build && "\
           "cd #{emscripten_path}/fastcomp/build && "\
@@ -116,6 +116,7 @@ DOT_EMSCRIPTEN
           'cmake . && '\
           'make -j3'
         )
+        # rubocop: enable Metrics/LineLength
       rescue CmdExecException => e
         error_exit(e.message, e.exit_status)
       end

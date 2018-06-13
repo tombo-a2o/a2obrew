@@ -8,6 +8,7 @@ require 'httpclient'
 require 'fileutils'
 
 module Tombo
+  # rubocop: disable Metrics/LineLength
   class Test < CLIBase
     PROFILE = 'test-platform'
     LANGUAGE_ID = 14 # ja
@@ -18,15 +19,11 @@ module Tombo
 
     desc 'upload', 'upload application into Tombo platform'
     def upload(*source_directories) # rubocop:disable Metrics/AbcSize,PerceivedComplexity,MethodLength,CyclomaticComplexity
-      # rubocop: disable Metrics/LineLength
-
       # Check source_directory
       error_exit('Specify source directory to be uploaded') if source_directories.length != 1
       source_directory = source_directories[0]
       application_html_path = File.join(source_directory, 'application', 'application.html')
-      unless File.file?(application_html_path)
-        error_exit('Cannot find application.html')
-      end
+      error_exit('Cannot find application.html') unless File.file?(application_html_path)
 
       # Check https connection
       begin
@@ -180,9 +177,7 @@ module Tombo
       error_exit('Specify source directory to be uploaded') if source_directories.length != 1
       source_directory = source_directories[0]
       application_html_path = File.join(source_directory, 'application', 'application.html')
-      unless File.file?(application_html_path)
-        error_exit('Cannot find application.html')
-      end
+      error_exit('Cannot find application.html') unless File.file?(application_html_path)
 
       # Check https connection
       begin
@@ -324,4 +319,5 @@ module Tombo
       system("open #{PLATFORM_URI}/_gameplus/#{GAMEPLUS_SCREEN_NAME}")
     end
   end
+  # rubocop: enable Metrics/LineLength
 end

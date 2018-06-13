@@ -21,9 +21,7 @@ module Tombo
 
       d = json['data']
 
-      if d.nil? || d['type'] != 'application_localizes' || d['id'].nil?
-        raise 'Cannot update application'
-      end
+      raise 'Cannot update application' if d.nil? || d['type'] != 'application_localizes' || d['id'].nil?
 
       output(json)
     end

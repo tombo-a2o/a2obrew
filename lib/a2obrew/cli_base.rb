@@ -30,11 +30,11 @@ module A2OBrew
         Cannot find emcc. Execute the command below.
 
         eval "$(a2obrew init -)"
-SHOW_A2OBREW_INIT
+      SHOW_A2OBREW_INIT
     end
 
     def a2obrew_path
-      File.expand_path('../../..', __FILE__)
+      File.expand_path('../..', __dir__)
     end
 
     def emscripten_path

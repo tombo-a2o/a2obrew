@@ -31,9 +31,7 @@ module Tombo
 
       d = json['data']
 
-      if d.nil? || d['type'] != 'applications' || d['id'].nil?
-        raise 'Cannot update application'
-      end
+      raise 'Cannot update application' if d.nil? || d['type'] != 'applications' || d['id'].nil?
 
       output(json)
     end
@@ -45,9 +43,7 @@ module Tombo
     def update
       body = {}
 
-      if options[:active_version_id]
-        body['application[active_version_id]'] = options[:active_version_id]
-      end
+      body['application[active_version_id]'] = options[:active_version_id] if options[:active_version_id]
 
       raise 'No column are specified to be updated' if body.empty?
 
@@ -57,9 +53,7 @@ module Tombo
 
       d = json['data']
 
-      if d.nil? || d['type'] != 'applications' || d['id'].nil?
-        raise 'Cannot update application'
-      end
+      raise 'Cannot update application' if d.nil? || d['type'] != 'applications' || d['id'].nil?
 
       output(json)
     end

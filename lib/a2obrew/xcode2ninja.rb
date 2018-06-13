@@ -11,9 +11,8 @@ require_relative 'util'
 require_relative 'ninja'
 require_relative 'xcodeproj_ext'
 
-# rubocop:disable Metrics/ParameterLists
-
 module A2OBrew
+  # rubocop: disable Metrics/ParameterLists
   APPLE_APPICONS = [
     [60, 3], # 60x60@3x 180x180 (main icon for iPhone retina iOS 8-)
     [76, 2], # 76x76@2x 152x152 (main icon for iPad   retina iOS 7-)
@@ -58,7 +57,7 @@ module A2OBrew
     private
 
     def xcworkspace
-      @workspace ||= File.extname(@xcodeproj_path) == '.xcworkspace' ? Xcodeproj::Workspace.new_from_xcworkspace(@xcodeproj_path) : nil
+      @xcworkspace ||= File.extname(@xcodeproj_path) == '.xcworkspace' ? Xcodeproj::Workspace.new_from_xcworkspace(@xcodeproj_path) : nil
     end
 
     def xcodeproj
@@ -624,15 +623,13 @@ module A2OBrew
     def find_icon_from_asset_catalog(base_path)
       contents_images = JSON.parse(File.read(
                                      File.join(base_path, 'Contents.json')
-      ))['images']
+                                   ))['images']
 
       APPLE_APPICONS.each do |width, scale|
         scale_str = "#{scale}x"
         size_str = "#{width}x#{width}"
         contents_images.each do |ci|
-          if ci['scale'] == scale_str && ci['size'] == size_str && ci.key?('filename')
-            return File.join(base_path, ci['filename']), scale
-          end
+          return File.join(base_path, ci['filename']), scale if ci['scale'] == scale_str && ci['size'] == size_str && ci.key?('filename')
         end
       end
 
@@ -642,7 +639,7 @@ module A2OBrew
     def find_launch_image_from_asset_catalog(base_path)
       contents_images = JSON.parse(File.read(
                                      File.join(base_path, 'Contents.json')
-      ))['images']
+                                   ))['images']
 
       [2, 1].each do |scale|
         scale_str = "#{scale}x"
@@ -736,9 +733,7 @@ module A2OBrew
 
       settings = build_file.settings
       file_cflags = []
-      if settings&.key?('COMPILER_FLAGS')
-        file_cflags += settings['COMPILER_FLAGS'].split
-      end
+      file_cflags += settings['COMPILER_FLAGS'].split if settings&.key?('COMPILER_FLAGS')
       if enable_objc_arc
         file_cflags << '-fobjc-arc' unless file_cflags.include?('-fno-objc-arc')
       end
@@ -1201,9 +1196,7 @@ module A2OBrew
         file_ref = file.file_ref
         remote_target = case file_ref
                         when Xcodeproj::Project::Object::PBXFileReference
-                          if file_ref.source_tree == 'BUILT_PRODUCTS_DIR'
-                            @target.project.workspace.library_to_targert_map[file_ref.path]
-                          end
+                          @target.project.workspace.library_to_targert_map[file_ref.path] if file_ref.source_tree == 'BUILT_PRODUCTS_DIR'
                         when Xcodeproj::Project::Object::PBXReferenceProxy
                           proxy = file_ref.remote_ref
                           proxy.remote_target
@@ -1469,4 +1462,5 @@ module A2OBrew
       files
     end
   end
+  # rubocop: enable Metrics/ParameterLists
 end

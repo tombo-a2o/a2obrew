@@ -8,8 +8,9 @@ require_relative 'dotfile'
 module Tombo
   module Logger
     def self.logger
-      # rubocop:disable Style/ClassVars
+      # rubocop: disable Style/ClassVars
       @@logger ||= ::Logger.new(STDERR)
+      # rubocop: enable Style/ClassVars
     end
   end
 

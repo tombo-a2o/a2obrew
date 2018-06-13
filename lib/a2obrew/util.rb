@@ -5,6 +5,7 @@ require 'mkmf'
 require 'rainbow'
 require 'mini_magick'
 require 'fileutils'
+require 'English'
 
 module MakeMakefile
   module Logging

@@ -32,9 +32,7 @@ module A2OBrew
     def read_project_config(path)
       if File.exist?(path)
         config = eval File.read(path) # rubocop:disable Security/Eval
-        unless config[:version] == 1
-          raise Informative, "#{BUILD_CONFIG_RB_PATH} version should be 1"
-        end
+        raise Informative, "#{BUILD_CONFIG_RB_PATH} version should be 1" unless config[:version] == 1
         config
       else
         {}
@@ -42,9 +40,7 @@ module A2OBrew
     end
 
     def load_project_config(project_config_path)
-      unless project_config_path.nil? || File.exist?(project_config_path)
-        error_exit "Specified #{project_config_path} not found"
-      end
+      error_exit "Specified #{project_config_path} not found" unless project_config_path.nil? || File.exist?(project_config_path)
 
       project_config_path ||= PROJECT_CONFIG_RB_PATH
 
@@ -69,9 +65,7 @@ module A2OBrew
         end
       end
 
-      unless FileTest.directory?(xcodeproj_path)
-        error_exit('Specify valid .xcodeproj path')
-      end
+      error_exit('Specify valid .xcodeproj path') unless FileTest.directory?(xcodeproj_path)
 
       xcodeproj_path
     end
@@ -107,14 +101,14 @@ module A2OBrew
         a2o:
           target: #{a2o_target}
           proj_config_path: #{proj_config_path}
-NINJA_A2O
+      NINJA_A2O
       puts <<~NINJA_XCODEPROJ
         xcodeproj:
           xcodeproj_path: #{xcodeproj_path}
           xcodeproj_name: #{xcodeproj_name}
           xcodeproj_target: #{xcodeproj_target}
           xocdeproj_build_config: #{xcodeproj_build_config}
-NINJA_XCODEPROJ
+      NINJA_XCODEPROJ
       xn = Xcode2Ninja.new(xcodeproj_path, xcodeproj_name, a2obrew_path)
       gen_paths = xn.xcode2ninja('a2o/ninja', xcodeproj_target,
                                  xcodeproj_build_config, active_project_config, a2o_target)

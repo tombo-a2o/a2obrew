@@ -158,7 +158,7 @@ module A2OBrew
       error_exit(<<~INVALID_TARGET) unless target.nil? || A2OCONF[:targets].key?(target.intern)
         Invalid target '#{target}'.
         You must specify #{A2OCONF[:targets].keys.join('/')}.
-INVALID_TARGET
+      INVALID_TARGET
     end
 
     def build_path(project_path, target, project_conf)
