@@ -3,7 +3,7 @@
 require 'pty'
 require 'mkmf'
 require 'rainbow'
-require 'RMagick'
+require 'mini_magick'
 require 'fileutils'
 
 module MakeMakefile
@@ -86,8 +86,8 @@ module A2OBrew
     end
 
     def self.image_width_and_height(path)
-      img = Magick::ImageList.new(path)
-      [img.columns, img.rows]
+      img = MiniMagick::Image.open(path)
+      [img.width, img.height]
     end
 
     def self.filter_ansi_esc(str)
