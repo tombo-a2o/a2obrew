@@ -9,22 +9,22 @@ module A2OBrew
       {
         path: 'emscripten/emscripten',
         branch: 'feature/objc',
-        git_url: 'git@github.com:tomboinc/emscripten.git'
+        git_url: 'git@github.com:tombo-a2o/emscripten.git'
       },
       {
         path: 'emscripten/fastcomp/src',
         branch: 'feature/objc',
-        git_url: 'git@github.com:tomboinc/emscripten-fastcomp.git'
+        git_url: 'git@github.com:tombo-a2o/emscripten-fastcomp.git'
       },
       {
         path: 'emscripten/fastcomp/src/tools/clang',
         branch: 'feature/objc',
-        git_url: 'git@github.com:tomboinc/emscripten-fastcomp-clang.git'
+        git_url: 'git@github.com:tombo-a2o/emscripten-fastcomp-clang.git'
       },
       {
         path: 'emscripten/binaryen',
         branch: 'master',
-        git_url: 'git@github.com:tomboinc/binaryen.git'
+        git_url: 'git@github.com:tombo-a2o/binaryen.git'
       }
     ].freeze
 
