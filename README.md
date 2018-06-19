@@ -99,22 +99,6 @@ config = {
 config
 ```
 
-## Upload an application
-
-Use these commands.
-
-```sh
-# check the application id
-tombocli applications index
-# Or create an application and application localize (Can accessable with the URL https://app.tombo.io/a2oapp)
-tombocli applications create --default-language-id=14 --screen-name=a2oapp
-tombocli application_localizes create --application-id=67454963-23ad-4868-88bf-3c97fad31685 --language-id=14
-# upload
-tombocli application_versions create --application-id=67454963-23ad-4868-88bf-3c97fad31685 --version=1.0.1-beta --source-directory=a2o/build/release/products
-# change latest version
-tombocli applications update --application-id=67454963-23ad-4868-88bf-3c97fad31685 --active-version-id=9987d841-4edb-4fe7-994e-55ff745e9a8a
-```
-
 ## For developers
 
 ### Update dependent libraries from git
@@ -122,8 +106,8 @@ tombocli applications update --application-id=67454963-23ad-4868-88bf-3c97fad316
 ```sh
 # update all
 a2obrew libraries update
-# update only cocotron
-a2obrew libraries update cocotron
+# update only A2OFrameworks
+a2obrew libraries update A2OFrameworks
 ```
 
 The command just updates a2obrew itself and dependent repositories.
@@ -143,9 +127,9 @@ a2obrew libraries build --target=debug
 # after modifing some header and source files, you build with this command
 a2obrew libraries build --target=debug
 # You can build specific library
-a2obrew libraries build --target=debug cocotron
+a2obrew libraries build --target=debug A2OFrameworks
 # You can build specific libraries
-a2obrew libraries build --target=debug Foundation cocotron Chameleon
+a2obrew libraries build --target=debug Foundation A2OFrameworks
 # install built binaries
 a2obrew libraries install --target=debug
 # clean built binaries
