@@ -9,7 +9,7 @@ if [ ! -d pyenv ]; then
 fi
 
 if [ ! -d python2/bin ]; then
-  ./pyenv/plugins/python-build/bin/python-build 2.7.9 python2
+  ./pyenv/plugins/python-build/bin/python-build 2.7.14 python2
 fi
 
 if [ ! -d ruby-build ]; then
@@ -17,7 +17,7 @@ if [ ! -d ruby-build ]; then
 fi
 
 if [ ! -d ruby/bin ]; then
-  ./ruby-build/bin/ruby-build 2.4.1 ruby
+  ./ruby-build/bin/ruby-build 2.4.4 ruby
 fi
 
 if [ ! -f ruby/bin/bundle ]; then
@@ -29,5 +29,5 @@ if [ ! -d node-build ]; then
 fi
 
 if [ ! -d node/bin ]; then
-  ./node-build/bin/node-build 6.11.0 node
+  ./node-build/bin/node-build 8.11.3 node
 fi
