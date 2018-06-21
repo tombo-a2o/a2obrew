@@ -430,7 +430,7 @@ module A2OBrew
               inputs: [local_path],
               build_variables: {
                 'temp_dir' => tmp_path,
-                'module_name' => @target.product_name,
+                'module_name' => @target.product_name.quote.ninja_escape,
                 'resources_dir' => resources_dir
               }
             }
@@ -443,7 +443,7 @@ module A2OBrew
               rule_name: 'ibtool2',
               inputs: [local_path],
               build_variables: {
-                'module_name' => @target.product_name
+                'module_name' => @target.product_name.quote.ninja_escape
               }
             }
             resources << remote_path
@@ -781,11 +781,11 @@ module A2OBrew
       cxx_std = nil if cxx_std == 'compiler-default'
 
       framework_dir_options = framework_search_paths.map { |f| "-F#{f}" }.join(' ')
-      header_options = (header_search_paths + user_header_search_paths.split + header_dirs).map { |dir| "-I\"#{dir}\"" }.join(' ')
+      header_options = (header_search_paths + user_header_search_paths.split + header_dirs.map(&:quote)).map { |dir| "-I#{dir}" }.join(' ')
 
       if build_setting('GCC_PRECOMPILE_PREFIX_HEADER', :bool)
         prefix_pch = build_setting('GCC_PREFIX_HEADER')
-        prefix_pch_options = prefix_pch.empty? ? '' : "-include #{prefix_pch}"
+        prefix_pch_options = prefix_pch.empty? ? '' : "-include #{prefix_pch.quote}"
       end
 
       # build sources
