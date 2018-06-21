@@ -11,7 +11,7 @@ https://developer.apple.com/downloads/
 1. Check out a2obrew into `$HOME/a2obrew`.
 
 ```sh
-git clone git@github.com:tomboinc/a2obrew.git $HOME/a2obrew
+git clone git@github.com:tombo-a2o/a2obrew.git $HOME/a2obrew
 ```
 
 2. Execute install.sh

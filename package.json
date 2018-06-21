@@ -7,14 +7,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tomboinc/a2obrew.git"
+    "url": "git+https://github.com/tombo-a2o/a2obrew.git"
   },
   "author": "Tombo, Inc.",
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/tomboinc/a2obrew/issues"
+    "url": "https://github.com/tombo-a2o/a2obrew/issues"
   },
-  "homepage": "https://github.com/tomboinc/a2obrew#readme",
+  "homepage": "https://github.com/tombo-a2o/a2obrew#readme",
   "dependencies": {
     "csslint": "^1.0.5",
     "eslint": "^4.1.1",
