@@ -1194,13 +1194,16 @@ module A2OBrew
 
       @target.frameworks_build_phase.files.each do |file|
         file_ref = file.file_ref
-        remote_target = case file_ref
-                        when Xcodeproj::Project::Object::PBXFileReference
-                          @target.project.workspace.library_to_targert_map[file_ref.path] if file_ref.source_tree == 'BUILT_PRODUCTS_DIR'
-                        when Xcodeproj::Project::Object::PBXReferenceProxy
-                          proxy = file_ref.remote_ref
-                          proxy.remote_target
-                        end
+        remote_target = nil
+        case file_ref
+        when Xcodeproj::Project::Object::PBXFileReference
+          if (file_ref.source_tree == 'BUILT_PRODUCTS_DIR') && !@target.project.workspace.nil?
+            remote_target = @target.project.workspace.library_to_target_map[file_ref.path]
+          end
+        when Xcodeproj::Project::Object::PBXReferenceProxy
+          proxy = file_ref.remote_ref
+          remote_target = proxy.remote_target
+        end
 
         if remote_target
           remote_a2o_target = A2OTarget.new(remote_target, @build_config.name, @active_project_config, @a2o_target_name, @a2obrew_path, @base_dir)
