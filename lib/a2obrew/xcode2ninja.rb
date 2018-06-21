@@ -1197,9 +1197,7 @@ module A2OBrew
         remote_target = nil
         case file_ref
         when Xcodeproj::Project::Object::PBXFileReference
-          if (file_ref.source_tree == 'BUILT_PRODUCTS_DIR') && !@target.project.workspace.nil?
-            remote_target = @target.project.workspace.library_to_target_map[file_ref.path]
-          end
+          remote_target = @target.project.workspace&.library_to_target_map&.fetch(file_ref.path, nil) if file_ref.source_tree == 'BUILT_PRODUCTS_DIR'
         when Xcodeproj::Project::Object::PBXReferenceProxy
           proxy = file_ref.remote_ref
           remote_target = proxy.remote_target
