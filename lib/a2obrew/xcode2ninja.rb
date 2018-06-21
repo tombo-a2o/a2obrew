@@ -40,6 +40,7 @@ module A2OBrew
       builds = []
 
       default_target = xcworkspace ? xcworkspace.find_target(@xcodeproj_name, xcodeproj_target) : xcodeproj.find_target(xcodeproj_target)
+      raise Informative, "Cannot find a default target #{xcodeproj_target}." if default_target.nil?
       dependent_targets = default_target.dependent_targets(xcworkspace).to_a
 
       targets = [default_target] + dependent_targets
