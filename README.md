@@ -21,6 +21,8 @@ cd $HOME/a2obrew
 ./install.sh
 ```
 
+It take a long time to build all the dependent libraries. `install.sh` builds Python, Ruby and Node.js, install npm modules and RubyGems, build emscripten's fastcomp, build Frameworks and build test iOS application project.
+
 3. Add `$HOME/a2obrew/bin` to your `$PATH` for access to the `a2obrew` command-line utility
 
 ```sh
@@ -38,6 +40,8 @@ echo 'eval "$(a2obrew init -)"' >> ~/.bash_profile
 # zsh
 echo 'eval "$(a2obrew init -)"' >> ~/.zshrc
 ```
+
+Or, you can execute `eval "$(a2obrew init -)"` everytime you want to use `a2obrew`.
 
 5. Restart your shell so that PATH changes take effect. (Opening a new
   terminal tab will usually do it.) Now check if a2obrew was set up:
